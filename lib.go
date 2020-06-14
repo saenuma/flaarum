@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"strings"
 	"io/ioutil"
+	"github.com/bankole7782/flaarum/flaarum_shared"
 )
 
 
@@ -17,6 +18,15 @@ func init() {
 	tr := &http.Transport{TLSClientConfig: config}
 
 	httpCl = &http.Client{Transport: tr}
+}
+
+// alias to make things easier for the user
+type FieldStruct = flaarum_shared.FieldStruct
+type FKeyStruct = flaarum_shared.FKeyStruct
+type TableStruct = flaarum_shared.TableStruct
+
+func ParseTableStructureStmt(stmt string) (TableStruct, error) {
+	return flaarum_shared.ParseTableStructureStmt(stmt)
 }
 
 type Client struct {
