@@ -1,3 +1,4 @@
+// this package 'flaarum' is the golang library for communicating with the flaarum server.
 package flaarum
 
 import (
