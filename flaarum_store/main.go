@@ -43,6 +43,7 @@ func main() {
 
 	// tables
 	r.HandleFunc("/create-table/{proj}", createTable)
+	r.HandleFunc("/update-table-structure/{proj}", updateTableStructure)
 
 	err := http.ListenAndServeTLS(":22318", "https-server.crt", "https-server.key", r)
 	if err != nil {

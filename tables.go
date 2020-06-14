@@ -28,3 +28,26 @@ func (cl *Client) CreateTable(stmt string) error {
 		return errors.New(string(body))
 	}
 }
+
+
+func (cl *Client) UpdateTableStructure(stmt string) error {
+	urlValues := url.Values{}
+	urlValues.Add("keyStr", cl.KeyStr)
+	urlValues.Add("stmt", stmt)
+
+	resp, err := httpCl.PostForm( cl.Addr + "update-table-structure/" + cl.ProjName, urlValues)
+	if err != nil {
+		return errors.Wrap(err, "http error")
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return errors.Wrap(err, "ioutil error)")
+	}
+
+	if resp.StatusCode == 200 {
+		return nil
+	} else {
+		return errors.New(string(body))
+	}
+}
