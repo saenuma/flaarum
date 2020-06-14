@@ -21,6 +21,7 @@ func createProject(w http.ResponseWriter, r *http.Request) {
 
 	if projName == "first_proj" {
 		printError(w, errors.New("the name 'first_proj' is by default created."))
+		return
 	}
 
 	dataPath, _ := GetDataPath()
@@ -33,6 +34,30 @@ func createProject(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			printError(w, errors.Wrap(err, "os error"))
 		}
+	}
+
+	fmt.Fprintf(w, "ok")
+}
+
+
+func deleteProject(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	projName := vars["proj"]
+
+	if projName == "first_proj" {
+		printError(w, errors.New("the name 'first_proj' is by default created."))
+		return
+	}
+
+	dataPath, _ := GetDataPath()
+
+	generalMutex.Lock()
+	defer generalMutex.Unlock()
+
+	err := os.RemoveAll(filepath.Join(dataPath, projName))
+	if err != nil {
+		printError(w, errors.Wrap(err, "os error"))
+		return
 	}
 
 	fmt.Fprintf(w, "ok")
