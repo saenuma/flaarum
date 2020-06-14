@@ -7,6 +7,8 @@ import (
 	"os"
 	"github.com/pkg/errors"
 	"fmt"
+	"encoding/json"
+	"io/ioutil"
 )
 
 
@@ -61,4 +63,31 @@ func deleteProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "ok")
+}
+
+
+func listProjects(w http.ResponseWriter, r *http.Request) {
+	dataPath, _ := GetDataPath()
+
+	generalMutex.RLock()
+	defer generalMutex.RUnlock()	
+
+	fis, err := ioutil.ReadDir(dataPath)
+	if err != nil {
+		printError(w, errors.Wrap(err, "ioutil error"))
+		return
+	}
+
+	projs := make([]string, 0)
+	for _, fi := range fis {
+		projs = append(projs, fi.Name())
+	}
+
+	jsonBytes, err := json.Marshal(projs)
+	if err != nil {
+		printError(w, errors.Wrap(err, "json error"))
+		return 
+	}
+
+	w.Write(jsonBytes)
 }

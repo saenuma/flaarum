@@ -37,6 +37,7 @@ func main() {
 
 	r.HandleFunc("/create-project/{proj}", createProject)
 	r.HandleFunc("/delete-project/{proj}", deleteProject)
+	r.HandleFunc("/list-projects", listProjects)
 
 	err := http.ListenAndServeTLS(":22318", "https-server.crt", "https-server.key", r)
 	if err != nil {
