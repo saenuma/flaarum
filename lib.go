@@ -21,6 +21,7 @@ func init() {
 }
 
 // alias to make things easier for the user
+
 type FieldStruct = flaarum_shared.FieldStruct
 type FKeyStruct = flaarum_shared.FKeyStruct
 type TableStruct = flaarum_shared.TableStruct

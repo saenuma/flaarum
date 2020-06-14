@@ -10,7 +10,7 @@ import (
 )
 
 var generalMutex *sync.RWMutex // for projects and tables (table data uses different mutexes) creation, editing, deletion
-
+var rowsMutexes map[string]*sync.RWMutex
 func init() {
 	dataPath, err := GetDataPath()
 	if err != nil {
@@ -25,6 +25,7 @@ func init() {
 
 	// create mutexes
 	generalMutex = &sync.RWMutex{}
+	rowsMutexes = make(map[string]*sync.RWMutex)
 }
 
 
@@ -35,9 +36,13 @@ func main() {
 		fmt.Fprintf(w, "yeah-flaarum")
 	})
 
+	// projects
 	r.HandleFunc("/create-project/{proj}", createProject)
 	r.HandleFunc("/delete-project/{proj}", deleteProject)
 	r.HandleFunc("/list-projects", listProjects)
+
+	// tables
+	r.HandleFunc("/create-table/{proj}", createTable)
 
 	err := http.ListenAndServeTLS(":22318", "https-server.crt", "https-server.key", r)
 	if err != nil {

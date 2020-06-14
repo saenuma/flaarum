@@ -3,6 +3,7 @@ package flaarum_shared
 import (
 	"strings"
 	"github.com/pkg/errors"
+	"fmt"
 )
 
 
@@ -16,7 +17,7 @@ type FieldStruct struct {
 type FKeyStruct struct {
 	FieldName string
 	PointedTable string
-	OnDelete string // expects one of "restrict", "empty", "delete"
+	OnDelete string // expects one of "on_delete_restrict", "on_delete_empty", "on_delete_delete"
 }
 
 type TableStruct struct {
@@ -61,6 +62,9 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 		}
 		if parts[0] == "id" || parts[0] == "_version" {
 			return ts, errors.New("Bad Statement: the fields 'id' and '_version' are automatically created. Hence can't be used.")
+		}
+		if FindIn([]string{"int", "float", "string", "text", "bool", "date", "datetime"}, parts[1]) == -1 {
+			return ts, errors.New(fmt.Sprintf("Bad Statement: the field type '%s' is not allowed in flaarum.", parts[1]))
 		}
 		fs := FieldStruct{FieldName: parts[0], FieldType: parts[1]}
 		if len(parts) > 2 {
@@ -125,4 +129,14 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 	}
 
 	return ts, nil
+}
+
+
+func FindIn(container []string, elem string) int {
+	for i, o := range container {
+		if o == elem {
+			return i
+		}
+	}
+	return -1
 }
