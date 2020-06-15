@@ -1,3 +1,4 @@
+// This package contains functions shared by the parts of this project
 package flaarum_shared
 
 import (
