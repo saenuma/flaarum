@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"fmt"
 	"strconv"
+	"github.com/bankole7782/flaarum/flaarum_shared"
 )
 
 
@@ -104,10 +105,10 @@ func (cl *Client) GetTableStructure(tableName string, versionNum int64) (string,
 }
 
 
-func (cl *Client) GetTableStructureParsed(tableName string, versionNum int64) (TableStruct, error) {
+func (cl *Client) GetTableStructureParsed(tableName string, versionNum int64) (flaarum_shared.TableStruct, error) {
 	stmt, err := cl.GetTableStructure(tableName, versionNum)
 	if err != nil {
-		return TableStruct{}, err
+		return flaarum_shared.TableStruct{}, err
 	}
-	return ParseTableStructureStmt(stmt)
+	return flaarum_shared.ParseTableStructureStmt(stmt)
 }

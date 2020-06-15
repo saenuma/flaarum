@@ -21,16 +21,6 @@ func init() {
 	httpCl = &http.Client{Transport: tr}
 }
 
-// alias to make things easier for the user
-
-type FieldStruct = flaarum_shared.FieldStruct
-type FKeyStruct = flaarum_shared.FKeyStruct
-type TableStruct = flaarum_shared.TableStruct
-
-func ParseTableStructureStmt(stmt string) (TableStruct, error) {
-	return flaarum_shared.ParseTableStructureStmt(stmt)
-}
-
 type Client struct {
 	Addr string
 	KeyStr string
