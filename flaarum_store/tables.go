@@ -212,3 +212,43 @@ func getTableStructureParsed(projName, tableName string, versionNum int) (flaaru
 
 	return flaarum_shared.ParseTableStructureStmt(string(raw))
 }
+
+
+func getCurrentVersionNumHTTP(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	projName := vars["proj"]
+	tableName := vars["tbl"]
+
+	generalMutex.Lock()
+	defer generalMutex.Unlock()
+
+	currentVersionNum, err := getCurrentVersionNum(projName, tableName)
+	if err != nil {
+		printError(w, err)
+		return
+	}
+
+	fmt.Fprintf(w, "%d", currentVersionNum)
+}
+
+
+func getTableStructureHTTP(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	projName := vars["proj"]
+	tableName := vars["tbl"]
+	versionNum := vars["vnum"]	
+
+	dataPath, _ := GetDataPath()
+
+	generalMutex.Lock()
+	defer generalMutex.Unlock()	
+
+	tablePath := filepath.Join(dataPath, projName, tableName)
+	stmt, err := ioutil.ReadFile(filepath.Join(tablePath, "structures", versionNum))
+	if err != nil {
+		printError(w, errors.Wrap(err, "ioutil error"))
+		return
+	}
+
+	fmt.Fprintf(w, string(stmt))
+}

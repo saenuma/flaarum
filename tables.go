@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"github.com/pkg/errors"
 	"net/url"
+	"fmt"
+	"strconv"
 )
 
 
@@ -50,4 +52,62 @@ func (cl *Client) UpdateTableStructure(stmt string) error {
 	} else {
 		return errors.New(string(body))
 	}
+}
+
+
+func (cl *Client) GetCurrentTableVersionNum(tableName string) (int64, error) {
+	urlValues := url.Values{}
+	urlValues.Add("keyStr", cl.KeyStr)
+	
+	resp, err := httpCl.PostForm(fmt.Sprintf("%s/get-current-version-num/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
+	if err != nil {
+		return -1, errors.Wrap(err, "http error")
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return -1, errors.Wrap(err, "ioutil error")
+	}
+
+	if resp.StatusCode == 200 {
+		retId, err := strconv.ParseInt(string(body), 10, 64)
+		if err != nil {
+			return -1, errors.Wrap(err, "strconv error")
+		}
+		return retId, nil
+	} else {
+		return -1, errors.New(string(body))
+	}
+}
+
+
+func (cl *Client) GetTableStructure(tableName string, versionNum int64) (string, error) {
+	urlValues := url.Values{}
+	urlValues.Add("keyStr", cl.KeyStr)
+	
+	resp, err := httpCl.PostForm(fmt.Sprintf("%s/get-table-structure/%s/%s/%d", cl.Addr, cl.ProjName, tableName, versionNum), 
+		urlValues)
+	if err != nil {
+		return "", errors.Wrap(err, "http error")
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", errors.Wrap(err, "ioutil error")
+	}
+
+	if resp.StatusCode == 200 {
+		return string(body), nil
+	} else {
+		return "", errors.New(string(body))
+	}	
+}
+
+
+func (cl *Client) GetTableStructureParsed(tableName string, versionNum int64) (TableStruct, error) {
+	stmt, err := cl.GetTableStructure(tableName, versionNum)
+	if err != nil {
+		return TableStruct{}, err
+	}
+	return ParseTableStructureStmt(stmt)
 }

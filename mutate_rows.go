@@ -42,6 +42,20 @@ func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (in
 
 // InsertRowStr inserts a row into a table. It expects the toInsert to be of type map[string]interface{}.
 func (cl *Client) InsertRowAny(tableName string, toInsert map[string]interface{}) (int64, error) {
+	currentVersionNum, err := cl.GetCurrentTableVersionNum(tableName)
+	if err != nil {
+		return -1, err
+	}
+	tableStruct, err := cl.GetTableStructureParsed(tableName, currentVersionNum)
+	if err != nil {
+		return -1, err
+	}
+	fieldNamesToFieldTypes := make(map[string]string)
+
+	for _, fieldStruct := range tableStruct.Fields {
+		fieldNamesToFieldTypes[fieldStruct.FieldName] = fieldStruct.FieldType
+	}
+
 	toInsertStr := make(map[string]string)
 	for k, v := range toInsert {
 		switch vInType := v.(type) {
@@ -63,7 +77,16 @@ func (cl *Client) InsertRowAny(tableName string, toInsert map[string]interface{}
 			}
 			toInsertStr[k] = vInStr
 		case time.Time:
-			toInsertStr[k] = RightDateTimeFormat(vInType)
+			ft, ok := fieldNamesToFieldTypes[k]
+			if ! ok {
+				return -1, errors.New(fmt.Sprintf("The field '%s' is not in the structure of table '%s' of project '%s'", 
+					k, tableName, cl.ProjName))
+			}
+			if ft == "date" {
+				toInsertStr[k] = RightDateFormat(vInType)
+			} else if ft == "datetime" {
+				toInsertStr[k] = RightDateTimeFormat(vInType)
+			}
 		}
 	}
 

@@ -45,6 +45,8 @@ func main() {
 	// tables
 	r.HandleFunc("/create-table/{proj}", createTable)
 	r.HandleFunc("/update-table-structure/{proj}", updateTableStructure)
+	r.HandleFunc("/get-current-version-num/{proj}/{tbl}", getCurrentVersionNumHTTP)
+	r.HandleFunc("/get-table-structure/{proj}/{tbl}/{vnum}", getTableStructureHTTP)
 
 	// rows
 	r.HandleFunc("/insert-row/{proj}/{tbl}", insertRow)
