@@ -6,6 +6,11 @@ import (
 	"fmt"
 )
 
+const (
+	BROWSER_DATE_FORMAT = "2006-01-02"
+	BROWSER_DATETIME_FORMAT = "2006-01-02T15:04"
+	STRING_MAX_LENGTH = 100
+)
 
 type FieldStruct struct {
 	FieldName string

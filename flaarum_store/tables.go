@@ -153,26 +153,13 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tableStructsFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "structures"))
+	currentVersionNum, err := getCurrentVersionNum(projName, tableStruct.TableName)
 	if err != nil {
-		printError(w, errors.Wrap(err, "ioutil error"))
+		printError(w, err)
 		return
 	}
 
-	versionNumbers := make([]int, 0)
-	for _, tsfi := range tableStructsFIs {
-		num, err := strconv.Atoi(tsfi.Name())
-		if err != nil {
-			printError(w, errors.Wrap(err, "strconv error."))
-			return
-		}
-		versionNumbers = append(versionNumbers, num)
-	}
-
-	sort.Ints(versionNumbers)
-	currentVersion := versionNumbers[len(versionNumbers) - 1]
-
-	oldFormattedStmt, err := ioutil.ReadFile(filepath.Join(tablePath, "structures", strconv.Itoa(currentVersion)))
+	oldFormattedStmt, err := ioutil.ReadFile(filepath.Join(tablePath, "structures", strconv.Itoa(currentVersionNum)))
 	if err != nil {
 		printError(w, errors.Wrap(err, "ioutil error"))
 		return
@@ -180,7 +167,7 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 
 	formattedStmt := formatTableStruct(tableStruct)
 	if formattedStmt != string(oldFormattedStmt) {
-		nextVersionNumber := currentVersion + 1
+		nextVersionNumber := currentVersionNum + 1
 		err = ioutil.WriteFile(filepath.Join(tablePath, "structures", strconv.Itoa(nextVersionNumber)), []byte(formattedStmt), 0777)
 		if err != nil {
 			printError(w, errors.Wrap(err, "ioutil error."))
@@ -189,4 +176,39 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "ok")
+}
+
+
+func getCurrentVersionNum(projName, tableName string) (int, error) {
+	dataPath, _ := GetDataPath()
+	tablePath := filepath.Join(dataPath, projName, tableName)
+
+	tableStructsFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "structures"))
+	if err != nil {
+		return -1, errors.Wrap(err, "ioutil error")
+	}
+
+	versionNumbers := make([]int, 0)
+	for _, tsfi := range tableStructsFIs {
+		num, err := strconv.Atoi(tsfi.Name())
+		if err != nil {
+			return -1, errors.Wrap(err, "strconv error.")
+		}
+		versionNumbers = append(versionNumbers, num)
+	}
+
+	sort.Ints(versionNumbers)
+	currentVersionNum := versionNumbers[len(versionNumbers) - 1]
+	return currentVersionNum, nil
+}
+
+
+func getTableStructureParsed(projName, tableName string, versionNum int) (flaarum_shared.TableStruct, error) {
+	dataPath, _ := GetDataPath()
+	raw, err := ioutil.ReadFile(filepath.Join(dataPath, projName, tableName, "structures", strconv.Itoa(versionNum)))
+	if err != nil {
+		return flaarum_shared.TableStruct{}, errors.Wrap(err, "ioutil error")
+	}
+
+	return flaarum_shared.ParseTableStructureStmt(string(raw))
 }

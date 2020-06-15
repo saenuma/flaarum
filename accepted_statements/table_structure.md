@@ -8,7 +8,7 @@ fields:
 	firstname string required
 	surname string required
 	email string required unique
-	registration_date date
+	regdt datetime
 	biography text
 	is_active bool
 ::

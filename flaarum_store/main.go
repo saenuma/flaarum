@@ -11,6 +11,7 @@ import (
 
 var generalMutex *sync.RWMutex // for projects and tables (table data uses different mutexes) creation, editing, deletion
 var rowsMutexes map[string]*sync.RWMutex
+
 func init() {
 	dataPath, err := GetDataPath()
 	if err != nil {
@@ -45,6 +46,9 @@ func main() {
 	r.HandleFunc("/create-table/{proj}", createTable)
 	r.HandleFunc("/update-table-structure/{proj}", updateTableStructure)
 
+	// rows
+	r.HandleFunc("/insert-row/{proj}/{tbl}", insertRow)
+	
 	err := http.ListenAndServeTLS(":22318", "https-server.crt", "https-server.key", r)
 	if err != nil {
 		panic(err)

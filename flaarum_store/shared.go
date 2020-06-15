@@ -7,6 +7,7 @@ import (
 	"strings"
 	"net/http"
 	"fmt"
+	"sync"
 )
 
 
@@ -40,4 +41,18 @@ func doesPathExists(p string) bool {
 		return false
 	}
 	return true
+}
+
+
+func createTableMutexIfNecessary(projName, tableName string) {
+	fullTableName := projName + ":" + tableName
+	_, ok := rowsMutexes[fullTableName]
+	if ! ok {
+		rowsMutexes[fullTableName] = &sync.RWMutex{}
+	}
+}
+
+
+func makeSafeIndexValue(val string) string {
+	return strings.ReplaceAll(val, "/", "~~ab~~")
 }
