@@ -6,6 +6,8 @@ import (
 	"github.com/pkg/errors"
 	"fmt"
 	"strconv"
+	"os"
+	"path/filepath"
 )
 
 const (
@@ -32,6 +34,15 @@ type TableStruct struct {
 	Fields []FieldStruct
 	ForeignKeys []FKeyStruct
 	UniqueGroups [][]string
+}
+
+
+func GetDataPath() (string, error) {
+	hd, err := os.UserHomeDir()
+	if err != nil {
+		return "", errors.Wrap(err, "os error")
+	}
+	return filepath.Join(hd, ".flaarum_data"), nil
 }
 
 
@@ -314,4 +325,14 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 
 func MakeSafeIndexName(v string) string {
   return strings.ReplaceAll(v, "/", "~~a~~")
+}
+
+
+func DoesTableExists(projName, tableName string) bool {
+  dataPath, _ := GetDataPath()
+  if _, err := os.Stat(filepath.Join(dataPath, projName, tableName)); os.IsNotExist(err) {
+    return false
+  } else {
+    return true
+  }
 }

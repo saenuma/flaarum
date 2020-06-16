@@ -15,6 +15,11 @@ import (
 )
 
 
+func doesTableExists(projName, tableName string) bool {
+  return flaarum_shared.DoesTableExists(projName, tableName)
+}
+
+
 func validateTableStruct(projName string, tableStruct flaarum_shared.TableStruct) error {
 	if err := projAndTableNameValidate(tableStruct.TableName); err != nil {
 		return err

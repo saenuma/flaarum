@@ -10,15 +10,12 @@ import (
 	"sync"
 	"crypto/sha512"
 	"strconv"
+	"github.com/bankole7782/flaarum/flaarum_shared"
 )
 
 
 func GetDataPath() (string, error) {
-	hd, err := os.UserHomeDir()
-	if err != nil {
-		return "", errors.Wrap(err, "os error")
-	}
-	return filepath.Join(hd, ".flaarum_data"), nil
+	return flaarum_shared.GetDataPath()
 }
 
 

@@ -34,11 +34,6 @@ func searchTable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createTableMutexIfNecessary(projName, stmtStruct.TableName)
-	fullTableName := projName + ":" + stmtStruct.TableName
-	tablesMutexes[fullTableName].RLock()
-	defer tablesMutexes[fullTableName].RUnlock()
-
 	rets, err := innerSearch(projName, r.FormValue("stmt"))
 	if err != nil {
 		printError(w, err)
@@ -95,6 +90,11 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 	dataPath, _ := GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, stmtStruct.TableName)
 	tableName := stmtStruct.TableName
+
+  createTableMutexIfNecessary(projName, stmtStruct.TableName)
+  fullTableName := projName + ":" + stmtStruct.TableName
+  tablesMutexes[fullTableName].RLock()
+  defer tablesMutexes[fullTableName].RUnlock()
 
 	expDetails := make(map[string]string)
 
