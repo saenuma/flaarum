@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"fmt"
 	"sync"
+	"crypto/sha512"
+	"strconv"
 )
 
 
@@ -55,4 +57,27 @@ func createTableMutexIfNecessary(projName, tableName string) {
 
 func makeSafeIndexValue(val string) string {
 	return strings.ReplaceAll(val, "/", "~~ab~~")
+}
+
+
+func confirmFieldType(projName, tableName, fieldName, fieldType, version string) bool {
+	versionInt, _ := strconv.Atoi(version)
+  tableStruct, err := getTableStructureParsed(projName, tableName, versionInt)
+  if err != nil {
+    return false
+  }
+  for _, fd := range tableStruct.Fields {
+    if fd.FieldName == fieldName && fd.FieldType == fieldType  {
+      return true
+    }
+  }
+  return false
+}
+
+
+func MakeHash(data string) string {
+  h := sha512.New()
+  h.Write([]byte(data))
+  bs := h.Sum(nil)
+  return fmt.Sprintf("%x", bs)
 }

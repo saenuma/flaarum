@@ -214,6 +214,15 @@ func getTableStructureParsed(projName, tableName string, versionNum int) (flaaru
 }
 
 
+func getCurrentTableStructureParsed(projName, tableName string) (flaarum_shared.TableStruct, error) {
+	currentVersionNum, err := getCurrentVersionNum(projName, tableName)
+	if err != nil {
+		return flaarum_shared.TableStruct{}, err
+	}
+	return getTableStructureParsed(projName, tableName, currentVersionNum)
+}
+
+
 func getCurrentVersionNumHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	projName := vars["proj"]

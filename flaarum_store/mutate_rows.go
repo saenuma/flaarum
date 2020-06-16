@@ -152,6 +152,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 				toInsert[fieldStruct.FieldName + "_month"] = strconv.Itoa(int(valueInTimeType.Month()))
 				toInsert[fieldStruct.FieldName + "_day"] = strconv.Itoa(valueInTimeType.Day())
 				toInsert[fieldStruct.FieldName + "_hour"] = strconv.Itoa(valueInTimeType.Hour())
+				toInsert[fieldStruct.FieldName + "_date"] = valueInTimeType.Format(flaarum_shared.BROWSER_DATE_FORMAT)
 			}
 		}
 	}

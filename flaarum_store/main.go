@@ -50,6 +50,7 @@ func main() {
 
 	// rows
 	r.HandleFunc("/insert-row/{proj}/{tbl}", insertRow)
+	r.HandleFunc("/search-table/{proj}", searchTable)
 	
 	err := http.ListenAndServeTLS(":22318", "https-server.crt", "https-server.key", r)
 	if err != nil {

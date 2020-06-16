@@ -1,3 +1,5 @@
+github.com/adam-hanna/arrayOperations v0.2.6 h1:QZC99xC8MgUawXnav7bFMejs/dm7YySnDpMx3oZzz2Y=
+github.com/adam-hanna/arrayOperations v0.2.6/go.mod h1:iIzkSjP91FnE66cUFNAjjUJVmjyAwCH0SXnWsx2nbdk=
 github.com/gorilla/mux v1.7.4 h1:VuZ8uybHlWmqV03+zRzdwKL4tUnIp1MAQtp1mIFE1bc=
 github.com/gorilla/mux v1.7.4/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
