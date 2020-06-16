@@ -112,3 +112,16 @@ func (cl *Client) GetTableStructureParsed(tableName string, versionNum int64) (f
 	}
 	return flaarum_shared.ParseTableStructureStmt(stmt)
 }
+
+
+func (cl *Client) GetCurrentTableStructureParsed(tableName string) (flaarum_shared.TableStruct, error) {
+	currentVersionNum, err := cl.GetCurrentTableVersionNum(tableName)
+	if err != nil {
+		return flaarum_shared.TableStruct{}, err
+	}
+	stmt, err := cl.GetTableStructure(tableName, currentVersionNum)
+	if err != nil {
+		return flaarum_shared.TableStruct{}, err
+	}
+	return flaarum_shared.ParseTableStructureStmt(stmt)	
+}

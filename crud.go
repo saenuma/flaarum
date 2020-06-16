@@ -337,3 +337,88 @@ func (cl Client) DeleteFields(stmt string, toDeleteFields []string) error {
     return errors.New(string(body))
   }
 }
+
+
+func (cl Client) CountRows(stmt string) (int64, error) {
+  urlValues := url.Values{}
+  urlValues.Set("keyStr", cl.KeyStr)
+  urlValues.Set("stmt", stmt)
+
+  resp, err := httpCl.PostForm(fmt.Sprintf("%scount-rows/%s", cl.Addr, cl.ProjName), urlValues)
+  if err != nil {
+    return 0, errors.Wrap(err, "server read failed.")
+  }
+  defer resp.Body.Close()
+
+  body, err := ioutil.ReadAll(resp.Body)
+  if err != nil {
+    return 0, errors.Wrap(err, "ioutil read failed.")
+  }
+
+  if resp.StatusCode == 200 {
+    r := string(body)
+    trueR, err := strconv.ParseInt(r, 10, 64)
+    if err != nil {
+      return 0, errors.Wrap(err, "strconv failed.")
+    }
+    return trueR, nil
+  } else {
+    return 0, errors.New(string(body))
+  }
+}
+
+
+// Sums the fields of a row and returns int64 if it is an int field or float64
+// if it a float field.
+func (cl Client) SumRows(stmt, toSumField string) (interface{}, error) {
+  urlValues := url.Values{}
+  urlValues.Add("stmt", stmt)
+  urlValues.Add("tosum", toSumField)
+  urlValues.Add("keyStr", cl.KeyStr)
+
+  resp, err := httpCl.PostForm(fmt.Sprintf("%ssum-rows/%s", cl.Addr, cl.ProjName), urlValues)
+  if err != nil {
+    return 0, errors.Wrap(err, "server read failed.")
+  }
+  defer resp.Body.Close()
+
+  body, err := ioutil.ReadAll(resp.Body)
+  if err != nil {
+    return 0, errors.Wrap(err, "ioutil read failed.")
+  }
+
+  if resp.StatusCode == 200 {
+    stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
+    if err != nil {
+      return nil, err
+    }
+
+    tableStruct, err := cl.GetCurrentTableStructureParsed(stmtStruct.TableName)
+    if err != nil {
+      return nil, err
+    }
+    var toSumFieldType string
+    for _, fd := range tableStruct.Fields {
+      if fd.FieldName == toSumField {
+        toSumFieldType = fd.FieldType
+      }
+    }
+
+    r := string(body)
+    if toSumFieldType == "int" {
+      trueR, err := strconv.ParseInt(r, 10, 64)
+      if err != nil {
+        return 0, errors.Wrap(err, "strconv failed.")
+      }
+      return trueR, nil
+    } else {
+      trueR, err := strconv.ParseFloat(r, 64)
+      if err != nil {
+        return 0, errors.Wrap(err, "strconv failed.")
+      }
+      return trueR, nil
+    }
+  } else {
+    return 0, errors.New(string(body))
+  }
+}
