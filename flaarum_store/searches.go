@@ -149,59 +149,6 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 		for _, whereStruct := range stmtStruct.WhereOptions {
 			if whereStruct.Relation == "=" {
-				stringIds := make([]string, 0)
-				if whereStruct.FieldName == "id" {
-					stringIds = append(stringIds, whereStruct.FieldValue)
-				} else {
-					indexesPath := filepath.Join(tablePath, "indexes", whereStruct.FieldName, makeSafeIndexValue(whereStruct.FieldValue))
-					if doesPathExists(indexesPath) {
-						raw, err := ioutil.ReadFile(indexesPath)
-						if err != nil {
-							return nil, errors.Wrap(err, "ioutil error")
-						}
-						stringIds = append(stringIds, strings.Split(string(raw), "\n")...)
-					}
-				}
-
-				beforeFilter = append(beforeFilter, stringIds)
-
-			} else if whereStruct.Relation == "!=" {
-				stringIds := make([]string, 0)
-				if whereStruct.FieldName == "id" {
-					dataFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
-					if err != nil {
-						return nil, errors.Wrap(err, "ioutil error.")
-					}
-					for _, dataFI := range dataFIs {
-						if dataFI.Name() != whereStruct.FieldValue {
-							stringIds = append(stringIds, dataFI.Name())							
-						}
-					}
-				} else {
-					safeVal := makeSafeIndexValue(whereStruct.FieldValue)
-					allIndexesPath := filepath.Join(tablePath, "indexes", whereStruct.FieldName)
-					if doesPathExists(allIndexesPath) {
-						allIndexesFIs, err := ioutil.ReadDir(allIndexesPath)
-						if err != nil {
-							return nil, errors.Wrap(err, "ioutil error")
-						}
-						for _, aifi := range allIndexesFIs {
-							if aifi.Name() != safeVal {
-								raw, err := ioutil.ReadFile(filepath.Join(allIndexesPath, aifi.Name()))
-								if err != nil {
-									return nil, errors.Wrap(err, "ioutil error")
-								}
-								stringIds = append(stringIds, strings.Split(string(raw), "\n")...)
-							}
-						}
-					}
-				}
-
-				beforeFilter = append(beforeFilter, stringIds)
-			}
-
-
-			if whereStruct.Relation == "=" {
 
         if whereStruct.FieldName == "id" {
           beforeFilter = append(beforeFilter, []string{whereStruct.FieldValue})
