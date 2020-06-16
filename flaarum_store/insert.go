@@ -232,3 +232,18 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, nextIdStr)
 }
+
+
+func saveRowData(projName, tableName, rowId string, toWrite map[string]string) error {
+  tablePath := getTablePath(projName, tableName)
+  jsonBytes, err := json.Marshal(&toWrite)
+  if err != nil {
+    return errors.Wrap(err, "json error")
+  }
+  err = ioutil.WriteFile(filepath.Join(tablePath, "data", rowId), jsonBytes, 0777)
+  if err != nil {
+    return errors.Wrap(err, "write file failed.")
+  }
+
+  return nil
+}

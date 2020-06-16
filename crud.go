@@ -286,3 +286,54 @@ func (cl Client) SearchForOne(stmt string) (*map[string]interface{}, error) {
     return nil, errors.New(string(body))
   }
 }
+
+
+func (cl Client) DeleteRows(stmt string) error {
+  urlValues := url.Values{}
+  urlValues.Add("keyStr", cl.KeyStr)
+  urlValues.Add("stmt", stmt)
+
+  resp, err := httpCl.PostForm(fmt.Sprintf("%sdelete-rows/%s", cl.Addr, cl.ProjName), urlValues)
+  if err != nil {
+    return errors.Wrap(err, "server read failed.")
+  }
+  defer resp.Body.Close()
+
+  body, err := ioutil.ReadAll(resp.Body)
+  if err != nil {
+    return errors.Wrap(err, "ioutil read failed.")
+  }
+
+  if resp.StatusCode == 200 {
+    return nil
+  } else {
+    return errors.New(string(body))
+  }
+}
+
+
+func (cl Client) DeleteFields(stmt string, toDeleteFields []string) error {
+  urlValues := url.Values{}
+  urlValues.Add("keyStr", cl.KeyStr)
+  urlValues.Add("stmt", stmt)
+  for i, f := range toDeleteFields {
+    urlValues.Add(fmt.Sprintf("to_delete_field%d", i+1), f)
+  }
+
+  resp, err := httpCl.PostForm(fmt.Sprintf("%sdelete-fields/%s", cl.Addr, cl.ProjName), urlValues)
+  if err != nil {
+    return errors.Wrap(err, "server read failed.")
+  }
+  defer resp.Body.Close()
+
+  body, err := ioutil.ReadAll(resp.Body)
+  if err != nil {
+    return errors.Wrap(err, "ioutil read failed.")
+  }
+
+  if resp.StatusCode == 200 {
+    return nil
+  } else {
+    return errors.New(string(body))
+  }
+}

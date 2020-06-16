@@ -84,3 +84,14 @@ func getTablePath(projName, tableName string) string {
   dataPath, _ := GetDataPath()
   return filepath.Join(dataPath, projName, tableName)
 }
+
+
+func isFieldExemptedFromIndexing(projName, tableName, fieldName string) bool {
+  ts, _ := getCurrentTableStructureParsed(projName, tableName)
+  for _, fd := range ts.Fields {
+    if fd.FieldName == fieldName && fd.FieldType == "text" {
+      return true
+    }
+  }
+  return false
+}
