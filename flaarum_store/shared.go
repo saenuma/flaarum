@@ -81,3 +81,9 @@ func MakeHash(data string) string {
   bs := h.Sum(nil)
   return fmt.Sprintf("%x", bs)
 }
+
+
+func getTablePath(projName, tableName string) string {
+  dataPath, _ := GetDataPath()
+  return filepath.Join(dataPath, projName, tableName)
+}

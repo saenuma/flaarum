@@ -311,3 +311,7 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 	return stmtStruct, nil
 }
 
+
+func MakeSafeIndexName(v string) string {
+  return strings.ReplaceAll(v, "/", "~~a~~")
+}

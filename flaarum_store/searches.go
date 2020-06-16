@@ -12,6 +12,7 @@ import (
 	"strings"
 	"github.com/adam-hanna/arrayOperations"
 	"sort"
+	"os"
 	"strconv"
 )
 
@@ -63,6 +64,25 @@ func searchTable(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprintf(w, string(jsonBytes))
 	}
+}
+
+
+func findIdsContainingTrueWhereValues(projName, tableName, field string, trueWhereValues []string) ([]string, error) {
+  retIds := make([]string, 0)
+  for _, tmpId := range trueWhereValues {
+    indexesPath := filepath.Join(getTablePath(projName, tableName), "indexes", field, tmpId)
+    if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
+
+    } else {
+      raw, err := ioutil.ReadFile(indexesPath)
+      if err != nil {
+        return nil, errors.Wrap(err, "read file failed.")
+      }
+      retIds = append(retIds, strings.Split(string(raw), "\n")...)
+    }
+
+  }
+  return retIds, nil
 }
 
 
@@ -181,6 +201,754 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 			}
 
 
+			if whereStruct.Relation == "=" {
+
+        if whereStruct.FieldName == "id" {
+          beforeFilter = append(beforeFilter, []string{whereStruct.FieldValue})
+        } else if strings.Contains(whereStruct.FieldName, ".") {
+          trueWhereValues := make([]string, 0)
+          parts := strings.Split(whereStruct.FieldName, ".")
+
+          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          pTbl, ok := expDetails[parts[0]]
+          if ! ok {
+            continue
+          }
+          indexesPath := filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFileName)
+          if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
+            // do nothing
+          } else {
+            raw, err := ioutil.ReadFile(indexesPath)
+            if err != nil {
+              return nil, errors.Wrap(err, "read file failed.")
+            }
+            trueWhereValues = strings.Split(string(raw), "\n")
+          }
+
+          stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+          if err != nil {
+            return nil, err
+          }
+          beforeFilter = append(beforeFilter, stringIds)
+
+        } else {
+          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          indexesPath := filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFileName)
+          if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
+            beforeFilter = append(beforeFilter, make([]string, 0))
+          } else {
+            raw, err := ioutil.ReadFile(indexesPath)
+            if err != nil {
+              return nil, errors.Wrap(err, "read file failed.")
+            }
+            beforeFilter = append(beforeFilter, strings.Split(string(raw), "\n"))
+          }
+        }
+
+      } else if whereStruct.Relation == "neq" {
+        if whereStruct.FieldName == "id" {
+          rows, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+          if err != nil {
+            return nil, errors.Wrap(err, "read file failed.")
+          }
+          stringIds := make([]string, 0)
+          for _, row := range rows {
+            if row.Name() != whereStruct.FieldValue {
+              stringIds = append(stringIds, row.Name())
+            }
+          }
+          beforeFilter = append(beforeFilter, stringIds)
+        } else if strings.Contains(whereStruct.FieldName, ".") {
+          trueWhereValues := make([]string, 0)
+          parts := strings.Split(whereStruct.FieldName, ".")
+
+          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          pTbl, ok := expDetails[parts[0]]
+          if ! ok {
+            continue
+          }
+
+          allIndexes, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+          for _, indexFI := range allIndexes {
+            if indexFI.Name() != indexFileName {
+              raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFI.Name()))
+              if err != nil {
+                return nil, errors.Wrap(err, "read file failed.")
+              }
+              trueWhereValues = arrayOperations.UnionString(trueWhereValues, strings.Split(string(raw), "\n"))
+            }
+          }
+
+          stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+          if err != nil {
+            return nil, err
+          }
+          beforeFilter = append(beforeFilter, stringIds)
+
+        } else {
+          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          allIndexes, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+          stringIds := make([]string, 0)
+          for _, indPath := range allIndexes {
+            if indPath.Name() != indexFileName {
+              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indPath.Name()))
+              if err != nil {
+                return nil, errors.Wrap(err, "read file failed.")
+              }
+              stringIds = arrayOperations.UnionString(stringIds, strings.Split(string(raw), "\n"))
+            }
+          }
+          beforeFilter = append(beforeFilter, stringIds)
+        }
+
+      } else if whereStruct.Relation == "gt" || whereStruct.Relation == "gteq" {
+
+        if whereStruct.FieldName == "id" {
+          stringIds := make([]string, 0)
+          rowFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+          allIds := make([]uint64, 0)
+          for _, rowFI := range rowFIs {
+            idUint, _ := strconv.ParseUint(rowFI.Name(), 10, 64)
+            allIds = append(allIds, idUint)
+          }
+
+          sort.SliceStable(allIds, func(i, j int) bool {
+            return allIds[i] < allIds[j]
+          })
+
+          for _, uintId := range allIds {
+            woValueUint, err := strconv.ParseUint(whereStruct.FieldValue, 10, 64)
+            if err != nil {
+              return nil, errors.Wrap(err, "strconv failed.")
+            }
+
+            if woValueUint == uintId && whereStruct.Relation == "gteq"{
+              stringIds = append(stringIds, strconv.FormatUint(uintId, 10))
+            } else if uintId > woValueUint {
+              stringIds = append(stringIds, strconv.FormatUint(uintId, 10))
+            }
+          }
+
+          beforeFilter = append(beforeFilter, stringIds)
+
+        } else if strings.Contains(whereStruct.FieldName, ".") {
+          trueWhereValues := make([]string, 0)
+          parts := strings.Split(whereStruct.FieldName, ".")
+
+          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          pTbl, ok := expDetails[parts[0]]
+          if ! ok {
+            continue
+          }
+
+          indexFIs, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+
+          indexFileName = flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+
+          for _, indexFI := range indexFIs {
+            raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", whereStruct.FieldName, indexFI.Name()))
+            if err != nil {
+              return nil, errors.Wrap(err, "read failed.")
+            }
+            idsInIndex := strings.Split(string(raw), "\n")
+            for _, idInIndex := range idsInIndex {
+              rowMap := make(map[string]string)
+              raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "data", idInIndex))
+              if err != nil {
+                continue
+              }
+              err = json.Unmarshal(raw, &rowMap)
+              if err != nil {
+                return nil, errors.Wrap(err, "json error.")
+              }
+              rowMap["id"] = idInIndex
+
+              if strings.HasSuffix(whereStruct.FieldName, "_year") || strings.HasSuffix(whereStruct.FieldName, "_month") ||
+                strings.HasSuffix(whereStruct.FieldName, "_day") || strings.HasSuffix(whereStruct.FieldName, "_hour") {
+                  woValueInInt, err := strconv.ParseInt(indexFileName, 10, 64)
+                  if err != nil {
+                    return nil, errors.Wrap(err, "strconv failed.")
+                  }
+                  currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
+                  if whereStruct.Relation == "gteq" && woValueInInt == currIndexNameInInt {
+                    trueWhereValues = append(trueWhereValues, rowMap["id"])
+                  } else if woValueInInt < currIndexNameInInt {
+                    trueWhereValues = append(trueWhereValues, rowMap["id"])
+                  }
+              } else if confirmFieldType(projName, tableName, whereStruct.FieldName, "int", rowMap["_version"]) {
+                woValueInInt, err := strconv.ParseInt(indexFileName, 10, 64)
+                if err != nil {
+                  return nil, errors.Wrap(err, "strconv failed.")
+                }
+                currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
+                if whereStruct.Relation == "gteq" && woValueInInt == currIndexNameInInt {
+                  trueWhereValues = append(trueWhereValues, rowMap["id"])
+                } else if woValueInInt < currIndexNameInInt {
+                  trueWhereValues = append(trueWhereValues, rowMap["id"])
+                }
+              } else if confirmFieldType(projName, tableName, whereStruct.FieldName, "float", rowMap["_version"]) {
+                woValueInFloat, err := strconv.ParseFloat(whereStruct.FieldValue, 64)
+                if err != nil {
+                  return nil, errors.Wrap(err, "strconv to float failed.")
+                }
+                currIndexNameInFloat, err := strconv.ParseFloat(indexFI.Name(), 64)
+                if whereStruct.Relation == "gteq" && woValueInFloat == currIndexNameInFloat {
+                  trueWhereValues = append(trueWhereValues, rowMap["id"])
+                } else if woValueInFloat < currIndexNameInFloat {
+                  trueWhereValues = append(trueWhereValues, rowMap["id"])
+                }
+              } else {
+                if whereStruct.Relation == "gteq" && indexFileName == indexFI.Name() {
+                  trueWhereValues = append(trueWhereValues, rowMap["id"])
+                } else if indexFileName < indexFI.Name() {
+                  trueWhereValues = append(trueWhereValues, rowMap["id"])
+                }
+              }
+            }
+
+          }
+
+          stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+          if err != nil {
+            return nil, err
+          }
+
+          beforeFilter = append(beforeFilter, stringIds)
+
+        } else {
+          stringIds := make([]string, 0)
+
+          indexFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+
+          for _, indexFI := range indexFIs {
+            raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
+            if err != nil {
+              return nil, errors.Wrap(err, "read failed.")
+            }
+            idsInIndex := strings.Split(string(raw), "\n")
+            for _, idInIndex := range idsInIndex {
+              rowMap := make(map[string]string)
+              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "data", idInIndex))
+              if err != nil {
+                continue
+              }
+              err = json.Unmarshal(raw, &rowMap)
+              if err != nil {
+                return nil, errors.Wrap(err, "json error.")
+              }
+              rowMap["id"] = idInIndex
+
+              if strings.HasSuffix(whereStruct.FieldName, "_year") || strings.HasSuffix(whereStruct.FieldName, "_month") ||
+                strings.HasSuffix(whereStruct.FieldName, "_day") || strings.HasSuffix(whereStruct.FieldName, "_hour") {
+                  woValueInInt, err := strconv.ParseInt(indexFileName, 10, 64)
+                  if err != nil {
+                    return nil, errors.Wrap(err, "strconv failed.")
+                  }
+                  currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
+                  if whereStruct.Relation == "gteq" && woValueInInt == currIndexNameInInt {
+                    stringIds = append(stringIds, rowMap["id"])
+                  } else if woValueInInt < currIndexNameInInt {
+                    stringIds = append(stringIds, rowMap["id"])
+                  }
+              } else if confirmFieldType(projName, tableName, whereStruct.FieldName, "int", rowMap["_version"]) {
+                woValueInInt, err := strconv.ParseInt(indexFileName, 10, 64)
+                if err != nil {
+                  return nil, errors.Wrap(err, "strconv failed.")
+                }
+                currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
+                if whereStruct.Relation == "gteq" && woValueInInt == currIndexNameInInt {
+                  stringIds = append(stringIds, rowMap["id"])
+                } else if woValueInInt < currIndexNameInInt {
+                  stringIds = append(stringIds, rowMap["id"])
+                }
+              } else if confirmFieldType(projName, tableName, whereStruct.FieldName, "float", rowMap["_version"]) {
+                woValueInFloat, err := strconv.ParseFloat(whereStruct.FieldValue, 64)
+                if err != nil {
+                  return nil, errors.Wrap(err, "strconv to float failed.")
+                }
+                currIndexNameInFloat, err := strconv.ParseFloat(indexFI.Name(), 64)
+                if whereStruct.Relation == "gteq" && woValueInFloat == currIndexNameInFloat {
+                  stringIds = append(stringIds, rowMap["id"])
+                } else if woValueInFloat < currIndexNameInFloat {
+                  stringIds = append(stringIds, rowMap["id"])
+                }
+              } else {
+                if whereStruct.Relation == "gteq" && indexFileName == indexFI.Name() {
+                  stringIds = append(stringIds, rowMap["id"])
+                } else if indexFileName < indexFI.Name() {
+                  stringIds = append(stringIds, rowMap["id"])
+                }
+              }
+            }
+          }
+
+          beforeFilter = append(beforeFilter, stringIds)
+
+        }
+
+
+      } else if whereStruct.Relation == "lt" || whereStruct.Relation == "lteq" {
+
+        if whereStruct.FieldName == "id" {
+          stringIds := make([]string, 0)
+          rowFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+          allIds := make([]uint64, 0)
+          for _, rowFI := range rowFIs {
+            idUint, _ := strconv.ParseUint(rowFI.Name(), 10, 64)
+            allIds = append(allIds, idUint)
+          }
+
+          sort.SliceStable(allIds, func(i, j int) bool {
+            return allIds[i] < allIds[j]
+          })
+
+          for _, uintId := range allIds {
+            woValueUint, err := strconv.ParseUint(whereStruct.FieldValue, 10, 64)
+            if err != nil {
+              return nil, errors.Wrap(err, "strconv failed.")
+            }
+
+            if woValueUint == uintId && whereStruct.Relation == "lteq"{
+              stringIds = append(stringIds, strconv.FormatUint(uintId, 10))
+            } else if uintId < woValueUint {
+              stringIds = append(stringIds, strconv.FormatUint(uintId, 10))
+            }
+          }
+
+          beforeFilter = append(beforeFilter, stringIds)
+
+        } else if strings.Contains(whereStruct.FieldName, ".") {
+          trueWhereValues := make([]string, 0)
+          parts := strings.Split(whereStruct.FieldName, ".")
+
+          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          pTbl, ok := expDetails[parts[0]]
+          if ! ok {
+            continue
+          }
+
+          indexFIs, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+
+          indexFileName = flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+
+          for _, indexFI := range indexFIs {
+            raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", whereStruct.FieldName, indexFI.Name()))
+            if err != nil {
+              return nil, errors.Wrap(err, "read failed.")
+            }
+            idsInIndex := strings.Split(string(raw), "\n")
+            for _, idInIndex := range idsInIndex {
+              rowMap := make(map[string]string)
+              raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "data", idInIndex))
+              if err != nil {
+                continue
+              }
+              err = json.Unmarshal(raw, &rowMap)
+              if err != nil {
+                return nil, errors.Wrap(err, "json error.")
+              }
+              rowMap["id"] = idInIndex
+
+              if strings.HasSuffix(whereStruct.FieldName, "_year") || strings.HasSuffix(whereStruct.FieldName, "_month") ||
+                strings.HasSuffix(whereStruct.FieldName, "_day") || strings.HasSuffix(whereStruct.FieldName, "_hour") {
+                  woValueInInt, err := strconv.ParseInt(indexFileName, 10, 64)
+                  if err != nil {
+                    return nil, errors.Wrap(err, "strconv failed.")
+                  }
+                  currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
+                  if whereStruct.Relation == "lteq" && woValueInInt == currIndexNameInInt {
+                    trueWhereValues = append(trueWhereValues, rowMap["id"])
+                  } else if woValueInInt > currIndexNameInInt {
+                    trueWhereValues = append(trueWhereValues, rowMap["id"])
+                  }
+              } else if confirmFieldType(projName, tableName, whereStruct.FieldName, "int", rowMap["_version"]) {
+                woValueInInt, err := strconv.ParseInt(indexFileName, 10, 64)
+                if err != nil {
+                  return nil, errors.Wrap(err, "strconv failed.")
+                }
+                currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
+                if whereStruct.Relation == "lteq" && woValueInInt == currIndexNameInInt {
+                  trueWhereValues = append(trueWhereValues, rowMap["id"])
+                } else if woValueInInt > currIndexNameInInt {
+                  trueWhereValues = append(trueWhereValues, rowMap["id"])
+                }
+              } else if confirmFieldType(projName, tableName, whereStruct.FieldName, "float", rowMap["_version"]) {
+                woValueInFloat, err := strconv.ParseFloat(whereStruct.FieldValue, 64)
+                if err != nil {
+                  return nil, errors.Wrap(err, "strconv to float failed.")
+                }
+                currIndexNameInFloat, err := strconv.ParseFloat(indexFI.Name(), 64)
+                if whereStruct.Relation == "lteq" && woValueInFloat == currIndexNameInFloat {
+                  trueWhereValues = append(trueWhereValues, rowMap["id"])
+                } else if woValueInFloat > currIndexNameInFloat {
+                  trueWhereValues = append(trueWhereValues, rowMap["id"])
+                }
+              } else {
+                if whereStruct.Relation == "lteq" && indexFileName == indexFI.Name() {
+                  trueWhereValues = append(trueWhereValues, rowMap["id"])
+                } else if indexFileName > indexFI.Name() {
+                  trueWhereValues = append(trueWhereValues, rowMap["id"])
+                }
+              }
+            }
+
+          }
+
+          stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+          if err != nil {
+            return nil, err
+          }
+
+          beforeFilter = append(beforeFilter, stringIds)
+        } else {
+          stringIds := make([]string, 0)
+
+          indexFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+
+          for _, indexFI := range indexFIs {
+            raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
+            if err != nil {
+              return nil, errors.Wrap(err, "read failed.")
+            }
+            idsInIndex := strings.Split(string(raw), "\n")
+            for _, idInIndex := range idsInIndex {
+              rowMap := make(map[string]string)
+              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "data", idInIndex))
+              if err != nil {
+                continue
+              }
+              err = json.Unmarshal(raw, &rowMap)
+              if err != nil {
+                return nil, errors.Wrap(err, "json error.")
+              }
+              rowMap["id"] = idInIndex
+
+              if strings.HasSuffix(whereStruct.FieldName, "_year") || strings.HasSuffix(whereStruct.FieldName, "_month") ||
+                strings.HasSuffix(whereStruct.FieldName, "_day") || strings.HasSuffix(whereStruct.FieldName, "_hour") {
+                  woValueInInt, err := strconv.ParseInt(indexFileName, 10, 64)
+                  if err != nil {
+                    return nil, errors.Wrap(err, "strconv failed.")
+                  }
+                  currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
+                  if whereStruct.Relation == "lteq" && woValueInInt == currIndexNameInInt {
+                    stringIds = append(stringIds, rowMap["id"])
+                  } else if woValueInInt > currIndexNameInInt {
+                    stringIds = append(stringIds, rowMap["id"])
+                  }
+              } else if confirmFieldType(projName, tableName, whereStruct.FieldName, "int", rowMap["_version"]) {
+                woValueInInt, err := strconv.ParseInt(indexFileName, 10, 64)
+                if err != nil {
+                  return nil, errors.Wrap(err, "strconv failed.")
+                }
+                currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
+                if whereStruct.Relation == "lteq" && woValueInInt == currIndexNameInInt {
+                  stringIds = append(stringIds, rowMap["id"])
+                } else if woValueInInt > currIndexNameInInt {
+                  stringIds = append(stringIds, rowMap["id"])
+                }
+              } else if confirmFieldType(projName, tableName, whereStruct.FieldName, "float", rowMap["_version"]) {
+                woValueInFloat, err := strconv.ParseFloat(whereStruct.FieldValue, 64)
+                if err != nil {
+                  return nil, errors.Wrap(err, "strconv to float failed.")
+                }
+                currIndexNameInFloat, err := strconv.ParseFloat(indexFI.Name(), 64)
+                if whereStruct.Relation == "lteq" && woValueInFloat == currIndexNameInFloat {
+                  stringIds = append(stringIds, rowMap["id"])
+                } else if woValueInFloat > currIndexNameInFloat {
+                  stringIds = append(stringIds, rowMap["id"])
+                }
+              } else {
+                if whereStruct.Relation == "lteq" && indexFileName == indexFI.Name() {
+                  stringIds = append(stringIds, rowMap["id"])
+                } else if indexFileName > indexFI.Name() {
+                  stringIds = append(stringIds, rowMap["id"])
+                }
+              }
+            }
+          }
+
+          beforeFilter = append(beforeFilter, stringIds)
+        }
+
+      } else if whereStruct.Relation == "in" {
+
+        stringIds := make([]string, 0)
+
+        if whereStruct.FieldName == "id" {
+          stringIds = whereStruct.FieldValues
+
+        } else if strings.Contains(whereStruct.FieldName, ".") {
+
+          trueWhereValues := make([]string, 0)
+          parts := strings.Split(whereStruct.FieldName, ".")
+
+          for _, inval := range whereStruct.FieldValues {
+
+            indexFileName := flaarum_shared.MakeSafeIndexName(inval)
+            pTbl, ok := expDetails[parts[0]]
+            if ! ok {
+              continue
+            }
+            indexesPath := filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFileName)
+            if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
+              // do nothing
+            } else {
+              raw, err := ioutil.ReadFile(indexesPath)
+              if err != nil {
+                return nil, errors.Wrap(err, "read file failed.")
+              }
+              trueWhereValues = arrayOperations.UnionString(trueWhereValues, strings.Split(string(raw), "\n"))
+
+            }
+          }
+
+          stringIds, err = findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+          if err != nil {
+            return nil, err
+          }
+          beforeFilter = append(beforeFilter, stringIds)
+        } else {
+          for _, inval := range whereStruct.FieldValues {
+            indexFileName := flaarum_shared.MakeSafeIndexName(inval)
+            indexesPath := filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFileName)
+            if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
+              // do nothing
+            } else {
+              raw, err := ioutil.ReadFile(indexesPath)
+              if err != nil {
+                return nil, errors.Wrap(err, "read file failed.")
+              }
+              stringIds = arrayOperations.UnionString(stringIds, strings.Split(string(raw), "\n"))
+            }
+
+          }
+        }
+
+        beforeFilter = append(beforeFilter, stringIds)
+
+      } else if whereStruct.Relation == "nin" {
+
+        if whereStruct.FieldName == "id" {
+          rows, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+          if err != nil {
+            return nil, errors.Wrap(err, "read file failed.")
+          }
+
+          stringIds := make([]string, 0)
+          for _, row := range rows {
+            for _, val := range whereStruct.FieldValues {
+              if row.Name() != val {
+                stringIds = append(stringIds, row.Name())
+              }
+            }
+          }
+          beforeFilter = append(beforeFilter, stringIds)
+        } else if strings.Contains(whereStruct.FieldName, ".") {
+          trueWhereValues := make([]string, 0)
+
+          parts := strings.Split(whereStruct.FieldName, ".")
+          pTbl, ok := expDetails[parts[0]]
+          if ! ok {
+            continue
+          }
+
+          for _, val := range whereStruct.FieldValues {
+            indexFileName := flaarum_shared.MakeSafeIndexName(val)
+            allIndexes, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
+            if err != nil {
+              return nil, errors.Wrap(err, "read dir failed.")
+            }
+            for _, indexFI := range allIndexes {
+              if indexFI.Name() != indexFileName {
+                raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFI.Name()))
+                if err != nil {
+                  return nil, errors.Wrap(err, "read file failed.")
+                }
+                trueWhereValues = arrayOperations.UnionString(trueWhereValues, strings.Split(string(raw), "\n"))
+              }
+            }
+
+          }
+
+          stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+          if err != nil {
+            return nil, err
+          }
+          beforeFilter = append(beforeFilter, stringIds)
+
+        } else {
+          stringIds := make([]string, 0)
+          for _, val := range whereStruct.FieldValues {
+            indexFileName := flaarum_shared.MakeSafeIndexName(val)
+            allIndexes, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
+            if err != nil {
+              return nil, errors.Wrap(err, "read dir failed.")
+            }
+
+            for _, indPath := range allIndexes {
+              if indPath.Name() != indexFileName {
+                raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indPath.Name()))
+                if err != nil {
+                  return nil, errors.Wrap(err, "read file failed.")
+                }
+                stringIds = arrayOperations.UnionString(stringIds, strings.Split(string(raw), "\n"))
+              }
+            }
+          }
+          beforeFilter = append(beforeFilter, stringIds)
+
+        }
+
+      } else if whereStruct.Relation == "isnull" {
+
+        if strings.Contains(whereStruct.FieldName, ".") {
+          parts := strings.Split(whereStruct.FieldName, ".")
+          pTbl, ok := expDetails[parts[0]]
+          if ! ok {
+            continue
+          }
+
+          allForeignIds := make([]string, 0)
+          allForeignRowFIs, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "data"))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+          for _, foreignFI := range allForeignRowFIs {
+            allForeignIds = append(allForeignIds, foreignFI.Name())
+          }
+
+          exemptedIds := make([]string, 0)
+          allIndexes, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+          for _, indexFI := range allIndexes {
+            raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFI.Name()))
+            if err != nil {
+              return nil, errors.Wrap(err, "read file failed.")
+            }
+            exemptedIds = arrayOperations.UnionString(exemptedIds, strings.Split(string(raw), "\n"))
+          }
+
+          trueWhereValues := arrayOperations.DifferenceString(allForeignIds, exemptedIds)
+
+          stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+          if err != nil {
+            return nil, err
+          }
+          beforeFilter = append(beforeFilter, stringIds)
+
+        } else {
+          rowFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+          allIds := make([]string, 0)
+          for _, rowFi := range rowFIs {
+            allIds = append(allIds, rowFi.Name())
+          }
+
+          allIndexes, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+
+          exemptedIds := make([]string, 0)
+          for _, indexFI := range allIndexes {
+            raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
+            if err != nil {
+              return nil, errors.Wrap(err, "read file failed.")
+            }
+            exemptedIds = arrayOperations.UnionString(exemptedIds, strings.Split(string(raw), "\n"))
+          }
+
+          stringIds := arrayOperations.DifferenceString(allIds, exemptedIds)
+          beforeFilter = append(beforeFilter, stringIds)
+        }
+
+      } else if whereStruct.Relation == "notnull" {
+
+        stringIds := make([]string, 0)
+
+        if whereStruct.FieldName == "id" {
+          rowFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+          for _, rowFi := range rowFIs {
+            stringIds = append(stringIds, rowFi.Name())
+          }
+        } else if strings.Contains(whereStruct.FieldName, ".") {
+          trueWhereValues := make([]string, 0)
+          parts := strings.Split(whereStruct.FieldName, ".")
+          pTbl, ok := expDetails[parts[0]]
+          if ! ok {
+            continue
+          }
+
+          allIndexes, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
+          if err != nil {
+            return nil, errors.Wrap(err, "read file failed.")
+          }
+          for _, indexFI := range allIndexes {
+            raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFI.Name()))
+            if err != nil {
+              return nil, errors.Wrap(err, "read file failed.")
+            }
+            trueWhereValues = arrayOperations.UnionString(trueWhereValues, strings.Split(string(raw), "\n"))
+          }
+
+          stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+          if err != nil {
+            return nil, err
+          }
+          beforeFilter = append(beforeFilter, stringIds)
+
+
+        } else {
+          allIndexes, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
+          if err != nil {
+            return nil, errors.Wrap(err, "read dir failed.")
+          }
+
+          for _, indexFI := range allIndexes {
+            raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
+            if err != nil {
+              return nil, errors.Wrap(err, "read file failed.")
+            }
+            stringIds = arrayOperations.UnionString(stringIds, strings.Split(string(raw), "\n"))
+          }
+        }
+
+        beforeFilter = append(beforeFilter, stringIds)
+
+      }
 		}
 
 		// do the 'and' / 'or' transformations
