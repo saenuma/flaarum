@@ -48,9 +48,9 @@ func doesPathExists(p string) bool {
 
 func createTableMutexIfNecessary(projName, tableName string) {
 	fullTableName := projName + ":" + tableName
-	_, ok := rowsMutexes[fullTableName]
+	_, ok := tablesMutexes[fullTableName]
 	if ! ok {
-		rowsMutexes[fullTableName] = &sync.RWMutex{}
+		tablesMutexes[fullTableName] = &sync.RWMutex{}
 	}
 }
 

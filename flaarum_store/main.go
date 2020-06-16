@@ -9,8 +9,8 @@ import (
 	"sync"
 )
 
-var generalMutex *sync.RWMutex // for projects and tables (table data uses different mutexes) creation, editing, deletion
-var rowsMutexes map[string]*sync.RWMutex
+var projsMutex *sync.RWMutex // for projects and tables (table data uses different mutexes) creation, editing, deletion
+var tablesMutexes map[string]*sync.RWMutex
 
 func init() {
 	dataPath, err := GetDataPath()
@@ -25,8 +25,8 @@ func init() {
 	}
 
 	// create mutexes
-	generalMutex = &sync.RWMutex{}
-	rowsMutexes = make(map[string]*sync.RWMutex)
+	projsMutex = &sync.RWMutex{}
+	tablesMutexes = make(map[string]*sync.RWMutex)
 }
 
 
@@ -41,6 +41,7 @@ func main() {
 	r.HandleFunc("/create-project/{proj}", createProject)
 	r.HandleFunc("/delete-project/{proj}", deleteProject)
 	r.HandleFunc("/list-projects", listProjects)
+	r.HandleFunc("/rename-project/{proj}/{nproj}", renameProject)
 
 	// tables
 	r.HandleFunc("/create-table/{proj}", createTable)

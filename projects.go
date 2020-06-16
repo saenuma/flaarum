@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"encoding/json"
+	"net/url"
 )
 
 
@@ -66,4 +67,27 @@ func (cl *Client) ListProjects() ([]string, error) {
 	} else {
 		return []string{}, errors.New(string(body))
 	}	
+}
+
+
+func (cl *Client) RenameProject(projName, newProjName string) error {
+  urlValues := url.Values{}
+  urlValues.Set("keyStr", cl.KeyStr)
+
+  resp, err := httpCl.PostForm(cl.Addr + "rename-project/" + projName + "/" + newProjName,
+    urlValues)
+  if err != nil {
+    return errors.Wrap(err, "error contacting site")
+  }
+  defer resp.Body.Close()
+  body, err :=  ioutil.ReadAll(resp.Body)
+  if err != nil {
+    return errors.Wrap(err, "ioutil error")
+  }
+
+  if resp.StatusCode == 200 {
+    return nil
+  } else {
+    return errors.New(string(body))
+  }
 }

@@ -43,8 +43,8 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
 	createTableMutexIfNecessary(projName, tableName)
 	fullTableName := projName + ":" + tableName
-	rowsMutexes[fullTableName].Lock()
-	defer rowsMutexes[fullTableName].Unlock()
+	tablesMutexes[fullTableName].Lock()
+	defer tablesMutexes[fullTableName].Unlock()
 
 	currentVersionNum, err := getCurrentVersionNum(projName, tableName)
 	if err != nil {

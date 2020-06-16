@@ -36,8 +36,8 @@ func searchTable(w http.ResponseWriter, r *http.Request) {
 
 	createTableMutexIfNecessary(projName, stmtStruct.TableName)
 	fullTableName := projName + ":" + stmtStruct.TableName
-	rowsMutexes[fullTableName].RLock()
-	defer rowsMutexes[fullTableName].RUnlock()
+	tablesMutexes[fullTableName].RLock()
+	defer tablesMutexes[fullTableName].RUnlock()
 
 	rets, err := innerSearch(projName, r.FormValue("stmt"))
 	if err != nil {

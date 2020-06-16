@@ -89,8 +89,8 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 
 	dataPath, _ := GetDataPath()
 
-	generalMutex.Lock()
-	defer generalMutex.Unlock()
+	projsMutex.Lock()
+	defer projsMutex.Unlock()
 
 	err = validateTableStruct(projName, tableStruct)
 	if err != nil {
@@ -138,8 +138,8 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 
 	dataPath, _ := GetDataPath()
 
-	generalMutex.Lock()
-	defer generalMutex.Unlock()
+	projsMutex.Lock()
+	defer projsMutex.Unlock()
 
 	err = validateTableStruct(projName, tableStruct)
 	if err != nil {
@@ -228,8 +228,8 @@ func getCurrentVersionNumHTTP(w http.ResponseWriter, r *http.Request) {
 	projName := vars["proj"]
 	tableName := vars["tbl"]
 
-	generalMutex.Lock()
-	defer generalMutex.Unlock()
+	projsMutex.Lock()
+	defer projsMutex.Unlock()
 
 	currentVersionNum, err := getCurrentVersionNum(projName, tableName)
 	if err != nil {
@@ -249,8 +249,8 @@ func getTableStructureHTTP(w http.ResponseWriter, r *http.Request) {
 
 	dataPath, _ := GetDataPath()
 
-	generalMutex.Lock()
-	defer generalMutex.Unlock()	
+	projsMutex.Lock()
+	defer projsMutex.Unlock()	
 
 	tablePath := filepath.Join(dataPath, projName, tableName)
 	stmt, err := ioutil.ReadFile(filepath.Join(tablePath, "structures", versionNum))
@@ -260,4 +260,22 @@ func getTableStructureHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, string(stmt))
+}
+
+
+func getExistingTables(projName string) ([]string, error) {
+  dataPath, _ := GetDataPath()
+  tablesPath := filepath.Join(dataPath, projName)
+
+  tablesFIs, err := ioutil.ReadDir(tablesPath)
+  if err != nil {
+    return nil, errors.Wrap(err, "read directory failed.")
+  }
+
+  tables := make([]string, 0)
+  for _, tfi := range tablesFIs {
+    tables = append(tables, tfi.Name())
+  }
+
+  return tables, nil
 }
