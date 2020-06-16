@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"github.com/bankole7782/flaarum/flaarum_shared"
 	"encoding/json"
-
+  "strings"
 )
 
 
@@ -43,55 +43,70 @@ func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (in
 }
 
 
+
+func (cl *Client) convertInterfaceMapToStringMap(tableName string, oldMap map[string]interface{}) (map[string]string, error) {
+  currentVersionNum, err := cl.GetCurrentTableVersionNum(tableName)
+  if err != nil {
+    return nil, err
+  }
+  tableStruct, err := cl.GetTableStructureParsed(tableName, currentVersionNum)
+  if err != nil {
+    return nil, err
+  }
+  fieldNamesToFieldTypes := make(map[string]string)
+
+  for _, fieldStruct := range tableStruct.Fields {
+    fieldNamesToFieldTypes[fieldStruct.FieldName] = fieldStruct.FieldType
+  }
+
+  newMap := make(map[string]string)
+  for k, v := range oldMap {
+    if strings.Contains(k, ".") || strings.Contains(k, ",") || strings.Contains(k, " ") || strings.Contains(k, "\n") {
+      return nil, errors.New("A field name cannot contain any of '.', ',', ' ', '\\n',")
+    }
+
+    switch vInType := v.(type) {
+    case int:
+      vInStr := strconv.Itoa(vInType)
+      newMap[k] = vInStr
+    case int64:
+      vInStr := strconv.FormatInt(vInType, 10)
+      newMap[k] = vInStr
+    case float64:
+      vInStr := strconv.FormatFloat(vInType, 'g', -1, 64)
+      newMap[k] = vInStr
+    case bool:
+      var vInStr string
+      if vInType == true {
+        vInStr = "t"
+      } else if vInType == false {
+        vInStr = "f"
+      }
+      newMap[k] = vInStr
+    case time.Time:
+      ft, ok := fieldNamesToFieldTypes[k]
+      if ! ok {
+        return nil, errors.New(fmt.Sprintf("The field '%s' is not in the structure of table '%s' of project '%s'", 
+          k, tableName, cl.ProjName))
+      }
+      if ft == "date" {
+        newMap[k] = RightDateFormat(vInType)
+      } else if ft == "datetime" {
+        newMap[k] = RightDateTimeFormat(vInType)
+      }
+    }
+  }
+
+  return newMap, nil
+}
+
+
 // InsertRowStr inserts a row into a table. It expects the toInsert to be of type map[string]interface{}.
 func (cl *Client) InsertRowAny(tableName string, toInsert map[string]interface{}) (int64, error) {
-	currentVersionNum, err := cl.GetCurrentTableVersionNum(tableName)
-	if err != nil {
-		return -1, err
-	}
-	tableStruct, err := cl.GetTableStructureParsed(tableName, currentVersionNum)
-	if err != nil {
-		return -1, err
-	}
-	fieldNamesToFieldTypes := make(map[string]string)
-
-	for _, fieldStruct := range tableStruct.Fields {
-		fieldNamesToFieldTypes[fieldStruct.FieldName] = fieldStruct.FieldType
-	}
-
-	toInsertStr := make(map[string]string)
-	for k, v := range toInsert {
-		switch vInType := v.(type) {
-		case int:
-			vInStr := strconv.Itoa(vInType)
-			toInsertStr[k] = vInStr
-		case int64:
-			vInStr := strconv.FormatInt(vInType, 10)
-			toInsertStr[k] = vInStr
-		case float64:
-			vInStr := strconv.FormatFloat(vInType, 'g', -1, 64)
-			toInsertStr[k] = vInStr
-		case bool:
-			var vInStr string
-			if vInType == true {
-				vInStr = "t"
-			} else if vInType == false {
-				vInStr = "f"
-			}
-			toInsertStr[k] = vInStr
-		case time.Time:
-			ft, ok := fieldNamesToFieldTypes[k]
-			if ! ok {
-				return -1, errors.New(fmt.Sprintf("The field '%s' is not in the structure of table '%s' of project '%s'", 
-					k, tableName, cl.ProjName))
-			}
-			if ft == "date" {
-				toInsertStr[k] = RightDateFormat(vInType)
-			} else if ft == "datetime" {
-				toInsertStr[k] = RightDateTimeFormat(vInType)
-			}
-		}
-	}
+	toInsertStr, err := cl.convertInterfaceMapToStringMap(tableName, toInsert)
+  if err != nil {
+    return -1, err
+  }
 
 	return cl.InsertRowStr(tableName, toInsertStr)
 }
@@ -421,4 +436,52 @@ func (cl Client) SumRows(stmt, toSumField string) (interface{}, error) {
   } else {
     return 0, errors.New(string(body))
   }
+}
+
+
+func (cl Client) UpdateRowsStr(stmt string, updateDataStr map[string]string) error {
+  urlValues := url.Values{}
+  urlValues.Add("keyStr", cl.KeyStr)
+  urlValues.Add("stmt", stmt)
+
+  keys := make([]string, 0)
+  for k := range updateDataStr {
+    keys = append(keys, k)
+  }
+
+  for i, k := range keys {
+    urlValues.Add(fmt.Sprintf("set%d_k", i+1), k)
+    urlValues.Add(fmt.Sprintf("set%d_v", i+1), updateDataStr[k])
+  }
+
+  resp, err := httpCl.PostForm(fmt.Sprintf("%supdate-rows/%s", cl.Addr, cl.ProjName), urlValues)
+  if err != nil {
+    return errors.Wrap(err, "server read failed.")
+  }
+  defer resp.Body.Close()
+
+  body, err := ioutil.ReadAll(resp.Body)
+  if err != nil {
+    return errors.Wrap(err, "ioutil read failed.")
+  }
+
+  if resp.StatusCode == 200 {
+    return nil
+  } else {
+    return errors.New(string(body))
+  }
+}
+
+
+func (cl Client) UpdateRowsAny(stmt string, updateData map[string]interface{}) error {
+  stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
+  if err != nil {
+    return err
+  }
+  updateDataStr, err := cl.convertInterfaceMapToStringMap(stmtStruct.TableName, updateData)
+  if err != nil {
+    return err
+  }
+
+  return cl.UpdateRowsStr(stmt, updateDataStr)
 }

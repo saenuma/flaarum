@@ -9,12 +9,158 @@ import (
 	"path/filepath"
 	"io/ioutil"
 	"fmt"
-	"os"
+	// "os"
 	"strings"
 	"time"
 	"github.com/bankole7782/flaarum/flaarum_shared"
 )
 
+
+func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map[string]string) (map[string]string, error) {
+  tableStruct, err := getCurrentTableStructureParsed(projName, tableName)
+  if err != nil {
+    return nil, err
+  }
+
+  dataPath, _ := flaarum_shared.GetDataPath()
+
+  fieldsDescs := make(map[string]flaarum_shared.FieldStruct)
+  for _, fd := range tableStruct.Fields {
+    fieldsDescs[fd.FieldName] = fd
+  }
+
+  for k, _ := range dataMap {
+    if k == "id" || k == "_version" {
+      continue
+    }
+    _, ok := fieldsDescs[k]
+    if ! ok {
+      return nil, errors.New(fmt.Sprintf("The field '%s' is not part of this table structure", k))
+    }
+  }
+
+  for _, fd := range tableStruct.Fields {
+    k := fd.FieldName
+    v, ok := dataMap[k]
+
+    if ok && v != "" {
+      if fd.FieldType == "int" {
+        _, err := strconv.ParseInt(v, 10, 64)
+        if err != nil {
+          return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not of type 'int'", v, k))
+        }
+      } else if fd.FieldType == "float" {
+        _, err := strconv.ParseFloat(v, 64)
+        if err != nil {
+          return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not of type 'float'", v, k))
+        }
+      } else if fd.FieldType == "bool" {
+        if v != "t" && v != "f" {
+          return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in the short bool format.", v, k))
+        }
+      } else if fd.FieldType == "date" {
+        valueInTimeType, err := time.Parse(flaarum_shared.BROWSER_DATE_FORMAT, v)
+        if err != nil {
+          return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in date format.", v, k))
+        }
+        dataMap[k + "_year"] = strconv.Itoa(valueInTimeType.Year())
+        dataMap[k + "_month"] = strconv.Itoa(int(valueInTimeType.Month()))
+        dataMap[k + "_day"] = strconv.Itoa(valueInTimeType.Day())
+      } else if fd.FieldType == "datetime" {
+        valueInTimeType, err := time.Parse(flaarum_shared.BROWSER_DATETIME_FORMAT, v)
+        if err != nil {
+          return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in datetime format.", v, k))
+        }
+        dataMap[k + "_year"] = strconv.Itoa(valueInTimeType.Year())
+        dataMap[k + "_month"] = strconv.Itoa(int(valueInTimeType.Month()))
+        dataMap[k + "_day"] = strconv.Itoa(valueInTimeType.Day())
+        dataMap[k + "_hour"] = strconv.Itoa(valueInTimeType.Hour())
+        dataMap[k + "_date"] = valueInTimeType.Format(flaarum_shared.BROWSER_DATE_FORMAT)
+      }
+
+    }
+
+    if (v == "" || !ok) && fd.Required {
+      return nil, errors.New(fmt.Sprintf("The field '%s' is required.", k))
+    }
+
+  }
+
+  for _, fd := range tableStruct.Fields {
+    newValue, ok1 := dataMap[fd.FieldName]
+    if newValue == "" {
+      delete(dataMap, fd.FieldName)
+    }
+    if oldValues != nil {
+      oldValue, ok2 := oldValues[fd.FieldName]
+      if ok1 && ok2 && oldValue == newValue {
+        continue
+      }
+    }
+    if fd.Unique && ok1 {
+      indexPath := filepath.Join(dataPath, projName, tableName, "indexes", fd.FieldName, flaarum_shared.MakeSafeIndexName(newValue))
+      if doesPathExists(indexPath) {
+        return nil, errors.New(fmt.Sprintf("The data '%s' is not unique to field '%s'.", newValue, fd.FieldName))
+      }
+    }
+  }
+
+  for _, fkd := range tableStruct.ForeignKeys {
+    v, ok := dataMap[fkd.FieldName]
+    if ok {
+      dataPath := filepath.Join(dataPath, projName, fkd.PointedTable, "data", v)
+      if ! doesPathExists(dataPath) {
+        return nil,  errors.New(fmt.Sprintf("The data with id '%s' does not exist in table '%s'", v, fkd.PointedTable))
+      }
+    }
+  }
+
+  for _, ug := range tableStruct.UniqueGroups {
+    wherePartFragment := ""
+
+    for i, fieldName := range ug {
+
+      newValue, ok1 := dataMap[fieldName]
+      var value string
+      if ok1 {
+        value = newValue
+      }
+      if oldValues != nil {
+        oldValue, ok2 := oldValues[fieldName]
+        if ok2 && newValue == oldValue {
+          continue
+        }
+      }
+      var joiner string
+      if i > 1 {
+      	joiner = "and"
+      }
+
+      wherePartFragment += fmt.Sprintf("%s%s = '%s' \n", joiner, fieldName, value) 
+    }
+
+    if len(ug) > 1 {
+      innerStmt := fmt.Sprintf(`
+      	table: %s
+      	where:
+      		%s
+      	`, tableName, wherePartFragment)
+      toCheckRows, err := innerSearch(projName, innerStmt)
+      if err != nil {
+        return nil, err
+      }
+
+      if len(*toCheckRows) > 0 {
+        return nil, errors.New(
+          fmt.Sprintf("The fields '%s' form a unique group and their data taken together is not unique.",
+          strings.Join(ug, ", ")))
+      }      
+    }
+
+  }
+
+  return dataMap, nil
+}
 
 func insertRow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -34,6 +180,14 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 		toInsert[k] = r.FormValue(k)
 	}
 
+	currentVersionNum, err := getCurrentVersionNum(projName, tableName)
+	if err != nil {
+		printError(w, err)
+		return
+	}
+
+	toInsert["_version"] = fmt.Sprintf("%d", currentVersionNum)
+
 	dataPath, _ := GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 	if ! doesPathExists(tablePath) {
@@ -41,122 +195,17 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// check if data conforms with table structure
+  toInsert, err = validateAndMutateDataMap(projName, tableName, toInsert, nil)
+  if err != nil {
+  	printError(w, err)
+    return
+  }
+
 	createTableMutexIfNecessary(projName, tableName)
 	fullTableName := projName + ":" + tableName
 	tablesMutexes[fullTableName].Lock()
 	defer tablesMutexes[fullTableName].Unlock()
-
-	currentVersionNum, err := getCurrentVersionNum(projName, tableName)
-	if err != nil {
-		printError(w, err)
-		return
-	}
-
-	// check if data conforms with table structure
-	tableStruct, err := getTableStructureParsed(projName, tableName, currentVersionNum)
-	if err != nil {
-		printError(w, err)
-		return
-	}
-
-	fieldNames := make([]string, 0)
-	for _, fieldStruct := range tableStruct.Fields {
-		fieldNames = append(fieldNames, fieldStruct.FieldName)
-
-		value, ok := toInsert[fieldStruct.FieldName]
-		if fieldStruct.Required {
-			if ! ok {
-				printError(w, errors.New(fmt.Sprintf("The field '%s' is required in table '%s' of project '%s'", 
-					fieldStruct.FieldName, tableName, projName)))
-				return
-			}
-		}
-
-		if fieldStruct.Unique && fieldStruct.FieldType != "text" {
-			if doesPathExists(filepath.Join(tablePath, "indexes", fieldStruct.FieldName, value)) {
-				printError(w, errors.New(fmt.Sprintf("The field '%s' with value '%s' is not unique to table '%s' of project '%s'",
-					fieldStruct.FieldName, value, tableName, projName)))
-				return
-			}
-		}
-
-		// check if the right data type is sent to each field
-		switch (fieldStruct.FieldType) {
-		case "int":
-			_, err = strconv.ParseInt(value, 10, 64)
-			if err != nil {
-				printError(w, errors.New(fmt.Sprintf("The data '%s' to field '%s' is not of type 'int' as defined in the structure", 
-					value, fieldStruct.FieldName)))
-				return
-			}
-		case "float":
-			_, err = strconv.ParseFloat(value, 64)
-			if err != nil {
-				printError(w, errors.New(fmt.Sprintf("The data '%s' to field '%s' is not of type 'float' as defined in the structure", 
-					value, fieldStruct.FieldName)))
-				return				
-			}
-		case "bool":
-			if value != "t" && value != "f" {
-				printError(w, errors.New(fmt.Sprintf("The data '%s' to field '%s' is not one of 't' or 'f'.", 
-					value, fieldStruct.FieldName)))
-				return
-			}
-		case "date":
-			_, err := time.Parse(flaarum_shared.BROWSER_DATE_FORMAT, value)
-			if err != nil {
-				printError(w, errors.New(fmt.Sprintf("The data '%s' to field '%s' is not in date format: '%s'.",
-					value, fieldStruct.FieldName, flaarum_shared.BROWSER_DATE_FORMAT)))
-				return
-			}			
-		case "datetime":
-			_, err := time.Parse(flaarum_shared.BROWSER_DATETIME_FORMAT, value)
-			if err != nil {
-				printError(w, errors.New(fmt.Sprintf("The data '%s' to field '%s' is not in date format: '%s'.",
-					value, fieldStruct.FieldName, flaarum_shared.BROWSER_DATETIME_FORMAT)))
-				return
-			}
-		case "string":
-			if len(value) > flaarum_shared.STRING_MAX_LENGTH {
-				printError(w, errors.New(fmt.Sprintf("The data '%s' to field '%s' is too long for string type. Max Length is '%d'",
-					value, fieldStruct.FieldName, flaarum_shared.STRING_MAX_LENGTH)))
-				return
-			}
-		}
-	}
-
-	for field, _ := range toInsert {
-		if flaarum_shared.FindIn(fieldNames, field) == -1 {
-			printError(w, errors.New(fmt.Sprintf("The field '%s' is not in the structure of table '%s' of project '%s'", 
-				field, tableName, projName)))
-			return
-		}
-	}
-
-	// add extra search fields for date and datetime types
-	for _, fieldStruct := range tableStruct.Fields {
-		if fieldStruct.FieldType == "date" {
-			value, ok := toInsert[fieldStruct.FieldName]
-			if ok {
-				valueInTimeType, _ := time.Parse(flaarum_shared.BROWSER_DATETIME_FORMAT, value)
-				toInsert[fieldStruct.FieldName + "_year"] = strconv.Itoa(valueInTimeType.Year())
-				toInsert[fieldStruct.FieldName + "_month"] = strconv.Itoa(int(valueInTimeType.Month()))
-				toInsert[fieldStruct.FieldName + "_day"] = strconv.Itoa(valueInTimeType.Day())
-			}
-		}
-		if fieldStruct.FieldType == "datetime" {
-			value, ok := toInsert[fieldStruct.FieldName]
-			if ok {
-				valueInTimeType, _ := time.Parse(flaarum_shared.BROWSER_DATETIME_FORMAT, value)
-				toInsert[fieldStruct.FieldName + "_year"] = strconv.Itoa(valueInTimeType.Year())
-				toInsert[fieldStruct.FieldName + "_month"] = strconv.Itoa(int(valueInTimeType.Month()))
-				toInsert[fieldStruct.FieldName + "_day"] = strconv.Itoa(valueInTimeType.Day())
-				toInsert[fieldStruct.FieldName + "_hour"] = strconv.Itoa(valueInTimeType.Hour())
-				toInsert[fieldStruct.FieldName + "_date"] = valueInTimeType.Format(flaarum_shared.BROWSER_DATE_FORMAT)
-			}
-		}
-	}
-
 
 	var nextId int64
 	if ! doesPathExists(filepath.Join(tablePath, "lastId")) {
@@ -176,52 +225,27 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 		nextId = rawNum + 1
 	}
 
-	toInsert["_version"] = fmt.Sprintf("%d", currentVersionNum)
-
-	jsonBytes, err := json.Marshal(toInsert)
-	if err != nil {
-		printError(w, errors.Wrap(err, "json error"))
-		return
-	}
-
 	nextIdStr := strconv.FormatInt(nextId, 10)
-	err = ioutil.WriteFile(filepath.Join(tablePath, "data", nextIdStr), jsonBytes, 0777)
-	if err != nil {
-		printError(w, errors.Wrap(err, "ioutil error"))
-		return
-	}
 
-	// create indexes
-	for field, value := range toInsert {
-		err = os.MkdirAll(filepath.Join(tablePath, "indexes", field), 0777)
-		if err != nil {
-			printError(w, errors.Wrap(err, "os error"))
-			return
-		}
+  err = saveRowData(projName, tableName, nextIdStr, toInsert)
+  if err != nil {
+  	printError(w, err)
+  	return
+  }
 
-		indexesPath := filepath.Join(tablePath, "indexes", field, makeSafeIndexValue(value))
-		if ! doesPathExists(indexesPath) {
-			err = ioutil.WriteFile(indexesPath, []byte(nextIdStr), 0777)
-			if err != nil {
-				printError(w, errors.Wrap(err, "ioutil error"))
-				return
-			}
-		} else {
-			raw, err := ioutil.ReadFile(indexesPath)
-			if err != nil {
-				printError(w, errors.Wrap(err, "ioutil error"))
-				return
-			}
-			indexedIds := strings.Split(string(raw), "\n")
-			indexedIds = append(indexedIds, nextIdStr)
+  // create indexes
+  for k, v := range toInsert {
+    if isFieldExemptedFromIndexing(projName, tableName, k) {
+      continue
+    }
 
-			err = ioutil.WriteFile(indexesPath, []byte(strings.Join(indexedIds, "\n")), 0777)
-			if err != nil {
-				printError(w, errors.Wrap(err, "ioutil error"))
-				return
-			}
-		}
-	}
+    err := flaarum_shared.MakeIndex(projName, tableName, k, v, nextIdStr)
+    if err != nil {
+      printError(w, err)
+      return
+    }
+  }
+
 
 	// store last id
 	err = ioutil.WriteFile(filepath.Join(tablePath, "lastId"), []byte(nextIdStr), 0777)

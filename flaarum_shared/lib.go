@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"os"
 	"path/filepath"
+	"io/ioutil"
+	"github.com/adam-hanna/arrayOperations"
 )
 
 const (
@@ -335,4 +337,34 @@ func DoesTableExists(projName, tableName string) bool {
   } else {
     return true
   }
+}
+
+
+func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
+  dataPath, _ := GetDataPath()
+  indexFolder := filepath.Join(dataPath, projName, tableName, "indexes", fieldName)
+  err := os.MkdirAll(indexFolder, 0777)
+  if err != nil {
+    return errors.Wrap(err, "create directory failed.")
+  }
+  indexPath := filepath.Join(indexFolder, MakeSafeIndexName(newData))
+  if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+    err = ioutil.WriteFile(indexPath, []byte(rowId), 0777)
+    if err != nil {
+      return errors.Wrap(err, "file write failed.")
+    }
+  } else {
+    raw, err := ioutil.ReadFile(indexPath)
+    if err != nil {
+      return errors.Wrap(err, "read failed.")
+    }
+    previousEntries := strings.Split(string(raw), "\n")
+    newEntries := arrayOperations.UnionString(previousEntries, []string{rowId})
+    err = ioutil.WriteFile(indexPath, []byte(strings.Join(newEntries, "\n")), 0777)
+    if err != nil {
+      return errors.Wrap(err, "write failed.")
+    }
+  }
+
+  return nil
 }
