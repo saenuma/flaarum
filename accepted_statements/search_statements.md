@@ -1,32 +1,81 @@
-# Search Statements Samples
+# Search Statement Samples
 
-## Sample 1
+## Statement 1
+
 ```
 table: users
-fields: email firstname
-where:
-	id > 2
-	and id < 10
+fields: name email
+limit: 10
+order_by: reg_dt asc
 ```
 
-No need for the ending '::' since there is only one multi-line section in search statements.
+## Statement 2
+```
+table: users distinct
+fields: name
+limit: 150
+```
 
-The 'where:' section must come last.
+## Statement 3
+```
+table: grades expand
+fields: userid.firstname userid.surname grade
+order_by: userid.firstname
+where:
+  userid.age > 20
+  and userid.age < 50
+```
 
+## Statement 4
+```
+table: grades
+where:
+  score < 90
+  or id = 3
+  and score > 60
+```
 
-## Sample 2
+## Statement 5
+a where condition that contains space.
+
+```
+table: grades
+where:
+  score < 90
+  and remark = 'not suspicious'
+```
+
+## Statement 6
+'in' queries
 ```
 table: users
-limit: 100
-start_index: 200
-order_by: firstname asc
-```
-order_by accepts for the second word either 'asc' for ascending and 'desc' for descending.
-
-## Sample 3: For where values that contains space
-```
-table: test1
 where:
-	a = 'James Lala'
-	and b in 'James Lala' 'Jamer Lak' Jk
+  id in 1 13 15 3
+  and name in 'James John' 'John Paul' 'Paulo liv'
+```
+
+## Statement 7
+'isnull' queries. To find fields which were not set.
+```
+table: users
+where:
+  age isnull
+  and id > 300
+```
+
+## Statement 8
+'notnull' queries. To find the fields which are set.
+
+```
+table: users
+where:
+  email notnull
+```
+
+## Statement 9
+'nin' queries
+```
+table: users
+where:
+  id nin 1 3 32 42
 ```
