@@ -171,7 +171,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
 	toInsert := make(map[string]string)
 	for k, _ := range r.PostForm {
-		if k == "keyStr" || k == "id" || k == "_version" {
+		if k == "key-str" || k == "id" || k == "_version" {
 			continue
 		}
 		if r.FormValue(k) == "" {

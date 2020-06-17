@@ -43,11 +43,15 @@ type TableStruct struct {
 
 
 func GetDataPath() (string, error) {
-	hd, err := os.UserHomeDir()
-	if err != nil {
-		return "", errors.Wrap(err, "os error")
+	dd := os.Getenv("SNAP_DATA")
+	if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
+		hd, err := os.UserHomeDir()
+		if err != nil {
+			return "", errors.Wrap(err, "os error")
+		}
+		dd = filepath.Join(hd, ".flaarum_data")	
 	}
-	return filepath.Join(hd, ".flaarum_data"), nil
+	return dd, nil
 }
 
 
