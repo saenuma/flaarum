@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"github.com/bankole7782/flaarum/flaarum_shared"
 	"time"
+	"net/url"
 )
 
 
@@ -37,7 +38,10 @@ func NewClient(addr, keyStr, projName string) Client {
 
 
 func (cl *Client) Ping() error {
-	resp, err := httpCl.Get(cl.Addr + "is-flaarum")
+  urlValues := url.Values{}
+  urlValues.Set("key-str", cl.KeyStr)
+
+	resp, err := httpCl.PostForm(cl.Addr + "is-flaarum", urlValues)
 	if err != nil {
 		return errors.Wrap(err, "http error")
 	}

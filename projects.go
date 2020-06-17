@@ -9,7 +9,10 @@ import (
 
 
 func (cl *Client) CreateProject(projName string) error {
-	resp, err := httpCl.Get( cl.Addr + "create-project/" + projName)
+  urlValues := url.Values{}
+  urlValues.Set("key-str", cl.KeyStr)
+
+	resp, err := httpCl.PostForm( cl.Addr + "create-project/" + projName, urlValues)
 	if err != nil {
 		return errors.Wrap(err, "http error")
 	}
@@ -28,7 +31,10 @@ func (cl *Client) CreateProject(projName string) error {
 
 
 func (cl *Client) DeleteProject(projName string) error {
-	resp, err := httpCl.Get( cl.Addr + "delete-project/" + projName)
+  urlValues := url.Values{}
+  urlValues.Set("key-str", cl.KeyStr)
+
+	resp, err := httpCl.PostForm( cl.Addr + "delete-project/" + projName, urlValues)
 	if err != nil {
 		return errors.Wrap(err, "http error")
 	}
@@ -47,7 +53,10 @@ func (cl *Client) DeleteProject(projName string) error {
 
 
 func (cl *Client) ListProjects() ([]string, error) {
-	resp, err := httpCl.Get( cl.Addr + "list-projects")
+  urlValues := url.Values{}
+  urlValues.Set("key-str", cl.KeyStr)
+
+	resp, err := httpCl.PostForm( cl.Addr + "list-projects", urlValues)
 	if err != nil {
 		return []string{}, errors.Wrap(err, "http error")
 	}
@@ -72,7 +81,7 @@ func (cl *Client) ListProjects() ([]string, error) {
 
 func (cl *Client) RenameProject(projName, newProjName string) error {
   urlValues := url.Values{}
-  urlValues.Set("keyStr", cl.KeyStr)
+  urlValues.Set("key-str", cl.KeyStr)
 
   resp, err := httpCl.PostForm(cl.Addr + "rename-project/" + projName + "/" + newProjName,
     urlValues)

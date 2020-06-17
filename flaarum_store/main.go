@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"io/ioutil"
+	"github.com/bankole7782/flaarum/flaarum_shared"
 )
 
 var projsMutex *sync.RWMutex // for projects and tables (table data uses different mutexes) creation, editing, deletion
@@ -62,8 +64,75 @@ func main() {
   r.HandleFunc("/count-rows/{proj}", countRows)
   r.HandleFunc("/sum-rows/{proj}", sumRows)
 	
-	err := http.ListenAndServeTLS(":22318", "https-server.crt", "https-server.key", r)
+	r.Use(keyEnforcementMiddleware)
+
+  port := getPort()
+  fmt.Println("Serving on port: " + port)
+
+	err := http.ListenAndServeTLS(fmt.Sprintf(":%s", port), "https-server.crt", "https-server.key", r)
 	if err != nil {
 		panic(err)
 	}
+}
+
+
+func G(objectName string) string {
+  homeDir, err := os.UserHomeDir()
+  if err != nil {
+    panic(err)
+  }
+  folders := make([]string, 0)
+  folders = append(folders, filepath.Join(homeDir, "codium/codium_store"))
+  folders = append(folders, filepath.Join(homeDir, ".codium/codium_store"))
+  folders = append(folders, "/opt/codium")
+
+  for _, dir := range folders {
+    testPath := filepath.Join(dir, objectName)
+    if doesPathExists(testPath) {
+      return testPath
+    }
+  }
+
+  panic("Improperly configured.")
+}
+
+
+
+func getPort() string {
+  port, err := flaarum_shared.GetSetting("port")
+  if err != nil {
+    panic(err)
+  }
+
+  return port
+}
+
+
+
+func keyEnforcementMiddleware(next http.Handler) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    inProd, err := flaarum_shared.GetSetting("in_production")
+    if err != nil {
+      panic(err)
+    }
+    if inProd == "true" {
+      keyStr := r.FormValue("key-str")
+      keyPath := filepath.Join("/etc", "flaarum.keyfile")
+      raw, err := ioutil.ReadFile(keyPath)
+      if err != nil {
+        http.Error(w, "Improperly Configured Server", http.StatusInternalServerError)
+      }
+      if keyStr == string(raw) {
+        // Call the next handler, which can be another middleware in the chain, or the final handler.
+        next.ServeHTTP(w, r)
+      } else {
+        http.Error(w, "Forbidden", http.StatusForbidden)
+      }
+
+    } else {
+      // Call the next handler, which can be another middleware in the chain, or the final handler.
+      next.ServeHTTP(w, r)
+    }
+
+  })
 }

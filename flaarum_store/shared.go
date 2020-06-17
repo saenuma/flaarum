@@ -30,8 +30,15 @@ func projAndTableNameValidate(name string) error {
 
 
 func printError(w http.ResponseWriter, err error) {
-	w.WriteHeader(http.StatusBadRequest)
-	fmt.Fprintf(w, fmt.Sprintf("%+v", err))
+  debug, err1 := flaarum_shared.GetSetting("debug")
+  if err1 != nil {
+    panic(err1)
+  }
+  if debug == "true" {
+    http.Error(w, fmt.Sprintf("%+v", err), http.StatusBadRequest)
+  } else {
+    http.Error(w, fmt.Sprintf("%s", err), http.StatusBadRequest)
+  }
 }
 
 

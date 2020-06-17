@@ -16,7 +16,7 @@ import (
 // InsertRowStr inserts a row into a table. It expects the input to be of type map[string]string
 func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (int64, error) {
 	urlValues := url.Values{}
-	urlValues.Add("keyStr", cl.KeyStr)
+	urlValues.Add("key-str", cl.KeyStr)
 	for k, v := range toInsert {
 		urlValues.Add(k, v)
 	}
@@ -203,7 +203,7 @@ func (cl *Client) ParseRow (rowStr map[string]string, tableStruct flaarum_shared
 
 func (cl *Client) Search (stmt string) (*[]map[string]interface{}, error) {
   urlValues := url.Values{}
-  urlValues.Set("keyStr", cl.KeyStr)
+  urlValues.Set("key-str", cl.KeyStr)
   urlValues.Set("stmt", stmt)
 
   resp, err := httpCl.PostForm(cl.Addr + "search-table/" + cl.ProjName, urlValues)
@@ -256,7 +256,7 @@ func (cl *Client) Search (stmt string) (*[]map[string]interface{}, error) {
 
 func (cl Client) SearchForOne(stmt string) (*map[string]interface{}, error) {
   urlValues := url.Values{}
-  urlValues.Set("keyStr", cl.KeyStr)
+  urlValues.Set("key-str", cl.KeyStr)
   urlValues.Set("stmt", stmt)
   urlValues.Set("query-one", "t")
 
@@ -305,7 +305,7 @@ func (cl Client) SearchForOne(stmt string) (*map[string]interface{}, error) {
 
 func (cl Client) DeleteRows(stmt string) error {
   urlValues := url.Values{}
-  urlValues.Add("keyStr", cl.KeyStr)
+  urlValues.Add("key-str", cl.KeyStr)
   urlValues.Add("stmt", stmt)
 
   resp, err := httpCl.PostForm(fmt.Sprintf("%sdelete-rows/%s", cl.Addr, cl.ProjName), urlValues)
@@ -329,7 +329,7 @@ func (cl Client) DeleteRows(stmt string) error {
 
 func (cl Client) DeleteFields(stmt string, toDeleteFields []string) error {
   urlValues := url.Values{}
-  urlValues.Add("keyStr", cl.KeyStr)
+  urlValues.Add("key-str", cl.KeyStr)
   urlValues.Add("stmt", stmt)
   for i, f := range toDeleteFields {
     urlValues.Add(fmt.Sprintf("to_delete_field%d", i+1), f)
@@ -356,7 +356,7 @@ func (cl Client) DeleteFields(stmt string, toDeleteFields []string) error {
 
 func (cl Client) CountRows(stmt string) (int64, error) {
   urlValues := url.Values{}
-  urlValues.Set("keyStr", cl.KeyStr)
+  urlValues.Set("key-str", cl.KeyStr)
   urlValues.Set("stmt", stmt)
 
   resp, err := httpCl.PostForm(fmt.Sprintf("%scount-rows/%s", cl.Addr, cl.ProjName), urlValues)
@@ -389,7 +389,7 @@ func (cl Client) SumRows(stmt, toSumField string) (interface{}, error) {
   urlValues := url.Values{}
   urlValues.Add("stmt", stmt)
   urlValues.Add("tosum", toSumField)
-  urlValues.Add("keyStr", cl.KeyStr)
+  urlValues.Add("key-str", cl.KeyStr)
 
   resp, err := httpCl.PostForm(fmt.Sprintf("%ssum-rows/%s", cl.Addr, cl.ProjName), urlValues)
   if err != nil {
@@ -441,7 +441,7 @@ func (cl Client) SumRows(stmt, toSumField string) (interface{}, error) {
 
 func (cl Client) UpdateRowsStr(stmt string, updateDataStr map[string]string) error {
   urlValues := url.Values{}
-  urlValues.Add("keyStr", cl.KeyStr)
+  urlValues.Add("key-str", cl.KeyStr)
   urlValues.Add("stmt", stmt)
 
   keys := make([]string, 0)

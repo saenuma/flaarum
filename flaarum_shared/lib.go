@@ -10,6 +10,9 @@ import (
 	"path/filepath"
 	"io/ioutil"
 	"github.com/adam-hanna/arrayOperations"
+	"math/rand"
+	"time"
+	"encoding/json"
 )
 
 const (
@@ -367,4 +370,32 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
   }
 
   return nil
+}
+
+
+func UntestedRandomString(length int) string {
+  var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+  const charset = "abcdefghijklmnopqrstuvwxyz1234567890"
+
+  b := make([]byte, length)
+  for i := range b {
+    b[i] = charset[seededRand.Intn(len(charset))]
+  }
+  return string(b)
+}
+
+
+func GetSetting(settingName string) (string, error) {
+  raw, err := ioutil.ReadFile("/etc/codium.json")
+  if err != nil {
+    return "", errors.Wrap(err, "read failed.")
+  }
+
+  settingObj := make(map[string]string)
+  err = json.Unmarshal(raw, &settingObj)
+  if err != nil {
+    return "", errors.Wrap(err, "json failed.")
+  }
+
+  return settingObj[settingName], nil
 }

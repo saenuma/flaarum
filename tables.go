@@ -13,7 +13,7 @@ import (
 
 func (cl *Client) CreateTable(stmt string) error {
 	urlValues := url.Values{}
-	urlValues.Add("keyStr", cl.KeyStr)
+	urlValues.Add("key-str", cl.KeyStr)
 	urlValues.Add("stmt", stmt)
 
 	resp, err := httpCl.PostForm( cl.Addr + "create-table/" + cl.ProjName, urlValues)
@@ -36,7 +36,7 @@ func (cl *Client) CreateTable(stmt string) error {
 
 func (cl *Client) UpdateTableStructure(stmt string) error {
 	urlValues := url.Values{}
-	urlValues.Add("keyStr", cl.KeyStr)
+	urlValues.Add("key-str", cl.KeyStr)
 	urlValues.Add("stmt", stmt)
 
 	resp, err := httpCl.PostForm( cl.Addr + "update-table-structure/" + cl.ProjName, urlValues)
@@ -59,7 +59,7 @@ func (cl *Client) UpdateTableStructure(stmt string) error {
 
 func (cl *Client) GetCurrentTableVersionNum(tableName string) (int64, error) {
 	urlValues := url.Values{}
-	urlValues.Add("keyStr", cl.KeyStr)
+	urlValues.Add("key-str", cl.KeyStr)
 	
 	resp, err := httpCl.PostForm(fmt.Sprintf("%s/get-current-version-num/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
 	if err != nil {
@@ -85,7 +85,7 @@ func (cl *Client) GetCurrentTableVersionNum(tableName string) (int64, error) {
 
 func (cl *Client) GetTableStructure(tableName string, versionNum int64) (string, error) {
 	urlValues := url.Values{}
-	urlValues.Add("keyStr", cl.KeyStr)
+	urlValues.Add("key-str", cl.KeyStr)
 	
 	resp, err := httpCl.PostForm(fmt.Sprintf("%s/get-table-structure/%s/%s/%d", cl.Addr, cl.ProjName, tableName, versionNum), 
 		urlValues)
