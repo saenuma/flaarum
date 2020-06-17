@@ -23,9 +23,7 @@ Can be found in the accepted statements folder.
 
 ## Regular Features
 
-1.	Query Cache that can be turned "on" or "off". It improves the speed but comes at a cost of needing more RAM.
-
-2.  Supports its own query language.
+1.  Supports its own query language.
 
 
 ## Technologies Used.
