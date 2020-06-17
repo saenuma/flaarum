@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 	"github.com/bankole7782/flaarum/flaarum_shared"
+	"encoding/json"
 )
 
 
@@ -124,4 +125,100 @@ func (cl *Client) GetCurrentTableStructureParsed(tableName string) (flaarum_shar
 		return flaarum_shared.TableStruct{}, err
 	}
 	return flaarum_shared.ParseTableStructureStmt(stmt)	
+}
+
+
+func (cl *Client) EmptyTable(tableName string) error {
+  urlValues := url.Values{}
+  urlValues.Set("key-str", cl.KeyStr)
+
+  resp, err := httpCl.PostForm(cl.Addr + "empty-table/" + cl.ProjName + "/" + tableName,
+    urlValues)
+  if err != nil {
+    return errors.Wrap(err, "error contacting site")
+  }
+  defer resp.Body.Close()
+  body, err :=  ioutil.ReadAll(resp.Body)
+  if err != nil {
+    return errors.Wrap(err, "ioutil error")
+  }
+
+  if resp.StatusCode == 200 {
+    return nil
+  } else {
+    return errors.New(string(body))
+  }
+}
+
+
+func (cl Client) ListTables() ([]string, error) {
+  urlValues := url.Values{}
+  urlValues.Add("key-str", cl.KeyStr)
+
+  resp, err := httpCl.PostForm(fmt.Sprintf("%slist-tables/%s", cl.Addr, cl.ProjName), urlValues)
+  if err != nil {
+    return nil, errors.Wrap(err, "error contacting site")
+  }
+  defer resp.Body.Close()
+  body, err :=  ioutil.ReadAll(resp.Body)
+  if err != nil {
+    return nil, errors.Wrap(err, "ioutil error")
+  }
+
+  if resp.StatusCode == 200 {
+    tables := make([]string, 0)
+    err = json.Unmarshal(body, &tables)
+    if err != nil {
+      return nil, errors.Wrap(err, "json error.")
+    }
+    return tables, nil
+  } else {
+    return nil, errors.New(string(body))
+  }
+
+}
+
+
+func (cl *Client) RenameTable(tableName, newTableName string) error {
+  urlValues := url.Values{}
+  urlValues.Set("key-str", cl.KeyStr)
+
+  resp, err := httpCl.PostForm(cl.Addr + "rename-table/" + cl.ProjName + "/" + tableName + "/" + newTableName,
+    urlValues)
+  if err != nil {
+    return errors.Wrap(err, "error contacting site")
+  }
+  defer resp.Body.Close()
+  body, err :=  ioutil.ReadAll(resp.Body)
+  if err != nil {
+    return errors.Wrap(err, "ioutil error")
+  }
+
+  if resp.StatusCode == 200 {
+    return nil
+  } else {
+    return errors.New(string(body))
+  }
+}
+
+
+func (cl *Client) DeleteTable(tableName string) error {
+  urlValues := url.Values{}
+  urlValues.Set("key-str", cl.KeyStr)
+
+  resp, err := httpCl.PostForm(cl.Addr + "delete-table/" + cl.ProjName + "/" + tableName , urlValues)
+  if err != nil {
+    return errors.Wrap(err, "error contacting site")
+  }
+  defer resp.Body.Close()
+  body, err :=  ioutil.ReadAll(resp.Body)
+  if err != nil {
+    return errors.Wrap(err, "ioutil error")
+  }
+
+  if resp.StatusCode == 200 {
+    return nil
+  } else {
+    return errors.New(string(body))
+  }
 }

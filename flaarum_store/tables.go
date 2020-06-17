@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"sort"
+	"encoding/json"
 )
 
 
@@ -21,28 +22,40 @@ func doesTableExists(projName, tableName string) bool {
 
 
 func validateTableStruct(projName string, tableStruct flaarum_shared.TableStruct) error {
-	if err := projAndTableNameValidate(tableStruct.TableName); err != nil {
-		return err
-	}
+  fields := make([]string, 0)
+  fTypeMap := make(map[string]string)
+  td := tableStruct
+  for _, fd := range td.Fields {
+    if fd.Unique && fd.FieldType == "text" {
+      return errors.New(fmt.Sprintf("The field '%s' is unique and cannot be of type 'text'", fd.FieldName))
+    }
+    fields = append(fields, fd.FieldName)
+    fTypeMap[fd.FieldName] = fd.FieldType
+  }
 
-	dataPath, _ := GetDataPath()
-	tableNames := make([]string, 0)
-	fis, err := ioutil.ReadDir(filepath.Join(dataPath, projName))
-	if err != nil {
-		return errors.Wrap(err, "ioutil error")
-	}
-	for _, fi := range fis {
-		tableNames = append(tableNames, fi.Name())
-	}
+  for _, fkd := range td.ForeignKeys {
+    if ! doesTableExists(projName, fkd.PointedTable) {
+      return errors.New(fmt.Sprintf("Pointed Table '%s' in foreign key definition does not exist.", fkd.PointedTable))
+    }
+    if flaarum_shared.FindIn(fields, fkd.FieldName) == -1 {
+      return errors.New(fmt.Sprintf("The field '%s' in a foreign key definition is not defined in the fields section",
+        fkd.FieldName))
+    }
+    if fTypeMap[fkd.FieldName] != "int" {
+      return errors.New(fmt.Sprintf("The field '%s' is not of type 'int' and so cannot be used in a foreign key defnition",
+        fkd.FieldName))
+    }
+  }
 
-	for _, fks := range tableStruct.ForeignKeys {
-		if flaarum_shared.FindIn(tableNames, fks.PointedTable) == -1 {
-			return errors.New(fmt.Sprintf("Input Error: The table name '%s' in the 'foreign_keys:' section does not exists in the project '%s'.", 
-				fks.PointedTable, projName))
-		}
-	}
+  for _, ug := range td.UniqueGroups {
+    for _, fn := range ug {
+      if fTypeMap[fn] == "text" {
+        return errors.New(fmt.Sprintf("The field '%s' is of type 'text' and cannot be in a unique group.", fn))
+      }
+    }
+  }
+  return nil
 
-	return nil
 }
 
 
@@ -283,4 +296,166 @@ func getExistingTables(projName string) ([]string, error) {
   }
 
   return tables, nil
+}
+
+
+func emptyTable(w http.ResponseWriter, r *http.Request) {
+  vars := mux.Vars(r)
+  projName := vars["proj"]
+  tableName := vars["tbl"]
+  dataPath, _ := GetDataPath()
+
+  projsMutex.Lock()
+  defer projsMutex.Unlock()
+
+  createTableMutexIfNecessary(projName, tableName)
+  fullTableName := projName + ":" + tableName
+  tablesMutexes[fullTableName].Lock()
+  defer tablesMutexes[fullTableName].Unlock()
+
+  if ! doesTableExists(projName, tableName) {
+    printError(w, errors.New(fmt.Sprintf("Table '%s' does not exist in project '%s'.", tableName, projName)))
+    return
+  }
+
+  toDelete := []string{"data", "indexes", "lastId"}
+  for _, todo := range toDelete {
+    err := os.RemoveAll(filepath.Join(dataPath, projName, tableName, todo))
+    if err != nil {
+      printError(w, errors.Wrap(err, "delete directory failed."))
+      return
+    }
+  }
+
+  for _, tm := range toDelete[:2] {
+    toMakePath := filepath.Join(dataPath, projName, tableName, tm)
+    err := os.MkdirAll(toMakePath, 0777)
+    if err != nil {
+      err = errors.Wrap(err, "directory creation failed.")
+      printError(w, err)
+      return
+    }
+  }
+
+  fmt.Fprintf(w, "ok")
+}
+
+
+func listTables(w http.ResponseWriter, r *http.Request) {
+  vars := mux.Vars(r)
+  projName := vars["proj"]
+
+  projsMutex.Lock()
+  defer projsMutex.Unlock()
+
+  tables, err := getExistingTables(projName)
+  if err != nil {
+    printError(w, err)
+    return
+  }
+
+  jsonBytes, err := json.Marshal(tables)
+  if err != nil {
+    printError(w, errors.Wrap(err, "json error."))
+    return
+  }
+
+  fmt.Fprintf(w, string(jsonBytes))
+}
+
+
+func renameTable(w http.ResponseWriter, r *http.Request) {
+  vars := mux.Vars(r)
+  projName := vars["proj"]
+  tableName := vars["tbl"]
+  newTableName := vars["ntbl"]
+
+  dataPath, _ := GetDataPath()
+
+  projsMutex.Lock()
+  defer projsMutex.Unlock()
+
+  createTableMutexIfNecessary(projName, tableName)
+  fullTableName := projName + ":" + tableName
+  tablesMutexes[fullTableName].Lock()
+  defer tablesMutexes[fullTableName].Unlock()
+
+  if ! doesTableExists(projName, tableName) {
+    printError(w, errors.New(fmt.Sprintf("Table '%s' does not exist in project '%s'.", tableName, projName)))
+    return
+  }
+
+  if doesTableExists(projName, newTableName) {
+    printError(w, errors.New(fmt.Sprintf("Table '%s' does exists in project '%s' and cannot be used as a new name",
+      newTableName, projName)))
+  }
+
+  versionsFolder := filepath.Join(dataPath, projName, tableName, "versions")
+  versionsFIs, err := ioutil.ReadDir(versionsFolder)
+  if err != nil {
+    printError(w, errors.Wrap(err, "read directory failed."))
+    return
+  }
+
+  for _, vfi := range versionsFIs {
+    versionPath := filepath.Join(versionsFolder, vfi.Name())
+    raw, err := ioutil.ReadFile(versionPath)
+    if err != nil {
+      printError(w, errors.Wrap(err, "read failed."))
+      return
+    }
+
+    versionPathContents := string(raw)
+    out := strings.ReplaceAll(versionPathContents, tableName, newTableName)
+
+    err = ioutil.WriteFile(versionPath, []byte(out), 0777)
+    if err != nil {
+      printError(w, errors.Wrap(err, "write failed."))
+      return
+    }
+  }
+
+  oldPath := filepath.Join(dataPath, projName, tableName)
+  newPath := filepath.Join(dataPath, projName, newTableName)
+  err = os.Rename(oldPath, newPath)
+  if err != nil {
+    printError(w, errors.Wrap(err, "rename failed."))
+    return
+  }
+
+  fmt.Fprintf(w, "ok")
+}
+
+
+func deleteTable(w http.ResponseWriter, r *http.Request) {
+  vars := mux.Vars(r)
+  projName := vars["proj"]
+  tableName := vars["tbl"]
+
+  dataPath, _ := GetDataPath()
+
+  projsMutex.Lock()
+  defer projsMutex.Unlock()
+
+  createTableMutexIfNecessary(projName, tableName)
+  fullTableName := projName + ":" + tableName
+  tablesMutexes[fullTableName].Lock()
+
+  if ! doesTableExists(projName, tableName) {
+    tablesMutexes[fullTableName].Unlock()
+    printError(w, errors.New(fmt.Sprintf("Table '%s' does not exist in project '%s'.", tableName, projName)))
+    return
+  }
+
+  err := os.RemoveAll(filepath.Join(dataPath, projName, tableName))
+  if err != nil {
+    tablesMutexes[fullTableName].Unlock()
+    printError(w, errors.Wrap(err, "delete dir failed."))
+    return
+  }
+
+  tablesMutexes[fullTableName].Unlock()
+  delete(tablesMutexes, fullTableName)
+
+  fmt.Fprintf(w, "ok")
 }

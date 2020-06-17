@@ -48,6 +48,10 @@ func main() {
 	r.HandleFunc("/update-table-structure/{proj}", updateTableStructure)
 	r.HandleFunc("/get-current-version-num/{proj}/{tbl}", getCurrentVersionNumHTTP)
 	r.HandleFunc("/get-table-structure/{proj}/{tbl}/{vnum}", getTableStructureHTTP)
+  r.HandleFunc("/empty-table/{proj}/{tbl}", emptyTable)
+  r.HandleFunc("/list-tables/{proj}", listTables)
+  r.HandleFunc("/rename-table/{proj}/{tbl}/{ntbl}", renameTable)
+  r.HandleFunc("/delete-table/{proj}/{tbl}", deleteTable)
 
 	// rows
 	r.HandleFunc("/insert-row/{proj}/{tbl}", insertRow)
