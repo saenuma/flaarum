@@ -52,6 +52,11 @@ func main() {
 	// rows
 	r.HandleFunc("/insert-row/{proj}/{tbl}", insertRow)
 	r.HandleFunc("/search-table/{proj}", searchTable)
+	r.HandleFunc("/delete-rows/{proj}", deleteRows)
+  r.HandleFunc("/delete-fields/{proj}", deleteFields)
+  r.HandleFunc("/update-rows/{proj}", updateRows)
+  r.HandleFunc("/count-rows/{proj}", countRows)
+  r.HandleFunc("/sum-rows/{proj}", sumRows)
 	
 	err := http.ListenAndServeTLS(":22318", "https-server.crt", "https-server.key", r)
 	if err != nil {
