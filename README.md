@@ -37,9 +37,24 @@ The samples of statements that flaarum supports can be found in the
 API documentation can be found on [godoc](https://godoc.org/github.com/bankole7782/flaarum)
 
 
-## Test Environment Setup
+## Install
 
-1. Copy `flaarum.json` to `/etc/flaarum.json`. This contains the settings file.
+1.	Install from snapstore using `sudo snap install flaarum`
+
+2.	Start the project with the command `sudo snap start flaarum.store`
+
+3.	You don't need a key to connect with the database when not in production.
+
+
+### Production Setup
+
+1.	Edit the config file found in `/var/snap/flaarum/current/flaarum.json` and set `in_production` to true
+
+2.	Mount the persistent disk in the path `/var/snap/flaarum/current/data`
+
+3.	Run `sudo flaarum.mkpass` to get the key that would be supplied in any database request.
+
+4.	Use the key when creating `flaarum.Client`
 
 
 ## License
