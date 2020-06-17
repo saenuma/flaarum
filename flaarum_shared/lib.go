@@ -386,7 +386,7 @@ func UntestedRandomString(length int) string {
 
 
 func GetSetting(settingName string) (string, error) {
-  raw, err := ioutil.ReadFile("/etc/codium.json")
+  raw, err := ioutil.ReadFile("/etc/flaarum.json")
   if err != nil {
     return "", errors.Wrap(err, "read failed.")
   }
