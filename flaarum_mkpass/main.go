@@ -4,12 +4,11 @@ import (
   "github.com/bankole7782/flaarum/flaarum_shared"
   "io/ioutil"
   "fmt"
-  "path/filepath"
 )
 
 
 func main() {
-  keyPath := filepath.Join("/etc", "flaarum.keyfile")
+  keyPath := flaarum_shared.GetKeyStrPath()
   randomString := flaarum_shared.UntestedRandomString(50)
 
   err := ioutil.WriteFile(keyPath, []byte(randomString), 0777)

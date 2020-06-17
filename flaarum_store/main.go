@@ -9,6 +9,8 @@ import (
 	"sync"
 	"io/ioutil"
 	"github.com/bankole7782/flaarum/flaarum_shared"
+  "github.com/tidwall/pretty"
+  "encoding/json"
 )
 
 var projsMutex *sync.RWMutex // for projects and tables (table data uses different mutexes) creation, editing, deletion
@@ -29,6 +31,31 @@ func init() {
 	// create mutexes
 	projsMutex = &sync.RWMutex{}
 	tablesMutexes = make(map[string]*sync.RWMutex)
+
+  confPath, err := flaarum_shared.GetConfigPath()
+  if err != nil {
+    panic(err)
+  }
+
+  if ! doesPathExists(confPath) {
+    conf := map[string]string {
+      "debug": "false",
+      "in_production": "false",
+      "port": "22318",
+    }
+
+    jsonBytes, err := json.Marshal(conf)
+    if err != nil {
+      panic(err)
+    }
+
+    prettyJson := pretty.Pretty(jsonBytes)
+
+    err = ioutil.WriteFile(confPath, prettyJson, 0777)
+    if err != nil {
+      panic(err)
+    }
+  }
 }
 
 
@@ -116,7 +143,7 @@ func keyEnforcementMiddleware(next http.Handler) http.Handler {
     }
     if inProd == "true" {
       keyStr := r.FormValue("key-str")
-      keyPath := filepath.Join("/etc", "flaarum.keyfile")
+      keyPath := flaarum_shared.GetKeyStrPath()
       raw, err := ioutil.ReadFile(keyPath)
       if err != nil {
         http.Error(w, "Improperly Configured Server", http.StatusInternalServerError)

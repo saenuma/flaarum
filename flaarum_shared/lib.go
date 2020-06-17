@@ -42,16 +42,65 @@ type TableStruct struct {
 }
 
 
-func GetDataPath() (string, error) {
+func GetConfigPath() (string, error) {
 	dd := os.Getenv("SNAP_DATA")
 	if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
 		hd, err := os.UserHomeDir()
 		if err != nil {
 			return "", errors.Wrap(err, "os error")
 		}
+		dd = filepath.Join(hd, ".flaarum.json")	
+	} else {
+		dd = filepath.Join(dd, "flaarum.json")
+	}
+	return dd, nil	
+}
+
+
+func GetDataPath() (string, error) {
+	dd := os.Getenv("SNAP_DATA")		
+	if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
+		hd, err := os.UserHomeDir()
+		if err != nil {
+			return "", errors.Wrap(err, "os error")
+		}
 		dd = filepath.Join(hd, ".flaarum_data")	
+	} else {
+		dd = filepath.Join(dd, "data")
 	}
 	return dd, nil
+}
+
+
+func GetSetting(settingName string) (string, error) {
+	settingFilePath, err := GetConfigPath()
+	if err != nil {
+		return "", err
+	}
+  raw, err := ioutil.ReadFile(settingFilePath)
+  if err != nil {
+    return "", errors.Wrap(err, "read failed.")
+  }
+
+  settingObj := make(map[string]string)
+  err = json.Unmarshal(raw, &settingObj)
+  if err != nil {
+    return "", errors.Wrap(err, "json failed.")
+  }
+
+  return settingObj[settingName], nil
+}
+
+
+func GetKeyStrPath() string {
+	var keyPath string
+  dd := os.Getenv("SNAP_DATA")
+  if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
+    keyPath = filepath.Join("/etc", "flaarum.keyfile")
+  } else {
+    keyPath = filepath.Join(dd, "flaarum.keyfile")
+  }
+  return keyPath
 }
 
 
@@ -386,20 +435,4 @@ func UntestedRandomString(length int) string {
     b[i] = charset[seededRand.Intn(len(charset))]
   }
   return string(b)
-}
-
-
-func GetSetting(settingName string) (string, error) {
-  raw, err := ioutil.ReadFile("/etc/flaarum.json")
-  if err != nil {
-    return "", errors.Wrap(err, "read failed.")
-  }
-
-  settingObj := make(map[string]string)
-  err = json.Unmarshal(raw, &settingObj)
-  if err != nil {
-    return "", errors.Wrap(err, "json failed.")
-  }
-
-  return settingObj[settingName], nil
 }
