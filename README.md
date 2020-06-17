@@ -4,12 +4,7 @@
 
 [![GoDoc](https://godoc.org/github.com/bankole7782/flaarum?status.svg)](https://godoc.org/github.com/bankole7782/flaarum)
 
-a database that enforces structures. 
-
-
-## Supported Statements
-
-Can be found in the accepted statements folder.
+A database that enforces structures and features its own query language.
 
 
 ## Why a new database.
@@ -18,7 +13,7 @@ Can be found in the accepted statements folder.
 
 2.	**Table Expansion** (a more comfortable form of joins)
 
-3.	Seamless table definition update
+3.	Can make any **changes to any table's structure** even though you have data in the table.
 
 
 ## Regular Features
