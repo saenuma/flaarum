@@ -46,6 +46,8 @@ func main() {
 	switch os.Args[1] {
 	case "--help", "help", "h":
 		fmt.Println(`flaarum cli provides some utilites for a flaarum installation.
+Please Run this program from the same server that powers your flaarum.
+Please don't expose your flaarum database to the internet for security sake.
 
 Project(s) Commands:
 	
