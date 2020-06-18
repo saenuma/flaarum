@@ -57,6 +57,13 @@ API documentation can be found on [godoc](https://godoc.org/github.com/bankole77
 4.	Use the key when creating `flaarum.Client`
 
 
+## CLI
+
+You can use the cli `flaarum.cli` to administer the database from the terminal. 
+
+Run it with help `flaarum.cli help` to view available options.
+
+
 ## License
 
 Released with the MIT License
