@@ -60,6 +60,8 @@ Table(s) Commands:
   trc   Table Rows Count: Expects a project and table combo eg. 'first_proj/users'
   ctvn  Current Table Version Number: Expects a project and table combo eg. 'first_proj/users'
   ts    Table Structure Statement: Expects a project and table combo eg. 'first_proj/users' and a valid number.
+  dt    Delete Table: Expects one or more project and table combo eg. 'first_proj/users'.
+  et    Empty Table: Expects one or more project and table combo eg. 'first_proj/users'.
 
 			`)
 
@@ -182,11 +184,39 @@ Table(s) Commands:
 		}
 		fmt.Println(tableStructStmt)
 
+	case "dt":
+		if len(os.Args) < 3 {
+			fmt.Println("'dt' command expects combo(s) of project and table eg. 'first_proj/users'.")
+		}
+		for _, arg := range os.Args[2:] {
+			parts := strings.Split(os.Args[2], "/")
+			cl.ProjName = parts[0]
+
+			err = cl.DeleteTable(parts[1])
+			if err != nil {
+				fmt.Println("Error deleting table '%s'. \nError: %s", arg, err)
+				os.Exit(1)
+			}
+		}
+
+	case "et":
+		if len(os.Args) < 3 {
+			fmt.Println("'et' command expects combo(s) of project and table eg. 'first_proj/users'.")
+		}
+		for _, arg := range os.Args[2:] {
+			parts := strings.Split(os.Args[2], "/")
+			cl.ProjName = parts[0]
+
+			err = cl.EmptyTable(parts[1])
+			if err != nil {
+				fmt.Println("Error emptying table '%s'. \nError: %s", arg, err)
+				os.Exit(1)
+			}
+		}
+
 	default:
 		fmt.Println("Unexpected command.")
 		os.Exit(1)
 	}
-
-
 
 }
