@@ -1,12 +1,13 @@
 package main
 
 import (
-	// "flag"
 	"os"
 	"fmt"
 	"github.com/bankole7782/flaarum"
 	"github.com/bankole7782/flaarum/flaarum_shared"
 	"io/ioutil"
+	"strings"
+	"strconv"
 )
 
 func main() {
@@ -46,12 +47,20 @@ func main() {
 	case "--help", "help", "h":
 		fmt.Println(`flaarum cli provides some utilites for a flaarum installation.
 
-Available Commands:
+Project(s) Commands:
 	
-	lp    List Projects
-	cp    Create Project: Expects the name(s) of projects after the command.
-	rp    Rename Project. Expects the name of the project to rename  followed by the new name of the project.
-	dp    Delete Project. Expects the name(s) of projects after the command.
+  lp    List Projects
+  cp    Create Project: Expects the name(s) of projects after the command.
+  rp    Rename Project. Expects the name of the project to rename  followed by the new name of the project.
+  dp    Delete Project. Expects the name(s) of projects after the command.
+
+Table(s) Commands:
+
+  lt    List Tables: Expects a project name after the command.
+  trc   Table Rows Count: Expects a project and table combo eg. 'first_proj/users'
+  ctvn  Current Table Version Number: Expects a project and table combo eg. 'first_proj/users'
+  ts    Table Structure Statement: Expects a project and table combo eg. 'first_proj/users' and a valid number.
+
 			`)
 
 	case "lp":
@@ -101,6 +110,77 @@ Available Commands:
 				os.Exit(1)
 			}
 		}
+
+	case "lt":
+		if len(os.Args) != 3 {
+			fmt.Println("'lt' command expects a project name.")
+			os.Exit(1)
+		}
+		cl.ProjName = os.Args[2]
+		tables, err := cl.ListTables()
+		if err != nil {
+			fmt.Println("Error listing tables of project '%s'.\nError: %s", os.Args[2], err)
+			os.Exit(1)
+		}
+		fmt.Printf("Tables List of Project '%s' List:\n\n", os.Args[2])
+		for _, tbl := range tables {
+			fmt.Printf("  %s\n", tbl)
+		}
+		fmt.Println()
+
+	case "trc":
+		if len(os.Args) != 3 {
+			fmt.Println("'trc' command expects a project and table combo eg. 'first_proj/users'.")
+			os.Exit(1)
+		}
+		parts := strings.Split(os.Args[2], "/")
+		cl.ProjName = parts[0]
+		count, err := cl.CountRows(fmt.Sprintf(`
+			table: %s
+			`, parts[1]))
+
+		if err != nil {
+			fmt.Printf("Error reading table '%s' of project '%s' row count.\nError: %s\n", parts[1], parts[0], err)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Count of Rows in Table '%s' of Project '%s': %d\n", parts[1], parts[0], count)
+
+	case "ctvn":
+		if len(os.Args) != 3 {
+			fmt.Println("'ctvn' command expects a project and table combo eg. 'first_proj/users'.")
+			os.Exit(1)
+		}
+		parts := strings.Split(os.Args[2], "/")
+		cl.ProjName = parts[0]
+		vnum, err := cl.GetCurrentTableVersionNum(parts[1])
+		if err != nil {
+			fmt.Printf("Error reading current table version number of table '%s' of Project '%s'.\nError: %s\n", 
+				parts[1], parts[0], err)
+			os.Exit(1)
+		}
+		fmt.Println(vnum)
+
+	case "ts":
+		if len(os.Args) != 4 {
+			fmt.Println("'ts' command expects a project table combo eg. 'first_proj/users' and a valid version number.")
+			os.Exit(1)
+		}
+		parts := strings.Split(os.Args[2], "/")
+		cl.ProjName = parts[0]
+		vnumStr := os.Args[3]
+		vnum, err := strconv.ParseInt(vnumStr, 10, 64)
+		if err != nil {
+			fmt.Printf("Number supplied '%s' is not a number.\n", vnumStr)
+			os.Exit(1)
+		}
+		tableStructStmt, err := cl.GetTableStructure(parts[1], vnum)
+		if err != nil {
+			fmt.Printf("Error reading table structure number '%s' of table '%s' of Project '%s'.\nError: %s\n", 
+				vnumStr, parts[1], parts[0], err)
+			os.Exit(1)
+		}
+		fmt.Println(tableStructStmt)
 
 	default:
 		fmt.Println("Unexpected command.")
