@@ -104,6 +104,15 @@ func GetKeyStrPath() string {
 }
 
 
+func GetPort() string {
+  port, err := GetSetting("port")
+  if err != nil {
+    panic(err)
+  }
+
+  return port
+}
+
 func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 	ts := TableStruct{}
 	stmt = strings.TrimSpace(stmt)

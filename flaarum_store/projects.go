@@ -125,7 +125,7 @@ func renameProject(w http.ResponseWriter, r *http.Request) {
   projName := vars["proj"]
   newProjName := vars["nproj"]
 
-  if projName == "keyfile" || projName == "default_proj" {
+  if projName == "keyfile" || projName == "first_proj" {
     printError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", projName)))
     return
   }

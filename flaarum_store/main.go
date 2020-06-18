@@ -93,7 +93,7 @@ func main() {
 	
 	r.Use(keyEnforcementMiddleware)
 
-  port := getPort()
+  port := flaarum_shared.GetPort()
   fmt.Println("Serving on port: " + port)
 
 	err := http.ListenAndServeTLS(fmt.Sprintf(":%s", port), G("https-server.crt"), G("https-server.key"), r)
@@ -120,17 +120,6 @@ func G(objectName string) string {
   }
 
   panic("Improperly configured.")
-}
-
-
-
-func getPort() string {
-  port, err := flaarum_shared.GetSetting("port")
-  if err != nil {
-    panic(err)
-  }
-
-  return port
 }
 
 
