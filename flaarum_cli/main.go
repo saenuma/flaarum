@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"strconv"
+	"encoding/json"
 )
 
 func main() {
@@ -67,6 +68,15 @@ Table(s) Commands:
   dt    Delete Table: Expects one or more project and table combo eg. 'first_proj/users'.
   et    Empty Table: Expects one or more project and table combo eg. 'first_proj/users'.
 
+Table Row Commands:
+
+  ir    Insert a row: Expects a project and table combo eg. 'first_proj/users' and a path containing a
+        json representation of the data to be inserted into the mentioned table.
+
+  ur    Update Row: Expects a project, table and id combo eg. 'first_proj/users/31' and a path containing a
+        json representation of the data to be inserted into the mentioned table.
+
+  dr    Delete Row: Expects one or more project, table and id combo eg. 'first_proj/users/31'
 
 			`)
 
@@ -195,7 +205,7 @@ Table(s) Commands:
 			os.Exit(1)
 		}
 		for _, arg := range os.Args[2:] {
-			parts := strings.Split(os.Args[2], "/")
+			parts := strings.Split(arg, "/")
 			cl.ProjName = parts[0]
 
 			err = cl.DeleteTable(parts[1])
@@ -211,7 +221,7 @@ Table(s) Commands:
 			os.Exit(1)
 		}
 		for _, arg := range os.Args[2:] {
-			parts := strings.Split(os.Args[2], "/")
+			parts := strings.Split(arg, "/")
 			cl.ProjName = parts[0]
 
 			err = cl.EmptyTable(parts[1])
@@ -223,7 +233,7 @@ Table(s) Commands:
 
 	case "ct":
 		if len(os.Args) != 4 {
-			fmt.Println("'ct' command expects the project name and a file containing project structure.")
+			fmt.Println("'ct' command expects the project name and a file containing table structure.")
 			os.Exit(1)
 		}
 
@@ -242,7 +252,7 @@ Table(s) Commands:
 
 	case "uts":
 		if len(os.Args) != 4 {
-			fmt.Println("'uts' command expects the project name and a file containing project structure.")
+			fmt.Println("'uts' command expects the project name and a file containing table structure.")
 			os.Exit(1)
 		}
 
@@ -258,6 +268,90 @@ Table(s) Commands:
 			fmt.Printf("Error updating table.\nError: %s", err)
 			os.Exit(1)
 		}
+
+	case "ir":
+		if len(os.Args) != 4 {
+			fmt.Println(`'ir' command expects a project and table combo eg. 'first_proj/users' and a path containing a
+        json representation of the data to be inserted into the mentioned table.`)
+			os.Exit(1)
+		}
+
+		raw, err := ioutil.ReadFile(os.Args[3])
+		if err != nil {
+			fmt.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
+			os.Exit(1)
+		}
+		rowData := make(map[string]string)
+		err = json.Unmarshal(raw, &rowData)
+		if err != nil {
+			fmt.Printf("The json file is not valid.\nError: %s\n", err)
+			os.Exit(1)
+		}
+
+		parts := strings.Split(os.Args[2], "/")
+		cl.ProjName = parts[0]
+
+		retId, err := cl.InsertRowStr(parts[1], rowData)
+		if err != nil {
+			fmt.Printf("Error inserting a new row.\nError: %s\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println(retId)
+
+	case "ur":
+		if len(os.Args) != 4 {
+			fmt.Println(`'ur' command expects a project, table and id combo eg. 'first_proj/users/31' and a path containing a
+        json representation of the data to be inserted into the mentioned table.`)
+			os.Exit(1)
+		}
+
+		raw, err := ioutil.ReadFile(os.Args[3])
+		if err != nil {
+			fmt.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
+			os.Exit(1)
+		}
+		rowData := make(map[string]string)
+		err = json.Unmarshal(raw, &rowData)
+		if err != nil {
+			fmt.Printf("The json file is not valid.\nError: %s\n", err)
+			os.Exit(1)
+		}
+
+		parts := strings.Split(os.Args[2], "/")
+		cl.ProjName = parts[0]
+
+		err = cl.UpdateRowsStr(fmt.Sprintf(`
+			table: %s
+			where:
+			  id = %s
+			`, parts[1], parts[2]), rowData)
+		if err != nil {
+			fmt.Printf("Error updating row.\nError: %s\n", err)
+			os.Exit(1)
+		}
+
+	case "dr":
+		if len(os.Args) < 3 {
+			fmt.Printf("'dr' command expects one or more project, table and id combo eg. 'first_proj/users/31'")
+			os.Exit(1)
+		}
+
+		for _, arg := range os.Args[2:] {
+			parts := strings.Split(os.Args[2], "/")
+			cl.ProjName = parts[0]
+
+			err = cl.DeleteRows(fmt.Sprintf(`
+				table: %s
+				where:
+				  id = %s
+				`, parts[1], parts[2]))
+			if err != nil {
+				fmt.Printf("Error deleting '%s'.\nError: %s", arg, err)
+				os.Exit(1)
+			}
+		}
+
 	default:
 		fmt.Println("Unexpected command.")
 		os.Exit(1)
