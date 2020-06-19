@@ -59,11 +59,14 @@ Project(s) Commands:
 Table(s) Commands:
 
   lt    List Tables: Expects a project name after the command.
+  ct    Create Table: Expects a project name and the path to a file containing the table structure
+  uts   Update Table Structure: Expects a project name and the path to a file containing the table structure
   trc   Table Rows Count: Expects a project and table combo eg. 'first_proj/users'
   ctvn  Current Table Version Number: Expects a project and table combo eg. 'first_proj/users'
   ts    Table Structure Statement: Expects a project and table combo eg. 'first_proj/users' and a valid number.
   dt    Delete Table: Expects one or more project and table combo eg. 'first_proj/users'.
   et    Empty Table: Expects one or more project and table combo eg. 'first_proj/users'.
+
 
 			`)
 
@@ -189,6 +192,7 @@ Table(s) Commands:
 	case "dt":
 		if len(os.Args) < 3 {
 			fmt.Println("'dt' command expects combo(s) of project and table eg. 'first_proj/users'.")
+			os.Exit(1)
 		}
 		for _, arg := range os.Args[2:] {
 			parts := strings.Split(os.Args[2], "/")
@@ -204,6 +208,7 @@ Table(s) Commands:
 	case "et":
 		if len(os.Args) < 3 {
 			fmt.Println("'et' command expects combo(s) of project and table eg. 'first_proj/users'.")
+			os.Exit(1)
 		}
 		for _, arg := range os.Args[2:] {
 			parts := strings.Split(os.Args[2], "/")
@@ -216,6 +221,43 @@ Table(s) Commands:
 			}
 		}
 
+	case "ct":
+		if len(os.Args) != 4 {
+			fmt.Println("'ct' command expects the project name and a file containing project structure.")
+			os.Exit(1)
+		}
+
+		raw, err := ioutil.ReadFile(os.Args[3])
+		if err != nil {
+			fmt.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
+			os.Exit(1)
+		}
+
+		cl.ProjName = os.Args[2]
+		err = cl.CreateTable(string(raw))
+		if err != nil {
+			fmt.Printf("Error creating table.\nError: %s", err)
+			os.Exit(1)
+		}
+
+	case "uts":
+		if len(os.Args) != 4 {
+			fmt.Println("'uts' command expects the project name and a file containing project structure.")
+			os.Exit(1)
+		}
+
+		raw, err := ioutil.ReadFile(os.Args[3])
+		if err != nil {
+			fmt.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
+			os.Exit(1)
+		}
+
+		cl.ProjName = os.Args[2]
+		err = cl.UpdateTableStructure(string(raw))
+		if err != nil {
+			fmt.Printf("Error updating table.\nError: %s", err)
+			os.Exit(1)
+		}
 	default:
 		fmt.Println("Unexpected command.")
 		os.Exit(1)
