@@ -13,6 +13,9 @@ import (
 	"strings"
 	"time"
 	"github.com/bankole7782/flaarum/flaarum_shared"
+  "github.com/mcnijman/go-emailaddress"
+  "net"
+  "net/url"
 )
 
 
@@ -76,6 +79,21 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
         dataMap[k + "_day"] = strconv.Itoa(valueInTimeType.Day())
         dataMap[k + "_hour"] = strconv.Itoa(valueInTimeType.Hour())
         dataMap[k + "_date"] = valueInTimeType.Format(flaarum_shared.BROWSER_DATE_FORMAT)
+      } else if fd.FieldType == "email" {
+        _, err := emailaddress.Parse(v)
+        if err != nil {
+          return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in email format.", v, k))
+        }
+      } else if fd.FieldType == "ipaddr" {
+        ipType := net.ParseIP(v)
+        if ipType != nil {
+          return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not an ip address.", v, k))
+        }
+      } else if fd.FieldType == "url" {
+        _, err := url.Parse(v)
+        if err != nil {
+          return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not a valid url.", v, k))
+        }
       }
 
     }

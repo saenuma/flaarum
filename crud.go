@@ -142,7 +142,7 @@ func (cl *Client) ParseRow (rowStr map[string]string, tableStruct flaarum_shared
     if v == "" {
       tmpRow[k] = nil
     } else if ok {
-      if fieldType == "text" || fieldType == "string" {
+      if fieldType == "text" || fieldType == "string" || fieldType == "url" || fieldType == "email" || fieldType == "ipaddr" {
         tmpRow[k] = v
       } else if fieldType == "int" {
         vInt, err := strconv.ParseInt(v, 10, 64)

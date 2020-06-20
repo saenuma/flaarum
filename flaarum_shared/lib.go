@@ -162,7 +162,7 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 		if parts[0] == "id" || parts[0] == "_version" {
 			return ts, errors.New("Bad Statement: the fields 'id' and '_version' are automatically created. Hence can't be used.")
 		}
-		if FindIn([]string{"int", "float", "string", "text", "bool", "date", "datetime"}, parts[1]) == -1 {
+		if FindIn([]string{"int", "float", "string", "text", "bool", "date", "datetime", "email", "url", "ipaddr"}, parts[1]) == -1 {
 			return ts, errors.New(fmt.Sprintf("Bad Statement: the field type '%s' is not allowed in flaarum.", parts[1]))
 		}
 		fs := FieldStruct{FieldName: parts[0], FieldType: parts[1]}

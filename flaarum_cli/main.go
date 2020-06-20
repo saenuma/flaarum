@@ -210,7 +210,7 @@ Table Row Commands:
 
 			err = cl.DeleteTable(parts[1])
 			if err != nil {
-				fmt.Println("Error deleting table '%s'. \nError: %s", arg, err)
+				fmt.Printf("Error deleting table '%s'. \nError: %s", arg, err)
 				os.Exit(1)
 			}
 		}
