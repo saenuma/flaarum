@@ -29,10 +29,9 @@ A database that enforces structures and features its own query language.
 * JSON
 
 
-## Documentation of the Flaarum Library
+## Documentation
 
-The samples of statements that flaarum supports can be found in the
-[accepted_statements folder](https://github.com/bankole7782/flaarum/tree/master/accepted_statements).
+The tutorial pages is located at [pandolee.com](https://pandolee.com/flaarumtuts/intro).
 
 API documentation can be found on [godoc](https://godoc.org/github.com/bankole7782/flaarum)
 
