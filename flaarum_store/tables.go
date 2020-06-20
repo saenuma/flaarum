@@ -61,6 +61,7 @@ func validateTableStruct(projName string, tableStruct flaarum_shared.TableStruct
 
 func formatTableStruct(tableStruct flaarum_shared.TableStruct) string {
 	stmt := "table: " + tableStruct.TableName + "\n"
+	stmt += "table-type: " + tableStruct.TableType + "\n"
 	stmt += "fields:\n"
 	for _, fieldStruct := range tableStruct.Fields {
 		stmt += "\t" + fieldStruct.FieldName + " " + fieldStruct.FieldType
@@ -180,6 +181,17 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 	oldFormattedStmt, err := ioutil.ReadFile(filepath.Join(tablePath, "structures", strconv.Itoa(currentVersionNum)))
 	if err != nil {
 		printError(w, errors.Wrap(err, "ioutil error"))
+		return
+	}
+
+	tableStructOld, err := flaarum_shared.ParseTableStructureStmt(string(oldFormattedStmt))
+	if err != nil {
+		printError(w, err)
+		return
+	}	
+
+	if tableStructOld.TableType != tableStruct.TableType {
+		printError(w, errors.New("An existing table's table type cannot be changed."))
 		return
 	}
 

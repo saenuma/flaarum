@@ -13,8 +13,10 @@ import (
 )
 
 
-// InsertRowStr inserts a row into a table. It expects the input to be of type map[string]string
-func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (int64, error) {
+// InsertRowStr inserts a row into a table. It expects the input to be of type map[string]string.
+// It returns a string which is parsable to an int64 for proper tables. For 'logs' tables it 
+// returns a string which is not parsable to int64
+func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (string, error) {
 	urlValues := url.Values{}
 	urlValues.Add("key-str", cl.KeyStr)
 	for k, v := range toInsert {
@@ -23,22 +25,18 @@ func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (in
 
 	resp, err := httpCl.PostForm(fmt.Sprintf("%sinsert-row/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
 	if err != nil {
-		return -1, errors.Wrap(err, "http error")
+		return "", errors.Wrap(err, "http error")
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return -1, errors.Wrap(err, "ioutil error")
+		return "", errors.Wrap(err, "ioutil error")
 	}
 
 	if resp.StatusCode == 200 {
-		retId, err := strconv.ParseInt(string(body), 10, 64)
-		if err != nil {
-			return -1, errors.Wrap(err, "strconv error")
-		}
-		return retId, nil
+		return string(body), nil
 	} else {
-		return -1, errors.New(string(body))
+		return "", errors.New(string(body))
 	}
 }
 
@@ -102,10 +100,10 @@ func (cl *Client) convertInterfaceMapToStringMap(tableName string, oldMap map[st
 
 
 // InsertRowStr inserts a row into a table. It expects the toInsert to be of type map[string]interface{}.
-func (cl *Client) InsertRowAny(tableName string, toInsert map[string]interface{}) (int64, error) {
+func (cl *Client) InsertRowAny(tableName string, toInsert map[string]interface{}) (string, error) {
 	toInsertStr, err := cl.convertInterfaceMapToStringMap(tableName, toInsert)
   if err != nil {
-    return -1, err
+    return "", err
   }
 
 	return cl.InsertRowStr(tableName, toInsertStr)
@@ -181,13 +179,6 @@ func (cl *Client) ParseRow (rowStr map[string]string, tableStruct flaarum_shared
     }
   }
 
-  if _, ok := rowStr["id"]; ok {
-    vInt, err := strconv.ParseInt(rowStr["id"], 10, 64)
-    if err != nil {
-      return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not of type 'int'", rowStr["id"], "id"))
-    }
-    tmpRow["id"] = vInt
-  }
   if _, ok := rowStr["_version"]; ok {
     tmpRow["_version"], _ = strconv.ParseInt(rowStr["_version"], 10, 64)
   }

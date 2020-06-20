@@ -207,54 +207,93 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 	tablesMutexes[fullTableName].Lock()
 	defer tablesMutexes[fullTableName].Unlock()
 
-	var nextId int64
-	if ! doesPathExists(filepath.Join(tablePath, "lastId")) {
-		nextId = 1
-	} else {
-		raw, err := ioutil.ReadFile(filepath.Join(tablePath, "lastId"))
-		if err != nil {
-			printError(w, errors.Wrap(err, "ioutil error"))
-			return
-		}
-
-		rawNum, err := strconv.ParseInt(string(raw), 10, 64)
-		if err != nil {
-			printError(w, errors.Wrap(err, "strconv error"))
-			return
-		}
-		nextId = rawNum + 1
-	}
-
-	nextIdStr := strconv.FormatInt(nextId, 10)
-
-  err = saveRowData(projName, tableName, nextIdStr, toInsert)
+  tableStruct, err := getCurrentTableStructureParsed(projName, tableName)
   if err != nil {
-  	printError(w, err)
-  	return
+    printError(w, err)
+    return
   }
 
-  // create indexes
-  for k, v := range toInsert {
-    if isFieldExemptedFromIndexing(projName, tableName, k) {
-      continue
+  if tableStruct.TableType == "proper" {
+
+    var nextId int64
+    if ! doesPathExists(filepath.Join(tablePath, "lastId")) {
+      nextId = 1
+    } else {
+      raw, err := ioutil.ReadFile(filepath.Join(tablePath, "lastId"))
+      if err != nil {
+        printError(w, errors.Wrap(err, "ioutil error"))
+        return
+      }
+
+      rawNum, err := strconv.ParseInt(string(raw), 10, 64)
+      if err != nil {
+        printError(w, errors.Wrap(err, "strconv error"))
+        return
+      }
+      nextId = rawNum + 1
     }
 
-    err := flaarum_shared.MakeIndex(projName, tableName, k, v, nextIdStr)
+    nextIdStr := strconv.FormatInt(nextId, 10)
+
+    err = saveRowData(projName, tableName, nextIdStr, toInsert)
     if err != nil {
       printError(w, err)
       return
     }
+
+    // create indexes
+    for k, v := range toInsert {
+      if isFieldExemptedFromIndexing(projName, tableName, k) {
+        continue
+      }
+
+      err := flaarum_shared.MakeIndex(projName, tableName, k, v, nextIdStr)
+      if err != nil {
+        printError(w, err)
+        return
+      }
+    }
+
+
+    // store last id
+    err = ioutil.WriteFile(filepath.Join(tablePath, "lastId"), []byte(nextIdStr), 0777)
+    if err != nil {
+      printError(w, errors.Wrap(err, "ioutil error"))
+      return
+    }
+
+    fmt.Fprintf(w, nextIdStr)
+
+  } else if tableStruct.TableType == "logs" {
+    nextId := flaarum_shared.UntestedRandomString(15)
+    timeNow := time.Now()
+    toInsert["created"] = timeNow.Format(flaarum_shared.BROWSER_DATETIME_FORMAT)
+    toInsert["created_year"] = strconv.Itoa(timeNow.Year())
+    toInsert["created_month"] = strconv.Itoa(int(timeNow.Month()))
+    toInsert["created_day"] = strconv.Itoa(timeNow.Day())
+    toInsert["created_hour"] = strconv.Itoa(timeNow.Hour())
+    toInsert["created_date"] = timeNow.Format(flaarum_shared.BROWSER_DATE_FORMAT)
+
+    err = saveRowData(projName, tableName, nextId, toInsert)
+    if err != nil {
+      printError(w, err)
+      return
+    }
+
+    // create index only for 'implicit datetime type'
+    for k, v := range toInsert {
+      if k == "created" || strings.HasPrefix(k, "created_") {
+        err := flaarum_shared.MakeIndex(projName, tableName, k, v, nextId)
+        if err != nil {
+          printError(w, err)
+          return
+        }        
+      }
+    }
+
+    fmt.Fprintf(w, nextId)
   }
 
-
-	// store last id
-	err = ioutil.WriteFile(filepath.Join(tablePath, "lastId"), []byte(nextIdStr), 0777)
-	if err != nil {
-		printError(w, errors.Wrap(err, "ioutil error"))
-		return
-	}
-
-	fmt.Fprintf(w, nextIdStr)
 }
 
 

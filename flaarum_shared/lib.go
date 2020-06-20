@@ -36,6 +36,7 @@ type FKeyStruct struct {
 
 type TableStruct struct {
 	TableName string
+	TableType string // one or "proper" or "logs"
 	Fields []FieldStruct
 	ForeignKeys []FKeyStruct
 	UniqueGroups [][]string
@@ -123,6 +124,19 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 	line1 := strings.Split(stmt, "\n")[0]
 	tableName := strings.TrimSpace(line1[len("table:") :])
 	ts.TableName = tableName
+	ts.TableType = "proper"
+
+	tableTypeBeginIndex := strings.Index(stmt, "table-type:")
+	if tableTypeBeginIndex != -1 {
+		tableTypeBeginIndex += len("table-type:")
+		tableTypeEndIndex := strings.Index(stmt[tableTypeBeginIndex: ], "\n")
+
+		tableType := strings.TrimSpace(stmt[tableTypeBeginIndex: tableTypeBeginIndex + tableTypeEndIndex ])
+		if tableType != "proper" && tableType != "logs" {
+			return ts, errors.New("Bad Statement: unsupported table type: expecting either 'proper' or 'logs'.")
+		}
+		ts.TableType = tableType
+	}
 
 	fieldsBeginPart := strings.Index(stmt, "fields:")
 	if fieldsBeginPart == -1 {
@@ -441,7 +455,7 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 
 func UntestedRandomString(length int) string {
   var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
-  const charset = "abcdefghijklmnopqrstuvwxyz1234567890"
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
   b := make([]byte, length)
   for i := range b {
