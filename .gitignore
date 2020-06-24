@@ -17,7 +17,7 @@
 tmp/
 flaarum_store/tmp/
 flaarum_store/flaarum_store
-flaarum_mkpass/flaarum_mkpass
+flaarum_key/flaarum_key
 
 artifacts/
 flaarum.tar.xz
