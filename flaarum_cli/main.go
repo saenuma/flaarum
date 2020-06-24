@@ -9,11 +9,12 @@ import (
 	"strings"
 	"strconv"
 	"encoding/json"
+	"github.com/gookit/color"
 )
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("expected a command. Open help to view commands.")
+		color.Red.Println("expected a command. Open help to view commands.")
 		os.Exit(1)
 	}
 
@@ -22,14 +23,14 @@ func main() {
 	var keyStr string
 	inProd, err := flaarum_shared.GetSetting("in_production")
 	if err != nil {
-		fmt.Println("unexpected error. Have you installed  and launched flaarum?")
+		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
 		os.Exit(1)	
 	}
 	if inProd == "true" || inProd == "t" {
 		keyStrPath := flaarum_shared.GetKeyStrPath()
 		raw, err := ioutil.ReadFile(keyStrPath)
 		if err != nil {
-			fmt.Println(err)
+			color.Red.Println(err)
 			os.Exit(1)
 		}
 		keyStr = string(raw)
@@ -83,7 +84,7 @@ Table Row Commands:
 	case "lp":
 		projects, err := cl.ListProjects()
 		if err != nil {
-			fmt.Println(err)
+			color.Red.Println(err)
 			os.Exit(1)
 		}
 		fmt.Println("Projects List:\n")
@@ -93,50 +94,50 @@ Table Row Commands:
 		fmt.Println()
 	case "cp":
 		if len(os.Args) < 3 {
-			fmt.Println("'cp' command expects project(s)")
+			color.Red.Println("'cp' command expects project(s)")
 			os.Exit(1)
 		}
 		for _, arg := range os.Args[2:] {
 			err = cl.CreateProject(arg)
 			if err != nil {
-				fmt.Println("Error creating project '%s':\nError: %s", arg, err)
+				color.Red.Printf("Error creating project '%s':\nError: %s\n", arg, err)
 				os.Exit(1)
 			}
 		}
 	case "rp":
 		if len(os.Args) != 4 {
-			fmt.Println("'rp' command expects an old project arg and a new project arg.")
+			color.Red.Println("'rp' command expects an old project arg and a new project arg.")
 			os.Exit(1)
 		}
 
 		err = cl.RenameProject(os.Args[2], os.Args[3])
 		if err != nil {
-			fmt.Println("Error renaming project from '%s' to '%s'.\nError: %s", os.Args[2], os.Args[3], err)
+			color.Red.Printf("Error renaming project from '%s' to '%s'.\nError: %s\n", os.Args[2], os.Args[3], err)
 			os.Exit(1)
 		}
 
 	case "dp":
 		if len(os.Args) < 3 {
-			fmt.Println("'dp' command expects project(s)")
+			color.Red.Println("'dp' command expects project(s)")
 			os.Exit(1)
 		}
 		for _, arg := range os.Args[2:] {
 			err = cl.DeleteProject(arg)
 			if err != nil {
-				fmt.Println("Error deleting project '%s':\nError: %s", arg, err)
+				color.Red.Printf("Error deleting project '%s':\nError: %s\n", arg, err)
 				os.Exit(1)
 			}
 		}
 
 	case "lt":
 		if len(os.Args) != 3 {
-			fmt.Println("'lt' command expects a project name.")
+			color.Red.Println("'lt' command expects a project name.")
 			os.Exit(1)
 		}
 		cl.ProjName = os.Args[2]
 		tables, err := cl.ListTables()
 		if err != nil {
-			fmt.Println("Error listing tables of project '%s'.\nError: %s", os.Args[2], err)
+			color.Red.Printf("Error listing tables of project '%s'.\nError: %s\n", os.Args[2], err)
 			os.Exit(1)
 		}
 		fmt.Printf("Tables List of Project '%s' List:\n\n", os.Args[2])
@@ -147,7 +148,7 @@ Table Row Commands:
 
 	case "trc":
 		if len(os.Args) != 3 {
-			fmt.Println("'trc' command expects a project and table combo eg. 'first_proj/users'.")
+			color.Red.Println("'trc' command expects a project and table combo eg. 'first_proj/users'.")
 			os.Exit(1)
 		}
 		parts := strings.Split(os.Args[2], "/")
@@ -157,7 +158,7 @@ Table Row Commands:
 			`, parts[1]))
 
 		if err != nil {
-			fmt.Printf("Error reading table '%s' of project '%s' row count.\nError: %s\n", parts[1], parts[0], err)
+			color.Red.Printf("Error reading table '%s' of project '%s' row count.\nError: %s\n", parts[1], parts[0], err)
 			os.Exit(1)
 		}
 
@@ -165,14 +166,14 @@ Table Row Commands:
 
 	case "ctvn":
 		if len(os.Args) != 3 {
-			fmt.Println("'ctvn' command expects a project and table combo eg. 'first_proj/users'.")
+			color.Red.Println("'ctvn' command expects a project and table combo eg. 'first_proj/users'.")
 			os.Exit(1)
 		}
 		parts := strings.Split(os.Args[2], "/")
 		cl.ProjName = parts[0]
 		vnum, err := cl.GetCurrentTableVersionNum(parts[1])
 		if err != nil {
-			fmt.Printf("Error reading current table version number of table '%s' of Project '%s'.\nError: %s\n", 
+			color.Red.Printf("Error reading current table version number of table '%s' of Project '%s'.\nError: %s\n", 
 				parts[1], parts[0], err)
 			os.Exit(1)
 		}
@@ -180,7 +181,7 @@ Table Row Commands:
 
 	case "ts":
 		if len(os.Args) != 4 {
-			fmt.Println("'ts' command expects a project table combo eg. 'first_proj/users' and a valid version number.")
+			color.Red.Println("'ts' command expects a project table combo eg. 'first_proj/users' and a valid version number.")
 			os.Exit(1)
 		}
 		parts := strings.Split(os.Args[2], "/")
@@ -188,12 +189,12 @@ Table Row Commands:
 		vnumStr := os.Args[3]
 		vnum, err := strconv.ParseInt(vnumStr, 10, 64)
 		if err != nil {
-			fmt.Printf("Number supplied '%s' is not a number.\n", vnumStr)
+			color.Red.Printf("Number supplied '%s' is not a number.\n", vnumStr)
 			os.Exit(1)
 		}
 		tableStructStmt, err := cl.GetTableStructure(parts[1], vnum)
 		if err != nil {
-			fmt.Printf("Error reading table structure number '%s' of table '%s' of Project '%s'.\nError: %s\n", 
+			color.Red.Printf("Error reading table structure number '%s' of table '%s' of Project '%s'.\nError: %s\n", 
 				vnumStr, parts[1], parts[0], err)
 			os.Exit(1)
 		}
@@ -201,7 +202,7 @@ Table Row Commands:
 
 	case "dt":
 		if len(os.Args) < 3 {
-			fmt.Println("'dt' command expects combo(s) of project and table eg. 'first_proj/users'.")
+			color.Red.Println("'dt' command expects combo(s) of project and table eg. 'first_proj/users'.")
 			os.Exit(1)
 		}
 		for _, arg := range os.Args[2:] {
@@ -210,14 +211,14 @@ Table Row Commands:
 
 			err = cl.DeleteTable(parts[1])
 			if err != nil {
-				fmt.Printf("Error deleting table '%s'. \nError: %s", arg, err)
+				color.Red.Printf("Error deleting table '%s'. \nError: %s\n", arg, err)
 				os.Exit(1)
 			}
 		}
 
 	case "et":
 		if len(os.Args) < 3 {
-			fmt.Println("'et' command expects combo(s) of project and table eg. 'first_proj/users'.")
+			color.Red.Println("'et' command expects combo(s) of project and table eg. 'first_proj/users'.")
 			os.Exit(1)
 		}
 		for _, arg := range os.Args[2:] {
@@ -226,65 +227,65 @@ Table Row Commands:
 
 			err = cl.EmptyTable(parts[1])
 			if err != nil {
-				fmt.Println("Error emptying table '%s'. \nError: %s", arg, err)
+				color.Red.Printf("Error emptying table '%s'. \nError: %s\n", arg, err)
 				os.Exit(1)
 			}
 		}
 
 	case "ct":
 		if len(os.Args) != 4 {
-			fmt.Println("'ct' command expects the project name and a file containing table structure.")
+			color.Red.Println("'ct' command expects the project name and a file containing table structure.")
 			os.Exit(1)
 		}
 
 		raw, err := ioutil.ReadFile(os.Args[3])
 		if err != nil {
-			fmt.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
+			color.Red.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
 			os.Exit(1)
 		}
 
 		cl.ProjName = os.Args[2]
 		err = cl.CreateTable(string(raw))
 		if err != nil {
-			fmt.Printf("Error creating table.\nError: %s", err)
+			color.Red.Printf("Error creating table.\nError: %s\n", err)
 			os.Exit(1)
 		}
 
 	case "uts":
 		if len(os.Args) != 4 {
-			fmt.Println("'uts' command expects the project name and a file containing table structure.")
+			color.Red.Println("'uts' command expects the project name and a file containing table structure.")
 			os.Exit(1)
 		}
 
 		raw, err := ioutil.ReadFile(os.Args[3])
 		if err != nil {
-			fmt.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
+			color.Red.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
 			os.Exit(1)
 		}
 
 		cl.ProjName = os.Args[2]
 		err = cl.UpdateTableStructure(string(raw))
 		if err != nil {
-			fmt.Printf("Error updating table.\nError: %s", err)
+			color.Red.Printf("Error updating table.\nError: %s\n", err)
 			os.Exit(1)
 		}
 
 	case "ir":
 		if len(os.Args) != 4 {
-			fmt.Println(`'ir' command expects a project and table combo eg. 'first_proj/users' and a path containing a
+			color.Red.Println(`'ir' command expects a project and table combo eg. 'first_proj/users' and a path containing a
         json representation of the data to be inserted into the mentioned table.`)
 			os.Exit(1)
 		}
 
 		raw, err := ioutil.ReadFile(os.Args[3])
 		if err != nil {
-			fmt.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
+			color.Red.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
 			os.Exit(1)
 		}
 		rowData := make(map[string]string)
 		err = json.Unmarshal(raw, &rowData)
 		if err != nil {
-			fmt.Printf("The json file is not valid.\nError: %s\n", err)
+			color.Red.Printf("The json file is not valid.\nError: %s\n", err)
 			os.Exit(1)
 		}
 
@@ -293,7 +294,7 @@ Table Row Commands:
 
 		retId, err := cl.InsertRowStr(parts[1], rowData)
 		if err != nil {
-			fmt.Printf("Error inserting a new row.\nError: %s\n", err)
+			color.Red.Printf("Error inserting a new row.\nError: %s\n", err)
 			os.Exit(1)
 		}
 
@@ -301,20 +302,20 @@ Table Row Commands:
 
 	case "ur":
 		if len(os.Args) != 4 {
-			fmt.Println(`'ur' command expects a project, table and id combo eg. 'first_proj/users/31' and a path containing a
+			color.Red.Println(`'ur' command expects a project, table and id combo eg. 'first_proj/users/31' and a path containing a
         json representation of the data to be inserted into the mentioned table.`)
 			os.Exit(1)
 		}
 
 		raw, err := ioutil.ReadFile(os.Args[3])
 		if err != nil {
-			fmt.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
+			color.Red.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
 			os.Exit(1)
 		}
 		rowData := make(map[string]string)
 		err = json.Unmarshal(raw, &rowData)
 		if err != nil {
-			fmt.Printf("The json file is not valid.\nError: %s\n", err)
+			color.Red.Printf("The json file is not valid.\nError: %s\n", err)
 			os.Exit(1)
 		}
 
@@ -327,13 +328,13 @@ Table Row Commands:
 			  id = %s
 			`, parts[1], parts[2]), rowData)
 		if err != nil {
-			fmt.Printf("Error updating row.\nError: %s\n", err)
+			color.Red.Printf("Error updating row.\nError: %s\n", err)
 			os.Exit(1)
 		}
 
 	case "dr":
 		if len(os.Args) < 3 {
-			fmt.Printf("'dr' command expects one or more project, table and id combo eg. 'first_proj/users/31'")
+			color.Red.Println("'dr' command expects one or more project, table and id combo eg. 'first_proj/users/31'")
 			os.Exit(1)
 		}
 
@@ -347,13 +348,13 @@ Table Row Commands:
 				  id = %s
 				`, parts[1], parts[2]))
 			if err != nil {
-				fmt.Printf("Error deleting '%s'.\nError: %s", arg, err)
+				color.Red.Printf("Error deleting '%s'.\nError: %s\n", arg, err)
 				os.Exit(1)
 			}
 		}
 
 	default:
-		fmt.Println("Unexpected command.")
+		color.Red.Println("Unexpected command. Run the cli with --help to find out the supported commands.")
 		os.Exit(1)
 	}
 
