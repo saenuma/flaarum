@@ -983,7 +983,6 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
         if err != nil {
           return nil, errors.Wrap(err, "json error.")
         }
-        rowMap2["id"] = data
         for f, d := range rowMap2 {
           rowMap[field + "." + f] = d
         }

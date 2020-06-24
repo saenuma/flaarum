@@ -98,7 +98,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 
     }
 
-    if (v == "" || !ok) && fd.Required {
+    if ok == false && fd.Required {
       return nil, errors.New(fmt.Sprintf("The field '%s' is required.", k))
     }
 
@@ -150,11 +150,11 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
         }
       }
       var joiner string
-      if i > 1 {
+      if i >= 1 {
       	joiner = "and"
       }
 
-      wherePartFragment += fmt.Sprintf("%s%s = '%s' \n", joiner, fieldName, value) 
+      wherePartFragment += fmt.Sprintf("%s %s = '%s' \n", joiner, fieldName, value) 
     }
 
     if len(ug) > 1 {

@@ -92,6 +92,8 @@ func (cl *Client) convertInterfaceMapToStringMap(tableName string, oldMap map[st
       } else if ft == "datetime" {
         newMap[k] = RightDateTimeFormat(vInType)
       }
+    case string:
+      newMap[k] = vInType
     }
   }
 
@@ -121,12 +123,13 @@ func (cl *Client) ParseRow (rowStr map[string]string, tableStruct flaarum_shared
     if _, ok := rowStr[fkd.FieldName + "._version"]; ! ok {
       continue
     }
-    
-    versionInt, err := strconv.ParseInt(rowStr[fkd.FieldName + "_version"], 10, 64)
+
+    versionInt, err := strconv.ParseInt(rowStr[fkd.FieldName + "._version"], 10, 64)
   	if err != nil {
   		return nil, errors.Wrap(err, "strconv error")
   	}
-    otherTableStruct, err := cl.GetTableStructureParsed(tableStruct.TableName, versionInt)
+
+    otherTableStruct, err := cl.GetTableStructureParsed(fkd.PointedTable, versionInt)
     if err != nil {
       return nil, err
     }
@@ -179,12 +182,22 @@ func (cl *Client) ParseRow (rowStr map[string]string, tableStruct flaarum_shared
     }
   }
 
+  tmpRow["id"] = rowStr["id"]
+
   if _, ok := rowStr["_version"]; ok {
-    tmpRow["_version"], _ = strconv.ParseInt(rowStr["_version"], 10, 64)
+    versionInt, err := strconv.ParseInt(rowStr["_version"], 10, 64)
+    if err != nil {
+      return nil, errors.Wrap(err, "strconv error")
+    }
+    tmpRow["_version"] = versionInt
   }
   for _, fkd := range tableStruct.ForeignKeys {
     if _, ok := rowStr[fkd.FieldName + "._version"]; ok {
-      tmpRow[fkd.FieldName + "._version"], _ = strconv.ParseInt(rowStr[fkd.FieldName + "._version"], 10, 64)
+      versionInt, err := strconv.ParseInt(rowStr[fkd.FieldName + "._version"], 10, 64)
+      if err != nil {
+        return nil, errors.Wrap(err, "strconv error")
+      }
+      tmpRow[fkd.FieldName + "._version"] = versionInt
     }
   }
 
@@ -230,7 +243,6 @@ func (cl *Client) Search (stmt string) (*[]map[string]interface{}, error) {
       if err != nil {
         return nil, err
       }
-
       row, err := cl.ParseRow(rowStr, versionedTableStruct)
       if err != nil {
         return nil, err

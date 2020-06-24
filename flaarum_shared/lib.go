@@ -354,7 +354,7 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 				return stmtStruct, errors.New("The words for 'order_by:' part must be two: a field and either of 'asc' or 'desc'")
 			}
 			stmtStruct.OrderBy = parts[0]
-			if parts[1] != "asc" || parts[1] != "desc" {
+			if parts[1] != "asc" && parts[1] != "desc" {
 				return stmtStruct, errors.New(fmt.Sprintf("The order direction must be either of 'asc' or 'desc'. Instead found '%s'",
 					parts[1]))
 			}
