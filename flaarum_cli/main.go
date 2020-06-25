@@ -78,6 +78,8 @@ Table Row Commands:
         json representation of the data to be inserted into the mentioned table.
 
   dr    Delete Row: Expects one or more project, table and id combo eg. 'first_proj/users/31'
+  vr    View Row: Expects one or more project, table and id combo eg. 'first_proj/users/31'
+
 
 			`)
 
@@ -351,6 +353,33 @@ Table Row Commands:
 				color.Red.Printf("Error deleting '%s'.\nError: %s\n", arg, err)
 				os.Exit(1)
 			}
+		}
+
+	case "vr":
+		if len(os.Args) < 3 {
+			color.Red.Println("'vr' command expects one or more project, table and id combo eg. 'first_proj/users/31'")
+			os.Exit(1)
+		}
+
+		for _, arg := range os.Args[2:] {
+			parts := strings.Split(os.Args[2], "/")
+			cl.ProjName = parts[0]
+
+			arow, err := cl.SearchForOne(fmt.Sprintf(`
+				table: %s
+				where:
+					id = %s
+				`, parts[1], parts[2]))
+			if err != nil {
+				color.Red.Printf("Error deleting '%s'.\nError: %s\n", arg, err)
+				os.Exit(1)
+			}
+
+			for k, v := range *arow {
+				fmt.Printf("\"%s\": %v\n", k, v)
+			}
+			fmt.Println()
+
 		}
 
 	default:
