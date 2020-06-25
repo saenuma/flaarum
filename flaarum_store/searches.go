@@ -707,14 +707,18 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             return nil, errors.Wrap(err, "read file failed.")
           }
 
+          allIds := make([]string, 0)
           stringIds := make([]string, 0)
           for _, row := range rows {
-            for _, val := range whereStruct.FieldValues {
-              if row.Name() != val {
-                stringIds = append(stringIds, row.Name())
-              }
+            allIds = append(allIds, row.Name())
+          }
+
+          for _, idStr := range allIds {
+            if flaarum_shared.FindIn(whereStruct.FieldValues, idStr) == -1 {
+              stringIds = append(stringIds, idStr)
             }
           }
+
           beforeFilter = append(beforeFilter, stringIds)
         } else if strings.Contains(whereStruct.FieldName, ".") {
           trueWhereValues := make([]string, 0)
@@ -725,22 +729,29 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             continue
           }
 
+          safeVals := make([]string, 0)
           for _, val := range whereStruct.FieldValues {
-            indexFileName := flaarum_shared.MakeSafeIndexName(val)
-            allIndexes, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
-            if err != nil {
-              return nil, errors.Wrap(err, "read dir failed.")
+            safeVals = append(safeVals, flaarum_shared.MakeSafeIndexName(val))
+          }
+
+          gottenIndexes := make([]string, 0)
+          allIndexesFIs, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
+          if err != nil {
+            return nil, errors.Wrap(err, "ioutil error.")
+          }
+          for _, indexFI := range allIndexesFIs {
+            if flaarum_shared.FindIn(safeVals, indexFI.Name()) == -1 {
+              gottenIndexes = append(gottenIndexes, indexFI.Name())
             }
-            for _, indexFI := range allIndexes {
-              if indexFI.Name() != indexFileName {
-                raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFI.Name()))
-                if err != nil {
-                  return nil, errors.Wrap(err, "read file failed.")
-                }
-                trueWhereValues = arrayOperations.UnionString(trueWhereValues, strings.Split(string(raw), "\n"))
-              }
+          }
+
+          for _, indexedValue := range gottenIndexes {
+            raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexedValue))
+            if err != nil {
+              return nil, errors.Wrap(err, "ioutil error.")
             }
 
+            trueWhereValues = arrayOperations.UnionString(trueWhereValues, strings.Split(string(raw), "\n"))
           }
 
           stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
@@ -751,26 +762,36 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
         } else {
           stringIds := make([]string, 0)
-          for _, val := range whereStruct.FieldValues {
-            indexFileName := flaarum_shared.MakeSafeIndexName(val)
-            allIndexes, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
-            if err != nil {
-              return nil, errors.Wrap(err, "read dir failed.")
-            }
 
-            for _, indPath := range allIndexes {
-              if indPath.Name() != indexFileName {
-                raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indPath.Name()))
-                if err != nil {
-                  return nil, errors.Wrap(err, "read file failed.")
-                }
-                stringIds = arrayOperations.UnionString(stringIds, strings.Split(string(raw), "\n"))
-              }
+          safeVals := make([]string, 0)
+          for _, val := range whereStruct.FieldValues {
+            safeVals = append(safeVals, flaarum_shared.MakeSafeIndexName(val))
+          }
+
+          gottenIndexes := make([]string, 0)
+          allIndexesFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
+          if err != nil {
+            return nil, errors.Wrap(err, "ioutil error.")
+          }
+          for _, indexFI := range allIndexesFIs {
+            if flaarum_shared.FindIn(safeVals, indexFI.Name()) == -1 {
+              gottenIndexes = append(gottenIndexes, indexFI.Name())
             }
           }
+
+          for _, indexedValue := range gottenIndexes {
+            raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexedValue))
+            if err != nil {
+              return nil, errors.Wrap(err, "ioutil error.")
+            }
+
+            stringIds = arrayOperations.UnionString(stringIds, strings.Split(string(raw), "\n"))
+          }
+
           beforeFilter = append(beforeFilter, stringIds)
 
         }
+
 
       } else if whereStruct.Relation == "isnull" {
 
