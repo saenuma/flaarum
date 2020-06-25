@@ -366,7 +366,7 @@ Table Row Commands:
 			cl.ProjName = parts[0]
 
 			arow, err := cl.SearchForOne(fmt.Sprintf(`
-				table: %s
+				table: %s expand
 				where:
 					id = %s
 				`, parts[1], parts[2]))
