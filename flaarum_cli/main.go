@@ -78,7 +78,7 @@ Table Row Commands:
         json representation of the data to be inserted into the mentioned table.
 
   dr    Delete Row: Expects one or more project, table and id combo eg. 'first_proj/users/31'
-  vr    View Row: Expects one or more project, table and id combo eg. 'first_proj/users/31'
+  vr    View Row: Expects a project, table and id combo eg. 'first_proj/users/31'
 
 
 			`)
@@ -356,31 +356,29 @@ Table Row Commands:
 		}
 
 	case "vr":
-		if len(os.Args) < 3 {
-			color.Red.Println("'vr' command expects one or more project, table and id combo eg. 'first_proj/users/31'")
+		if len(os.Args) != 3 {
+			color.Red.Println("'vr' command expects a project, table and id combo eg. 'first_proj/users/31'")
 			os.Exit(1)
 		}
 
-		for _, arg := range os.Args[2:] {
-			parts := strings.Split(os.Args[2], "/")
-			cl.ProjName = parts[0]
+		parts := strings.Split(os.Args[2], "/")
+		cl.ProjName = parts[0]
 
-			arow, err := cl.SearchForOne(fmt.Sprintf(`
-				table: %s expand
-				where:
-					id = %s
-				`, parts[1], parts[2]))
-			if err != nil {
-				color.Red.Printf("Error viewing row '%s'.\nError: %s\n", arg, err)
-				os.Exit(1)
-			}
-
-			for k, v := range *arow {
-				fmt.Printf("\"%s\": %v\n", k, v)
-			}
-			fmt.Println()
-
+		arow, err := cl.SearchForOne(fmt.Sprintf(`
+			table: %s expand
+			where:
+				id = %s
+			`, parts[1], parts[2]))
+		if err != nil {
+			color.Red.Printf("Error viewing row '%s'.\nError: %s\n", os.Args[2], err)
+			os.Exit(1)
 		}
+
+		for k, v := range *arow {
+			fmt.Printf("\"%s\": %v\n", k, v)
+		}
+		fmt.Println()
+
 
 	default:
 		color.Red.Println("Unexpected command. Run the cli with --help to find out the supported commands.")
