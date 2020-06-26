@@ -371,7 +371,7 @@ Table Row Commands:
 					id = %s
 				`, parts[1], parts[2]))
 			if err != nil {
-				color.Red.Printf("Error deleting '%s'.\nError: %s\n", arg, err)
+				color.Red.Printf("Error viewing row '%s'.\nError: %s\n", arg, err)
 				os.Exit(1)
 			}
 
