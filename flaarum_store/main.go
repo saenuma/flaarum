@@ -96,32 +96,12 @@ func main() {
   port := flaarum_shared.GetPort()
   fmt.Println("Serving on port: " + port)
 
-	err := http.ListenAndServeTLS(fmt.Sprintf(":%s", port), G("https-server.crt"), G("https-server.key"), r)
+	err := http.ListenAndServeTLS(fmt.Sprintf(":%s", port), flaarum_shared.G("https-server.crt"), 
+    flaarum_shared.G("https-server.key"), r)
 	if err != nil {
 		panic(err)
 	}
 }
-
-
-func G(objectName string) string {
-  homeDir, err := os.UserHomeDir()
-  if err != nil {
-    panic(err)
-  }
-  folders := make([]string, 0)
-  folders = append(folders, filepath.Join(homeDir, "flaarum/flaarum_store"))
-  folders = append(folders, os.Getenv("SNAP"))
-
-  for _, dir := range folders {
-    testPath := filepath.Join(dir, objectName)
-    if doesPathExists(testPath) {
-      return testPath
-    }
-  }
-
-  panic("Improperly configured.")
-}
-
 
 
 func keyEnforcementMiddleware(next http.Handler) http.Handler {

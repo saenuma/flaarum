@@ -35,6 +35,7 @@ func createProject(w http.ResponseWriter, r *http.Request) {
 		err := os.MkdirAll(filepath.Join(dataPath, projName), 0777)
 		if err != nil {
 			printError(w, errors.Wrap(err, "os error"))
+			return
 		}
 	}
 
