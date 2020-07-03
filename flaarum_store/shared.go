@@ -102,3 +102,8 @@ func isFieldExemptedFromIndexing(projName, tableName, fieldName string) bool {
   }
   return false
 }
+
+
+func makeSafeIndexName(v string) string {
+  return strings.ReplaceAll(v, "/", "~~a~~")
+}

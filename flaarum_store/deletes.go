@@ -193,7 +193,7 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
     }
   }
 
-  indexFileName := flaarum_shared.MakeSafeIndexName(data)
+  indexFileName := makeSafeIndexName(data)
   indexesPath := filepath.Join(getTablePath(projName, tableName), "indexes", fieldName, indexFileName)
   if doesPathExists(indexesPath) {
     raw, err := ioutil.ReadFile(indexesPath)

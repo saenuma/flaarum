@@ -16,6 +16,8 @@ import (
   "github.com/mcnijman/go-emailaddress"
   "net"
   "net/url"
+  "github.com/adam-hanna/arrayOperations"
+  "os"
 )
 
 
@@ -116,7 +118,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
       }
     }
     if fd.Unique && ok1 {
-      indexPath := filepath.Join(dataPath, projName, tableName, "indexes", fd.FieldName, flaarum_shared.MakeSafeIndexName(newValue))
+      indexPath := filepath.Join(dataPath, projName, tableName, "indexes", fd.FieldName, makeSafeIndexName(newValue))
       if doesPathExists(indexPath) {
         return nil, errors.New(fmt.Sprintf("The data '%s' is not unique to field '%s'.", newValue, fd.FieldName))
       }
@@ -265,7 +267,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
         continue
       }
 
-      err := flaarum_shared.MakeIndex(projName, tableName, k, v, nextIdStr)
+      err := makeIndex(projName, tableName, k, v, nextIdStr)
       if err != nil {
         printError(w, err)
         return
@@ -301,7 +303,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
     // create index only for 'implicit datetime type'
     for k, v := range toInsert {
       if k == "created" || strings.HasPrefix(k, "created_") {
-        err := flaarum_shared.MakeIndex(projName, tableName, k, v, nextId)
+        err := makeIndex(projName, tableName, k, v, nextId)
         if err != nil {
           printError(w, err)
           return
@@ -324,6 +326,36 @@ func saveRowData(projName, tableName, rowId string, toWrite map[string]string) e
   err = ioutil.WriteFile(filepath.Join(tablePath, "data", rowId), jsonBytes, 0777)
   if err != nil {
     return errors.Wrap(err, "write file failed.")
+  }
+
+  return nil
+}
+
+
+func makeIndex(projName, tableName, fieldName, newData, rowId string) error {
+  dataPath, _ := GetDataPath()
+  indexFolder := filepath.Join(dataPath, projName, tableName, "indexes", fieldName)
+  err := os.MkdirAll(indexFolder, 0777)
+  if err != nil {
+    return errors.Wrap(err, "create directory failed.")
+  }
+  indexPath := filepath.Join(indexFolder, makeSafeIndexName(newData))
+  if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+    err = ioutil.WriteFile(indexPath, []byte(rowId), 0777)
+    if err != nil {
+      return errors.Wrap(err, "file write failed.")
+    }
+  } else {
+    raw, err := ioutil.ReadFile(indexPath)
+    if err != nil {
+      return errors.Wrap(err, "read failed.")
+    }
+    previousEntries := strings.Split(string(raw), "\n")
+    newEntries := arrayOperations.UnionString(previousEntries, []string{rowId})
+    err = ioutil.WriteFile(indexPath, []byte(strings.Join(newEntries, "\n")), 0777)
+    if err != nil {
+      return errors.Wrap(err, "write failed.")
+    }
   }
 
   return nil

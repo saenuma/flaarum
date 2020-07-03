@@ -156,7 +156,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           trueWhereValues := make([]string, 0)
           parts := strings.Split(whereStruct.FieldName, ".")
 
-          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          indexFileName := makeSafeIndexName(whereStruct.FieldValue)
           pTbl, ok := expDetails[parts[0]]
           if ! ok {
             continue
@@ -179,7 +179,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           beforeFilter = append(beforeFilter, stringIds)
 
         } else {
-          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          indexFileName := makeSafeIndexName(whereStruct.FieldValue)
           indexesPath := filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFileName)
           if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
             beforeFilter = append(beforeFilter, make([]string, 0))
@@ -209,7 +209,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           trueWhereValues := make([]string, 0)
           parts := strings.Split(whereStruct.FieldName, ".")
 
-          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          indexFileName := makeSafeIndexName(whereStruct.FieldValue)
           pTbl, ok := expDetails[parts[0]]
           if ! ok {
             continue
@@ -236,7 +236,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           beforeFilter = append(beforeFilter, stringIds)
 
         } else {
-          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          indexFileName := makeSafeIndexName(whereStruct.FieldValue)
           allIndexes, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
@@ -291,7 +291,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           trueWhereValues := make([]string, 0)
           parts := strings.Split(whereStruct.FieldName, ".")
 
-          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          indexFileName := makeSafeIndexName(whereStruct.FieldValue)
           pTbl, ok := expDetails[parts[0]]
           if ! ok {
             continue
@@ -302,7 +302,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             return nil, errors.Wrap(err, "read dir failed.")
           }
 
-          indexFileName = flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          indexFileName = makeSafeIndexName(whereStruct.FieldValue)
 
           for _, indexFI := range indexFIs {
             raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", whereStruct.FieldName, indexFI.Name()))
@@ -381,7 +381,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
-          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          indexFileName := makeSafeIndexName(whereStruct.FieldValue)
 
           for _, indexFI := range indexFIs {
             raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
@@ -487,7 +487,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           trueWhereValues := make([]string, 0)
           parts := strings.Split(whereStruct.FieldName, ".")
 
-          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          indexFileName := makeSafeIndexName(whereStruct.FieldValue)
           pTbl, ok := expDetails[parts[0]]
           if ! ok {
             continue
@@ -498,7 +498,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             return nil, errors.Wrap(err, "read dir failed.")
           }
 
-          indexFileName = flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          indexFileName = makeSafeIndexName(whereStruct.FieldValue)
 
           for _, indexFI := range indexFIs {
             raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", whereStruct.FieldName, indexFI.Name()))
@@ -576,7 +576,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
-          indexFileName := flaarum_shared.MakeSafeIndexName(whereStruct.FieldValue)
+          indexFileName := makeSafeIndexName(whereStruct.FieldValue)
 
           for _, indexFI := range indexFIs {
             raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
@@ -657,7 +657,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
           for _, inval := range whereStruct.FieldValues {
 
-            indexFileName := flaarum_shared.MakeSafeIndexName(inval)
+            indexFileName := makeSafeIndexName(inval)
             pTbl, ok := expDetails[parts[0]]
             if ! ok {
               continue
@@ -682,7 +682,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           beforeFilter = append(beforeFilter, stringIds)
         } else {
           for _, inval := range whereStruct.FieldValues {
-            indexFileName := flaarum_shared.MakeSafeIndexName(inval)
+            indexFileName := makeSafeIndexName(inval)
             indexesPath := filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFileName)
             if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
               // do nothing
@@ -731,7 +731,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
           safeVals := make([]string, 0)
           for _, val := range whereStruct.FieldValues {
-            safeVals = append(safeVals, flaarum_shared.MakeSafeIndexName(val))
+            safeVals = append(safeVals, makeSafeIndexName(val))
           }
 
           gottenIndexes := make([]string, 0)
@@ -765,7 +765,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
           safeVals := make([]string, 0)
           for _, val := range whereStruct.FieldValues {
-            safeVals = append(safeVals, flaarum_shared.MakeSafeIndexName(val))
+            safeVals = append(safeVals, makeSafeIndexName(val))
           }
 
           gottenIndexes := make([]string, 0)

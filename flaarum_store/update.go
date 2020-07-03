@@ -124,7 +124,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
           printError(w, err)
           return
         }
-        err = flaarum_shared.MakeIndex(projName, tableName, fieldName, newData, row["id"])
+        err = makeIndex(projName, tableName, fieldName, newData, row["id"])
         if err != nil {
           printError(w, err)
           return
