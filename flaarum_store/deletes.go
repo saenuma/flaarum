@@ -171,7 +171,6 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
     dMap[f + "_year"] = strconv.Itoa(valueInTimeType.Year())
     dMap[f + "_month"] = strconv.Itoa(int(valueInTimeType.Month()))
     dMap[f + "_day"] = strconv.Itoa(valueInTimeType.Day())
-    dMap[f + "_tz"] = valueInTimeType.Location().String()
 
     for toDeleteField, fieldData := range dMap {
       err := deleteIndex(projName, tableName, toDeleteField, fieldData, rowId, version)
@@ -190,7 +189,6 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
     dMap[f + "_year"] = strconv.Itoa(valueInTimeType.Year())
     dMap[f + "_month"] = strconv.Itoa(int(valueInTimeType.Month()))
     dMap[f + "_day"] = strconv.Itoa(valueInTimeType.Day())
-    dMap[f + "_tz"] = valueInTimeType.Location().String()
     dMap[f + "_hour"] = strconv.Itoa(valueInTimeType.Hour())
 
     for toDeleteField, fieldData := range dMap {
@@ -270,12 +268,10 @@ func innerDeleteField(projName, tableName, fieldName string, rows *[]map[string]
         delete(row, f + "_year")
         delete(row, f + "_month")
         delete(row, f + "_day")
-        delete(row, f + "_tz")
       } else if confirmFieldType(projName, tableName, f, "datetime", row["_version"]) {
         delete(row, f + "_year")
         delete(row, f + "_month")
         delete(row, f + "_day")
-        delete(row, f + "_tz")
         delete(row, f + "_hour")
       }
     }
