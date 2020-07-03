@@ -330,7 +330,7 @@ func emptyTable(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  toDelete := []string{"data", "indexes", "lastId"}
+  toDelete := []string{"data", "indexes", "tindexes", "lastId"}
   for _, todo := range toDelete {
     err := os.RemoveAll(filepath.Join(dataPath, projName, tableName, todo))
     if err != nil {
@@ -339,7 +339,7 @@ func emptyTable(w http.ResponseWriter, r *http.Request) {
     }
   }
 
-  for _, tm := range toDelete[:2] {
+  for _, tm := range toDelete[:3] {
     toMakePath := filepath.Join(dataPath, projName, tableName, tm)
     err := os.MkdirAll(toMakePath, 0777)
     if err != nil {
