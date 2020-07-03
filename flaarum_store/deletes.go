@@ -125,6 +125,8 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 
 
 func innerDelete(projName, tableName string, rows *[]map[string]string) error {
+  dataPath, _ := GetDataPath()
+
   for _, row := range *rows {
     // delete index
     for f, d := range row {
@@ -132,8 +134,14 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
         continue
       }
 
-      if ! isFieldExemptedFromIndexing(projName, tableName, f) {
+      if ! isFieldOfTypeText(projName, tableName, f) {
         err := deleteIndex(projName, tableName, f, d, row["id"], row["_version"])
+        if err != nil {
+          return err
+        }
+      } else {
+        err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "data", fmt.Sprintf("%s.rtext", row["id"])), 
+          []byte("ok"), 0777)
         if err != nil {
           return err
         }
@@ -249,7 +257,7 @@ func innerDeleteField(projName, tableName, fieldName string, rows *[]map[string]
     f := fieldName
     data, ok := row[f]
     if ok {
-      isFieldExempted := isFieldExemptedFromIndexing(projName, tableName, f)
+      isFieldExempted := isFieldOfTypeText(projName, tableName, f)
       if isFieldExempted == false {
         err := deleteIndex(projName, tableName, f, data, row["id"], row["_version"])
         if err != nil {

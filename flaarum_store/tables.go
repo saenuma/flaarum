@@ -122,7 +122,7 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	toMake := []string{"data", "indexes", "structures"}
+	toMake := []string{"data", "indexes", "tindexes", "structures"}
 	for _, tm := range toMake {
 		err := os.MkdirAll(filepath.Join(dataPath, projName, tableStruct.TableName, tm), 0777)
 		if err != nil {

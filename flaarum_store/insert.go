@@ -263,15 +263,22 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
     // create indexes
     for k, v := range toInsert {
-      if isFieldExemptedFromIndexing(projName, tableName, k) {
-        continue
+      if isFieldOfTypeText(projName, tableName, k) {
+        // create a .text file which is a message to the tindexer program.
+        err = ioutil.WriteFile(filepath.Join(tablePath, "data", fmt.Sprintf("%s.text", nextIdStr)), 
+          []byte(v), 0777)
+        if err != nil {
+          printError(w, errors.Wrap(err, "ioutil error"))
+          return
+        }
+      } else {
+        err := makeIndex(projName, tableName, k, v, nextIdStr)
+        if err != nil {
+          printError(w, err)
+          return
+        }
       }
 
-      err := makeIndex(projName, tableName, k, v, nextIdStr)
-      if err != nil {
-        printError(w, err)
-        return
-      }
     }
 
 

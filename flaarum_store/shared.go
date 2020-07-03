@@ -93,7 +93,7 @@ func getTablePath(projName, tableName string) string {
 }
 
 
-func isFieldExemptedFromIndexing(projName, tableName, fieldName string) bool {
+func isFieldOfTypeText(projName, tableName, fieldName string) bool {
   ts, _ := getCurrentTableStructureParsed(projName, tableName)
   for _, fd := range ts.Fields {
     if fd.FieldName == fieldName && fd.FieldType == "text" {

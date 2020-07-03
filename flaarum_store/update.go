@@ -7,6 +7,8 @@ import (
   "fmt"
   "github.com/bankole7782/flaarum/flaarum_shared"
   "strconv"
+  "io/ioutil"
+  "path/filepath"
 )
 
 
@@ -101,17 +103,27 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
     patchedRows[i] = validatedRow
   }
 
+  dataPath, _ := GetDataPath()
+
   createTableMutexIfNecessary(projName, tableName)
   fullTableName := projName + ":" + tableName
   tablesMutexes[fullTableName].Lock()
   defer tablesMutexes[fullTableName].Unlock()
 
+  // create or delete indexes.
   for i, row := range patchedRows {
     for fieldName, newData := range row {
       if fieldName == "id" {
         continue
       }
-      if isFieldExemptedFromIndexing(projName, tableName, fieldName) {
+      if isFieldOfTypeText(projName, tableName, fieldName) {
+        // create a .text file which is a message to the tindexer program.
+        err = ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "data", fmt.Sprintf("%s.text", row["id"])), 
+          []byte(newData), 0777)
+        if err != nil {
+          printError(w, errors.Wrap(err, "ioutil error"))
+          return
+        }
         continue
       }
       allOldRows := *rows
