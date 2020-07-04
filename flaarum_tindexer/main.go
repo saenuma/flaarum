@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"os"
 	"sync"
+	"github.com/microcosm-cc/bluemonday"
 )
 
 var (
@@ -132,7 +133,8 @@ func doIndex(textPath string) {
 		return
 	}
 	
-	words := strings.Fields(string(raw))
+	textStrippedOfHtml := bluemonday.StrictPolicy().Sanitize(string(raw))
+	words := strings.Fields(textStrippedOfHtml)
 
 	wordCountMap := make(map[string]int64)
 	for _, word := range words {
