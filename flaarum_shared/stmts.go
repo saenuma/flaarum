@@ -312,3 +312,31 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 
 	return stmtStruct, nil
 }
+
+
+// Full text search statement
+type FTSStmtStruct struct{
+	Optional []string
+	Compulsory []string
+	Excluded []string
+}
+
+
+func ParseFTSStmt(stmt string) FTSStmtStruct {
+	optional := make([]string, 0)
+	compulsory := make([]string, 0)
+	excluded := make([]string, 0)
+
+	stmt = strings.TrimSpace(stmt)
+	for _, part := range strings.Fields(stmt) {
+		if strings.HasPrefix(part, "+") {
+			compulsory = append(compulsory, part[1:])
+		} else if strings.HasPrefix(part, "-") {
+			excluded = append(excluded, part[1:])
+		} else {
+			optional = append(optional, part)
+		}
+	}
+
+	return FTSStmtStruct{optional, compulsory, excluded}
+}

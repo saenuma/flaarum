@@ -1,4 +1,5 @@
-// This package contains functions shared by the parts of this project
+// This package contains functions shared by the programs of this project. Some of these functions is expected to run
+// on the same machine as a flaarum server.
 package flaarum_shared
 
 import (
@@ -10,7 +11,30 @@ import (
 	"math/rand"
 	"time"
 	"encoding/json"
+  "github.com/kljensen/snowball"  
+  "fmt"
 )
+
+
+var (
+  STOP_WORDS []string
+)
+
+
+func init() {
+  // load stop words once
+  stopWordsJsonPath := G("english-stopwords.json")
+  jsonBytes, err := ioutil.ReadFile(stopWordsJsonPath)
+  if err != nil {
+    panic(err)
+  }
+  stopWordsList := make([]string, 0)
+  err = json.Unmarshal(jsonBytes, &stopWordsList)
+  if err != nil {
+    panic(err)
+  }
+  STOP_WORDS = stopWordsList
+}
 
 
 func DoesPathExists(p string) bool {
@@ -151,4 +175,34 @@ func UntestedRandomString(length int) string {
     b[i] = charset[seededRand.Intn(len(charset))]
   }
   return string(b)
+}
+
+
+var ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789"
+
+func CleanWord(word string) string {
+  word = strings.ToLower(word)
+
+  allowedCharsList := strings.Split(ALLOWED_CHARS, "")
+
+  if strings.HasSuffix(word, "'s") {
+    word = word[: len(word) - len("'s")]
+  }
+
+  newWord := ""
+  for _, ch := range strings.Split(word, "") {
+    if FindIn(allowedCharsList, ch) != -1 {
+      newWord += ch
+    }
+  }
+
+  var toWriteWord string
+  stemmed, err := snowball.Stem(newWord, "english", true)
+  if err != nil {
+    toWriteWord = newWord
+    fmt.Println(errors.Wrap(err, "stemmer error."))
+  }
+  toWriteWord = stemmed
+
+  return toWriteWord
 }

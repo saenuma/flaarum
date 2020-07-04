@@ -7,35 +7,11 @@ import (
 	"time"
 	"github.com/radovskyb/watcher"
 	"strings"
-	"encoding/json"
 	"io/ioutil"
 	"github.com/pkg/errors"
 	"path/filepath"
 	"os"
-	"github.com/kljensen/snowball"	
 )
-
-
-var (
-	STOP_WORDS []string
-)
-
-
-func init() {
-	// load stop words once
-	stopWordsJsonPath := flaarum_shared.G("english-stopwords.json")
-	jsonBytes, err := ioutil.ReadFile(stopWordsJsonPath)
-	if err != nil {
-		panic(err)
-	}
-	stopWordsList := make([]string, 0)
-	err = json.Unmarshal(jsonBytes, &stopWordsList)
-	if err != nil {
-		panic(err)
-	}
-	STOP_WORDS = stopWordsList
-
-}
 
 
 func P(err error) {
@@ -81,35 +57,6 @@ func main() {
 
 }
 
-var ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789"
-
-func cleanWord(word string) string {
-	word = strings.ToLower(word)
-
-	allowedCharsList := strings.Split(ALLOWED_CHARS, "")
-
-	if strings.HasSuffix(word, "'s") {
-		word = word[: len(word) - len("'s")]
-	}
-
-	newWord := ""
-	for _, ch := range strings.Split(word, "") {
-		if flaarum_shared.FindIn(allowedCharsList, ch) != -1 {
-			newWord += ch
-		}
-	}
-
-	var toWriteWord string
-	stemmed, err := snowball.Stem(newWord, "english", true)
-	if err != nil {
-		toWriteWord = newWord
-		fmt.Println(errors.Wrap(err, "stemmer error."))
-	}
-	toWriteWord = stemmed
-
-	return toWriteWord
-}
-
 
 func doIndex(textPath string) {
 	raw, err := ioutil.ReadFile(textPath)
@@ -122,17 +69,15 @@ func doIndex(textPath string) {
 	wordCountMap := make(map[string]int64)
 	for _, word := range words {
 		// clean the word.
-		word = cleanWord(word)
+		word = flaarum_shared.CleanWord(word)
 		if word == "" {
+			continue
+		}
+		if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
 			continue
 		}
 
 		oldCount, ok := wordCountMap[word]
-
-		if flaarum_shared.FindIn(STOP_WORDS, word) != -1 {
-			continue
-		}
-
 		if ! ok {
 			wordCountMap[word] = 1
 		} else {

@@ -113,6 +113,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 	}
 
 	retIds := make([]string, 0)
+  textWeights := make(map[string]int64)
 
 	if len(stmtStruct.WhereOptions) == 0 {
 		dataFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
@@ -120,6 +121,9 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 			return nil, errors.Wrap(err, "ioutil error.")
 		}
 		for _, dataFI := range dataFIs {
+      if strings.HasSuffix(dataFI.Name(), ".text") || strings.HasSuffix(dataFI.Name(), ".rtext") {
+        continue
+      }
 			retIds = append(retIds, dataFI.Name())
 		}
 
@@ -131,6 +135,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 			fieldNamesToFieldTypes[fieldStruct.FieldName] = fieldStruct.FieldType
 		}
 
+    ftsCount := 0
 		for i, whereStruct := range stmtStruct.WhereOptions {
 			if i != 0 {
 				if whereStruct.Joiner != "and" && whereStruct.Joiner != "or" {
@@ -138,11 +143,19 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 				}				
 			}
 
-			if fieldNamesToFieldTypes[whereStruct.FieldName] == "text" {
-				return nil, errors.New(fmt.Sprintf("The field '%s' is not searchable since it is of type 'text'", 
-					whereStruct.FieldName))
+			if fieldNamesToFieldTypes[whereStruct.FieldName] == "text" && whereStruct.Relation != "fts" {
+				return nil, errors.New(fmt.Sprintf("The field '%s' is not searchable with '%s' since it is of type 'text'", 
+					whereStruct.FieldName, whereStruct.Relation))
 			}
+
+      if whereStruct.Relation == "fts" {
+        ftsCount += 1
+      }
 		}
+
+    if ftsCount > 1 {
+      return nil, errors.New("Flaarum only supports one 'fts' search in a query.")
+    }
 
 		// main search
 		beforeFilter := make([][]string, 0)
@@ -916,7 +929,135 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
         beforeFilter = append(beforeFilter, stringIds)
 
+      } else if whereStruct.Relation == "fts" {
+
+        if strings.Contains(whereStruct.FieldName, ".") {
+
+        } else {
+
+          if ! isFieldOfTypeText(projName, tableName, whereStruct.FieldName) {
+            continue
+          }
+
+          ftssStruct := flaarum_shared.ParseFTSStmt(whereStruct.FieldValue)
+
+          tmpIds := make([]string, 0)
+
+          fmt.Println(ftssStruct.Compulsory)
+          for _, word := range ftssStruct.Compulsory {
+            // clean the word.
+            word = flaarum_shared.CleanWord(word)
+            if word == "" {
+              continue
+            }
+            if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
+              continue
+            }
+
+            dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", word))
+            if err != nil {
+              tmpIds = make([]string, 0) // reset the compulsoryIds if one word fails.
+              break
+            }
+
+            for _, dirFI := range dirFIs {
+              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "tindexes", word, dirFI.Name()))
+              if err != nil {
+                return nil, errors.Wrap(err, "ioutil error.")
+              }
+
+              wordCount, err := strconv.ParseInt(string(raw), 10, 64)
+              if err != nil {
+                return nil, errors.Wrap(err, "strconv error")
+              }
+              oldWordCount, ok := textWeights[dirFI.Name()]
+              if ! ok {
+                textWeights[dirFI.Name()] = wordCount
+              } else {
+                textWeights[dirFI.Name()] = wordCount + oldWordCount
+              }
+              tmpIds = append(tmpIds, dirFI.Name())
+            }
+
+          }
+
+          for _, word := range ftssStruct.Optional {
+            // clean the word.
+            word = flaarum_shared.CleanWord(word)
+            if word == "" {
+              continue
+            }
+            if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
+              continue
+            }
+            dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", word))
+            if err != nil {
+              continue
+            }
+
+            for _, dirFI := range dirFIs {
+              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "tindexes", word, dirFI.Name()))
+              if err != nil {
+                return nil, errors.Wrap(err, "ioutil error.")
+              }
+
+              wordCount, err := strconv.ParseInt(string(raw), 10, 64)
+              if err != nil {
+                return nil, errors.Wrap(err, "strconv error")
+              }
+
+              oldWordCount, ok := textWeights[dirFI.Name()]
+              if ! ok {
+                textWeights[dirFI.Name()] = wordCount
+              } else {
+                textWeights[dirFI.Name()] = wordCount + oldWordCount
+              }
+
+              tmpIds = append(tmpIds, dirFI.Name())
+            }            
+          }
+
+          excludedIDsOnly := make([]string, 0)
+          for _, word := range ftssStruct.Excluded {
+            // clean the word.
+            word = flaarum_shared.CleanWord(word)
+            if word == "" {
+              continue
+            }
+            if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
+              continue
+            }
+            dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", word))
+            if err != nil {
+              continue
+            }
+
+            for _, dirFI := range dirFIs {
+              _, err := ioutil.ReadFile(filepath.Join(tablePath, "tindexes", word, dirFI.Name()))
+              if err != nil {
+                return nil, errors.Wrap(err, "ioutil error.")
+              }
+
+              excludedIDsOnly = append(excludedIDsOnly, dirFI.Name())
+            }
+
+          }
+
+          tmpIds = arrayOperations.DistinctString(tmpIds)
+          stringIds := make([]string, 0)
+          for _, idStr := range tmpIds {
+            if flaarum_shared.FindIn(excludedIDsOnly, idStr) == -1 {
+              stringIds = append(stringIds, idStr)
+            } else {
+              delete(textWeights, idStr)
+            }
+          }
+
+          beforeFilter = append(beforeFilter, stringIds)
+        }
+      
       }
+
 		}
 
 		// do the 'and' / 'or' transformations
@@ -1036,6 +1177,11 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           } else {
             return elems[i][stmtStruct.OrderBy] < elems[j][stmtStruct.OrderBy]
           }
+        } else if confirmFieldType(projName, tableName, stmtStruct.OrderBy, "text", elems[i]["_version"]) && 
+          confirmFieldType(projName, tableName, stmtStruct.OrderBy, "text", elems[j]["_version"]) {
+            x := textWeights[ elems[i]["id"] ]
+            y := textWeights[ elems[j]["id"] ]
+            return x < y
         } else {
           return elems[i][stmtStruct.OrderBy] < elems[j][stmtStruct.OrderBy]
         }
@@ -1060,6 +1206,11 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           } else {
             return elems[i][stmtStruct.OrderBy] > elems[j][stmtStruct.OrderBy]
           }
+        } else if confirmFieldType(projName, tableName, stmtStruct.OrderBy, "text", elems[i]["_version"]) &&
+          confirmFieldType(projName, tableName, stmtStruct.OrderBy, "text", elems[j]["_version"]) {
+            x := textWeights[ elems[i]["id"] ]
+            y := textWeights[ elems[j]["id"] ]
+            return x > y
         } else {
           return elems[i][stmtStruct.OrderBy] > elems[j][stmtStruct.OrderBy]
         }
