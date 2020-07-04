@@ -14,9 +14,39 @@ import (
 	"sync"
 )
 
+var (
+	mutexesMap map[string]*sync.Mutex
+	debugMode bool
+)
+
+func init() {
+	mutexesMap = make(map[string]*sync.Mutex)
+
+	debug, err := flaarum_shared.GetSetting("debug")
+	if err != nil {
+		panic(err)
+	}
+	if debug == "true" || debug == "t" {
+		debugMode = true
+	}
+}
+
+
+func createMutexIfNecessary(projName, tableName, fieldName string) {
+	objName := projName + ":" + tableName + ":" + fieldName
+	_, ok := mutexesMap[objName]
+	if ! ok {
+		mutexesMap[objName] = &sync.Mutex{}
+	}
+}
+
 
 func P(err error) {
-	fmt.Printf("%+v\n", err)
+	if debugMode {
+		fmt.Printf("%+v\n", err)
+	} else {
+		fmt.Println(err.Error())
+	}
 }
 
 
@@ -66,12 +96,16 @@ func main() {
 			case event := <-w.Event:
 				if strings.HasSuffix(event.Path, ".text") {
 					go doIndex(event.Path)
-					fmt.Println("indexed: " + event.Path)
+					if debugMode {
+						fmt.Println("indexed: " + event.Path)
+					}
 				}
 
 				if strings.HasSuffix(event.Path, ".rtext") {
 					go removeIndex(event.Path)
-					fmt.Println("remove index from instruction file: " + event.Path)
+					if debugMode {
+						fmt.Println("remove index from instruction file: " + event.Path)
+					}
 				}
 			case err := <-w.Error:
 				log.Fatalln(err)
@@ -142,6 +176,12 @@ func doIndex(textPath string) {
 	parts2 := strings.Split(nameFrag, flaarum_shared.TEXT_INTR_DELIM)
 	textIndex := parts2[0]
 	fieldName := parts2[1]
+
+	createMutexIfNecessary(projName, tableName, fieldName)
+	mutexName := projName + ":" + tableName + ":" + fieldName
+	mutexesMap[mutexName].Lock()
+	defer mutexesMap[mutexName].Unlock()
+
 	removeIndexInner(projName, tableName, fieldName, textIndex)
 
 	for word, wordCount := range wordCountMap {
@@ -239,6 +279,12 @@ func removeIndex(textPath string) {
 	parts2 := strings.Split(nameFrag, flaarum_shared.TEXT_INTR_DELIM)
 	textIndex := parts2[0]
 	fieldName := parts2[1]
+
+	createMutexIfNecessary(projName, tableName, fieldName)
+	mutexName := projName + ":" + tableName + ":" + fieldName
+	mutexesMap[mutexName].Lock()
+	defer mutexesMap[mutexName].Unlock()
+
 	removeIndexInner(projName, tableName, fieldName, textIndex)
 
 	err = os.RemoveAll(textPath)
@@ -253,4 +299,3 @@ func removeIndexWG(textPath string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	removeIndex(textPath)
 }
-

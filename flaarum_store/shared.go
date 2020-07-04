@@ -35,7 +35,7 @@ func printError(w http.ResponseWriter, err error) {
   if err1 != nil {
     panic(err1)
   }
-  if debug == "true" {
+  if debug == "true" || debug == "t" {
     http.Error(w, fmt.Sprintf("%+v", err), http.StatusBadRequest)
   } else {
     http.Error(w, fmt.Sprintf("%s", err), http.StatusBadRequest)
