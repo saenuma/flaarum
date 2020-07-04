@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"path/filepath"
 	"os"
+	"sync"
 )
 
 
@@ -18,20 +19,58 @@ func P(err error) {
 	fmt.Printf("%+v\n", err)
 }
 
+
 func main() {
+	dataPath, err := flaarum_shared.GetDataPath()
+	if err != nil {
+		panic(err)
+	}
+	var wg sync.WaitGroup
+	count := 1
+	// create indexes in case the tindexer was off and some insertions went on.
+	err = filepath.Walk(dataPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if ! info.IsDir() {
+			if strings.HasSuffix(info.Name(), ".text") {
+				wg.Add(1)
+				go doIndexWG(path, &wg)
+				count += 1
+			} else if strings.HasSuffix(info.Name(), ".rtext") {
+				wg.Add(1)
+				go removeIndexWG(path, &wg)
+				count += 1	
+			}
+		}
+
+		return nil
+	})
+
+	wg.Wait()
+
+	if err != nil {
+		P(err)
+		return	
+	}
+	
+	fmt.Println("Started...")
+
+	// watch for new files
 	w := watcher.New()
 
 	go func() {
 		for {
 			select {
 			case event := <-w.Event:
-				if strings.HasSuffix(event.Path, ".text") && (event.Op == watcher.Write || event.Op == watcher.Create) {
-					doIndex(event.Path)
+				if strings.HasSuffix(event.Path, ".text") {
+					go doIndex(event.Path)
 					fmt.Println("indexed: " + event.Path)
 				}
 
-				if strings.HasSuffix(event.Path, ".rtext") && (event.Op == watcher.Write || event.Op == watcher.Create) {
-					removeIndex(event.Path)
+				if strings.HasSuffix(event.Path, ".rtext") {
+					go removeIndex(event.Path)
 					fmt.Println("remove index from instruction file: " + event.Path)
 				}
 			case err := <-w.Error:
@@ -41,11 +80,6 @@ func main() {
 			}
 		}
 	}()
-
-	dataPath, err := flaarum_shared.GetDataPath()
-	if err != nil {
-		panic(err)
-	}
 
 	if err := w.AddRecursive(dataPath); err != nil {
 		log.Fatalln(err)
@@ -61,9 +95,9 @@ func main() {
 func doIndex(textPath string) {
 	raw, err := ioutil.ReadFile(textPath)
 	if err != nil {
-		P(errors.Wrap(err, "ioutil error"))
 		return
 	}
+	
 	words := strings.Fields(string(raw))
 
 	wordCountMap := make(map[string]int64)
@@ -133,10 +167,20 @@ func doIndex(textPath string) {
 }
 
 
+func doIndexWG(textPath string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	doIndex(textPath)
+}
+
+
 func removeIndexInner(projName, tableName, fieldName, textIndex string) {
 	dataPath, err := flaarum_shared.GetDataPath()
 	if err != nil {
 		P(err)
+		return
+	}
+
+	if ! flaarum_shared.DoesPathExists(filepath.Join(dataPath, projName, tableName, "tindexes", fieldName)) {
 		return
 	}
 
@@ -160,7 +204,7 @@ func removeIndexInner(projName, tableName, fieldName, textIndex string) {
 	for _, dirFI := range dirsFIs {
 		filesFIs, err := ioutil.ReadDir(filepath.Join(dataPath, projName, tableName, "tindexes", fieldName, dirFI.Name()))
 		if err == nil && len(filesFIs) == 0 {
-			err = os.RemoveAll(filepath.Join(dataPath, projName, tableName, "tindexes", dirFI.Name()))
+			err = os.RemoveAll(filepath.Join(dataPath, projName, tableName, "tindexes", fieldName, dirFI.Name()))
 			if err != nil {
 				P(errors.Wrap(err, "os remove error."))
 				return
@@ -203,3 +247,10 @@ func removeIndex(textPath string) {
 		return
 	}
 }
+
+
+func removeIndexWG(textPath string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	removeIndex(textPath)
+}
+
