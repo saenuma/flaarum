@@ -9,7 +9,7 @@ A database that enforces structures and features its own query language.
 
 ## Why a new database.
 
-1.	Every data stored in this database is **automatically indexed** unless it is large.
+1.	Every data stored in this database is **automatically indexed**. Text fields are indexed with full text search indexes.
 
 2.	**Table Expansion** (a more comfortable form of joins)
 
@@ -19,6 +19,8 @@ A database that enforces structures and features its own query language.
 ## Regular Features
 
 1.  Supports its own query language.
+
+2.	Full text Search.
 
 
 ## Technologies Used.
@@ -42,7 +44,9 @@ API documentation can be found on [godoc](https://godoc.org/github.com/bankole77
 
 2.	Start the project with the command `sudo snap start flaarum.store`
 
-3.	You don't need a key to connect with the database when not in production.
+3.	Start the text indexer with the command `sudo snap start flaarum.tindexer`
+
+4.	You don't need a key to connect with the database when not in production.
 
 
 ### Production Setup
