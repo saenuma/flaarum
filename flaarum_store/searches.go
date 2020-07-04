@@ -943,7 +943,6 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
           tmpIds := make([]string, 0)
 
-          fmt.Println(ftssStruct.Compulsory)
           for _, word := range ftssStruct.Compulsory {
             // clean the word.
             word = flaarum_shared.CleanWord(word)
