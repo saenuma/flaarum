@@ -104,11 +104,14 @@ func doIndex(textPath string) {
 
 	projName := parts[0]
 	tableName := parts[1]
-	textIndex := strings.ReplaceAll(parts[3], ".text", "")
-	removeIndexInner(projName, tableName, textIndex)
+	nameFrag := strings.ReplaceAll(parts[3], ".text", "")
+	parts2 := strings.Split(nameFrag, flaarum_shared.TEXT_INTR_DELIM)
+	textIndex := parts2[0]
+	fieldName := parts2[1]
+	removeIndexInner(projName, tableName, fieldName, textIndex)
 
 	for word, wordCount := range wordCountMap {
-		dirToMake := filepath.Join(dataPath, projName, tableName, "tindexes", word)
+		dirToMake := filepath.Join(dataPath, projName, tableName, "tindexes", fieldName, word)
 		err := os.MkdirAll(dirToMake, 0777)
 		if err != nil {
 			P(errors.Wrap(err, "os error."))
@@ -130,21 +133,21 @@ func doIndex(textPath string) {
 }
 
 
-func removeIndexInner(projName, tableName, textIndex string) {
+func removeIndexInner(projName, tableName, fieldName, textIndex string) {
 	dataPath, err := flaarum_shared.GetDataPath()
 	if err != nil {
 		P(err)
 		return
 	}
 
-	dirsFIs, err := ioutil.ReadDir(filepath.Join(dataPath, projName, tableName, "tindexes"))
+	dirsFIs, err := ioutil.ReadDir(filepath.Join(dataPath, projName, tableName, "tindexes", fieldName))
 	if err != nil {
 		P(errors.Wrap(err, "ioutil error."))
 		return
 	}	
 
 	for _, dirFI := range dirsFIs {
-		lookingForPath := filepath.Join(dataPath, projName, tableName, "tindexes", dirFI.Name(), textIndex)
+		lookingForPath := filepath.Join(dataPath, projName, tableName, "tindexes", fieldName, dirFI.Name(), textIndex)
 		if flaarum_shared.DoesPathExists(lookingForPath) {
 			err := os.RemoveAll(lookingForPath)
 			if err != nil {
@@ -155,7 +158,7 @@ func removeIndexInner(projName, tableName, textIndex string) {
 	}
 
 	for _, dirFI := range dirsFIs {
-		filesFIs, err := ioutil.ReadDir(filepath.Join(dataPath, projName, tableName, "tindexes", dirFI.Name()))
+		filesFIs, err := ioutil.ReadDir(filepath.Join(dataPath, projName, tableName, "tindexes", fieldName, dirFI.Name()))
 		if err == nil && len(filesFIs) == 0 {
 			err = os.RemoveAll(filepath.Join(dataPath, projName, tableName, "tindexes", dirFI.Name()))
 			if err != nil {
@@ -187,9 +190,12 @@ func removeIndex(textPath string) {
 	}
 	projName := parts[0]
 	tableName := parts[1]
-	textIndex := strings.ReplaceAll(parts[3], ".rtext", "")
 
-	removeIndexInner(projName, tableName, textIndex)
+	nameFrag := strings.ReplaceAll(parts[3], ".rtext", "")
+	parts2 := strings.Split(nameFrag, flaarum_shared.TEXT_INTR_DELIM)
+	textIndex := parts2[0]
+	fieldName := parts2[1]
+	removeIndexInner(projName, tableName, fieldName, textIndex)
 
 	err = os.RemoveAll(textPath)
 	if err != nil {

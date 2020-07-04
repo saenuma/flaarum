@@ -140,7 +140,8 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
           return err
         }
       } else {
-        err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "data", fmt.Sprintf("%s.rtext", row["id"])), 
+        newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + f + ".rtext"
+        err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "data", newTextFileName), 
           []byte("ok"), 0777)
         if err != nil {
           return err

@@ -19,10 +19,11 @@ func GetDataPath() (string, error) {
 }
 
 
-func projAndTableNameValidate(name string) error {
+func nameValidate(name string) error {
 	if strings.Contains(name, ".") || strings.Contains(name, " ") || strings.Contains(name, "\t") ||
-	strings.Contains(name, "\n") || strings.Contains(name, ":") || strings.Contains(name, "/") {
-		return errors.New("object name must not contain space, '.', ':', '/', ")
+	strings.Contains(name, "\n") || strings.Contains(name, ":") || strings.Contains(name, "/") ||
+  strings.Contains(name, "~") {
+		return errors.New("object name must not contain space, '.', ':', '/', ~ ")
 	}
 
 	return nil

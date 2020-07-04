@@ -8,6 +8,17 @@ import (
 )
 
 
+func NameValidate(name string) error {
+  if strings.Contains(name, ".") || strings.Contains(name, " ") || strings.Contains(name, "\t") ||
+  strings.Contains(name, "\n") || strings.Contains(name, ":") || strings.Contains(name, "/") ||
+  strings.Contains(name, "~") {
+    return errors.New("object name must not contain space, '.', ':', '/', ~ ")
+  }
+
+  return nil
+}
+
+
 type FieldStruct struct {
 	FieldName string
 	FieldType string
@@ -41,6 +52,11 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 	line1 := strings.Split(stmt, "\n")[0]
 	tableName := strings.TrimSpace(line1[len("table:") :])
 	ts.TableName = tableName
+
+	if err := NameValidate(tableName); err != nil {
+		return ts, err
+	}
+
 	ts.TableType = "proper"
 
 	tableTypeBeginIndex := strings.Index(stmt, "table-type:")
@@ -79,6 +95,11 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 		if parts[0] == "id" || parts[0] == "_version" {
 			return ts, errors.New("Bad Statement: the fields 'id' and '_version' are automatically created. Hence can't be used.")
 		}
+
+		if err := NameValidate(parts[0]); err != nil {
+			return ts, err
+		}
+		
 		if FindIn([]string{"int", "float", "string", "text", "bool", "date", "datetime", "email", "url", "ipaddr"}, parts[1]) == -1 {
 			return ts, errors.New(fmt.Sprintf("Bad Statement: the field type '%s' is not allowed in flaarum.", parts[1]))
 		}

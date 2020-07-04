@@ -20,6 +20,7 @@ var (
   STOP_WORDS []string
 )
 
+const TEXT_INTR_DELIM = "~~~"
 
 func init() {
   // load stop words once

@@ -16,7 +16,7 @@ func createProject(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	projName := vars["proj"]
 
-	if err := projAndTableNameValidate(projName); err != nil {
+	if err := nameValidate(projName); err != nil {
 		printError(w, err)
 		return
 	}

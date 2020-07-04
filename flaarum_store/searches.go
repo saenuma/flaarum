@@ -958,7 +958,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               continue
             }
 
-            dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", word))
+            dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word))
             if err != nil {
               tmpIds = make([]string, 0) // reset the compulsoryIds if one word fails.
               aCompulsoryWordNotFound = true
@@ -966,7 +966,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             }
 
             for _, dirFI := range dirFIs {
-              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "tindexes", word, dirFI.Name()))
+              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word, dirFI.Name()))
               if err != nil {
                 aCompulsoryWordNotFound = true
                 break
@@ -1001,13 +1001,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
               continue
             }
-            dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", word))
+            dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word))
             if err != nil {
               continue
             }
 
             for _, dirFI := range dirFIs {
-              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "tindexes", word, dirFI.Name()))
+              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word, dirFI.Name()))
               if err != nil {
                 return nil, errors.Wrap(err, "ioutil error.")
               }
@@ -1038,13 +1038,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
               continue
             }
-            dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", word))
+            dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word))
             if err != nil {
               continue
             }
 
             for _, dirFI := range dirFIs {
-              _, err := ioutil.ReadFile(filepath.Join(tablePath, "tindexes", word, dirFI.Name()))
+              _, err := ioutil.ReadFile(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word, dirFI.Name()))
               if err != nil {
                 return nil, errors.Wrap(err, "ioutil error.")
               }
