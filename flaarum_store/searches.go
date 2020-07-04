@@ -148,6 +148,11 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 					whereStruct.FieldName, whereStruct.Relation))
 			}
 
+      if fieldNamesToFieldTypes[whereStruct.FieldName] != "text" && whereStruct.Relation == "fts" {
+        return nil, errors.New(fmt.Sprintf("The field '%s' is not searchable with fts since it is not of type 'text'", 
+          whereStruct.FieldName))
+      }
+
       if whereStruct.Relation == "fts" {
         ftsCount += 1
       }
