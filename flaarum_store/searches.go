@@ -937,6 +937,142 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
       } else if whereStruct.Relation == "fts" {
 
         if strings.Contains(whereStruct.FieldName, ".") {
+          trueWhereValues := make([]string, 0)
+          parts := strings.Split(whereStruct.FieldName, ".")
+          pTbl, ok := expDetails[parts[0]]
+          if ! ok {
+            continue
+          }
+          otherFieldName := parts[1]
+          otherTablePath := filepath.Join(dataPath, projName, pTbl)
+          if ! isFieldOfTypeText(projName, pTbl, otherFieldName) {
+            continue
+          }
+
+          ftssStruct := flaarum_shared.ParseFTSStmt(whereStruct.FieldValue)
+
+          tmpIds := make([]string, 0)
+          aCompulsoryWordNotFound := false
+          for _, word := range ftssStruct.Compulsory {
+            // clean the word.
+            word = flaarum_shared.CleanWord(word)
+            if word == "" {
+              continue
+            }
+            if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
+              continue
+            }
+
+            dirFIs, err := ioutil.ReadDir(filepath.Join(otherTablePath, "tindexes", otherFieldName, word))
+            if err != nil {
+              tmpIds = make([]string, 0) // reset the compulsoryIds if one word fails.
+              aCompulsoryWordNotFound = true
+              break
+            }
+
+            for _, dirFI := range dirFIs {
+              raw, err := ioutil.ReadFile(filepath.Join(otherTablePath, "tindexes", otherFieldName, word, dirFI.Name()))
+              if err != nil {
+                aCompulsoryWordNotFound = true
+                break
+                return nil, errors.Wrap(err, "ioutil error.")
+              }
+
+              wordCount, err := strconv.ParseInt(string(raw), 10, 64)
+              if err != nil {
+                return nil, errors.Wrap(err, "strconv error")
+              }
+              oldWordCount, ok := textWeights[dirFI.Name()]
+              if ! ok {
+                textWeights[dirFI.Name()] = wordCount
+              } else {
+                textWeights[dirFI.Name()] = wordCount + oldWordCount
+              }
+              tmpIds = append(tmpIds, dirFI.Name())
+            }
+
+          }
+
+          if aCompulsoryWordNotFound {
+            continue
+          }
+
+          for _, word := range ftssStruct.Optional {
+            // clean the word.
+            word = flaarum_shared.CleanWord(word)
+            if word == "" {
+              continue
+            }
+            if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
+              continue
+            }
+            dirFIs, err := ioutil.ReadDir(filepath.Join(otherTablePath, "tindexes", otherFieldName, word))
+            if err != nil {
+              continue
+            }
+
+            for _, dirFI := range dirFIs {
+              raw, err := ioutil.ReadFile(filepath.Join(otherTablePath, "tindexes", otherFieldName, word, dirFI.Name()))
+              if err != nil {
+                return nil, errors.Wrap(err, "ioutil error.")
+              }
+
+              wordCount, err := strconv.ParseInt(string(raw), 10, 64)
+              if err != nil {
+                return nil, errors.Wrap(err, "strconv error")
+              }
+
+              oldWordCount, ok := textWeights[dirFI.Name()]
+              if ! ok {
+                textWeights[dirFI.Name()] = wordCount
+              } else {
+                textWeights[dirFI.Name()] = wordCount + oldWordCount
+              }
+
+              tmpIds = append(tmpIds, dirFI.Name())
+            }            
+          }
+
+          excludedIDsOnly := make([]string, 0)
+          for _, word := range ftssStruct.Excluded {
+            // clean the word.
+            word = flaarum_shared.CleanWord(word)
+            if word == "" {
+              continue
+            }
+            if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
+              continue
+            }
+            dirFIs, err := ioutil.ReadDir(filepath.Join(otherTablePath, "tindexes", otherFieldName, word))
+            if err != nil {
+              continue
+            }
+
+            for _, dirFI := range dirFIs {
+              _, err := ioutil.ReadFile(filepath.Join(otherTablePath, "tindexes", otherFieldName, word, dirFI.Name()))
+              if err != nil {
+                return nil, errors.Wrap(err, "ioutil error.")
+              }
+
+              excludedIDsOnly = append(excludedIDsOnly, dirFI.Name())
+            }
+
+          }
+
+          tmpIds = arrayOperations.DistinctString(tmpIds)
+          for _, idStr := range tmpIds {
+            if flaarum_shared.FindIn(excludedIDsOnly, idStr) == -1 {
+              trueWhereValues = append(trueWhereValues, idStr)
+            } else {
+              delete(textWeights, idStr)
+            }
+          }
+
+          stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+          if err != nil {
+            return nil, err
+          }
+          beforeFilter = append(beforeFilter, stringIds)
 
         } else {
 
