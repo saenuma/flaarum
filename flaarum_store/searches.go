@@ -942,7 +942,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           ftssStruct := flaarum_shared.ParseFTSStmt(whereStruct.FieldValue)
 
           tmpIds := make([]string, 0)
-
+          aCompulsoryWordNotFound := false
           for _, word := range ftssStruct.Compulsory {
             // clean the word.
             word = flaarum_shared.CleanWord(word)
@@ -956,12 +956,15 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", word))
             if err != nil {
               tmpIds = make([]string, 0) // reset the compulsoryIds if one word fails.
+              aCompulsoryWordNotFound = true
               break
             }
 
             for _, dirFI := range dirFIs {
               raw, err := ioutil.ReadFile(filepath.Join(tablePath, "tindexes", word, dirFI.Name()))
               if err != nil {
+                aCompulsoryWordNotFound = true
+                break
                 return nil, errors.Wrap(err, "ioutil error.")
               }
 
@@ -978,6 +981,10 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               tmpIds = append(tmpIds, dirFI.Name())
             }
 
+          }
+
+          if aCompulsoryWordNotFound {
+            continue
           }
 
           for _, word := range ftssStruct.Optional {
