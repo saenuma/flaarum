@@ -309,7 +309,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
     // create index only for 'implicit datetime type'
     for k, v := range toInsert {
-      if k == "created" || strings.HasPrefix(k, "created_") {
+      if k == "created" || strings.HasPrefix(k, "created_") || k == "_version" {
         err := makeIndex(projName, tableName, k, v, nextId)
         if err != nil {
           printError(w, err)
