@@ -57,7 +57,7 @@ API documentation can be found on [godoc](https://godoc.org/github.com/bankole77
 
 3.	Run `sudo flaarum.keyp c` to get the key that would be supplied in any database request.
 
-4.	Use the key when creating `flaarum.Client`
+4.	Use the key when creating `flaarum.Client` in your programs.
 
 
 ## CLI
