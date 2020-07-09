@@ -1,4 +1,4 @@
-// flaarum_keyp provides the reading and creating of key strings used in communicating with a flaarum server.
+// flaarum_prod provides the reading and creating of key strings used in communicating with a flaarum server.
 package main
 
 import (
@@ -18,13 +18,13 @@ func main() {
 
   switch os.Args[1] {
   case "--help", "help", "h":
-    fmt.Println(`Flaarum's keyp creates or reads the key string used to authenticate the programs with
-Flaarum.
+    fmt.Println(`Flaarum's prod makes a flaarum instance production ready.
 
 Supported Commands:
 
     r     Read the current key string used 
     c     Creates and prints a new key string
+    mpr   Make production ready.
 
       `)
 
@@ -48,8 +48,32 @@ Supported Commands:
     }
     fmt.Print(randomString)
 
+  case "mpr":
+    confPath, err := flaarum_shared.GetConfigPath()
+    if err != nil {
+      panic(err)
+    }
+
+    conf := map[string]string {
+      "debug": "false",
+      "in_production": "true",
+      "port": "22318",
+    }
+
+    jsonBytes, err := json.Marshal(conf)
+    if err != nil {
+      panic(err)
+    }
+
+    prettyJson := pretty.Pretty(jsonBytes)
+
+    err = ioutil.WriteFile(confPath, prettyJson, 0777)
+    if err != nil {
+      panic(err)
+    }
+
   default:
-    color.Red.Println("Unexpected command. Run the Flaarum's keyp with --help to find out the supported commands.")
+    color.Red.Println("Unexpected command. Run the Flaarum's prod with --help to find out the supported commands.")
     os.Exit(1)
   }
 
