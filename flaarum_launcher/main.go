@@ -83,7 +83,7 @@ Supported Commands:
 			"--metadata-from-file", "startup-script=startup_script.sh",
 		)
 
-		_, err := cmd.Output()
+		_, err = cmd.Output()
 		if err != nil {
 			fmt.Println(string(err.(*exec.ExitError).Stderr))
 			panic(err)
