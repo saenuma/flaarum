@@ -18,6 +18,7 @@ tmp/
 flaarum_store/tmp/
 flaarum_store/flaarum_store
 flaarum_key/flaarum_key
+flaarum_launcher/*.json
 
 artifacts/
 flaarum.tar.xz
