@@ -2,28 +2,23 @@
 package main
 
 import (
-	// "github.com/bankole7782/flaarum/flaarum_shared"
-	// "strings"
+	"github.com/bankole7782/flaarum/flaarum_shared"
+	"strings"
 	"os"
 	"github.com/gookit/color"
-	// "github.com/bankole7782/mangalar"
 	"fmt"
   "github.com/tidwall/pretty"
   "io/ioutil"
   "encoding/json"
+  "os/exec"
 )
 
-var toExec = `
-gcloud compute --project $project instances create $instance --zone $zone --machine-type $mt \
- --image ubuntu-minimal-2004-focal-v20200702 --image-project ubuntu-os-cloud --boot-disk-size 10GB \
-  --boot-disk-type pd-standard
-
-
-`
 
 const (
 	configFileName = "flaarum_config.json"
 )
+
+
 func main() {
 	if len(os.Args) < 2 {
 		color.Red.Println("Expecting a command. Run with help subcommand to view help.")
@@ -69,22 +64,32 @@ Supported Commands:
   	if err != nil {
   		panic(err)
   	}
-  	initObject := make(map[string]string)
-  	err = json.Unmarshal(raw, &initObject)
+  	o := make(map[string]string)
+  	err = json.Unmarshal(raw, &o)
   	if err != nil {
   		panic(err)
   	}
 
-  	fmt.Println(initObject)
+		instanceName := fmt.Sprintf("flaarum-%s", strings.ToLower(flaarum_shared.UntestedRandomString(4)))
+		diskName := fmt.Sprintf("%s-disk", instanceName)
+  	
+  	o["instance"] = instanceName
+  	o["disk"] = diskName
+
+		cmd := exec.Command("gcloud", "compute", "--project", o["project"], "instances", "create", o["instance"], 
+			"--zone", o["zone"], "--machine-type", o["machine-type"], "--image", "ubuntu-minimal-2004-focal-v20200702",
+			"--image-project", "ubuntu-os-cloud", "--boot-disk-size", "10GB", 
+			"--create-disk", "mode=rw,size=10,type=pd-ssd,name=" + o["disk"],
+			"--metadata-from-file", "startup-script=startup_script.sh",
+		)
+
+		_, err := cmd.Output()
+		if err != nil {
+			fmt.Println(string(err.(*exec.ExitError).Stderr))
+			panic(err)
+		}
+
+		fmt.Println("Instance Name: " + o["instance"])
 	}
 
-	// instanceName := fmt.Sprintf("flaarum-%s", strings.ToLower(flaarum_shared.UntestedRandomString(4)))
-	// diskName := fmt.Sprintf("%s-disk", instanceName)
-
-	// vars := map[string]string {
-	// 	"project": os.Args[1], "zone": os.Args[2],
-	// 	"instance": instanceName, "disk": diskName,
-	// }
-
-	// fmt.Println(vars)
 }
