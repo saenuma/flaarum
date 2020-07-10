@@ -16,6 +16,7 @@ import (
 
 const (
 	configFileName = "flaarum_config.json"
+	resultsFileName = "flaarum_launch_results.json"
 )
 
 
@@ -43,6 +44,7 @@ Supported Commands:
   	initObject := map[string]string {
   		"project": "",
   		"zone": "",
+  		"region": "",
   		"disk-size": "10GB",
   		"machine-type": "f1-micro",
   	}
@@ -76,11 +78,19 @@ Supported Commands:
   	o["instance"] = instanceName
   	o["disk"] = diskName
 
+		cmd0 := exec.Command("gcloud", "services", "enable", "compute.googleapis.com", "--project", o["project"])
+
+		_, err = cmd0.Output()
+		if err != nil {
+			fmt.Println(string(err.(*exec.ExitError).Stderr))
+		}
+
+		scriptPath := flaarum_shared.G("startup_script.sh")
 		cmd := exec.Command("gcloud", "compute", "--project", o["project"], "instances", "create", o["instance"], 
 			"--zone", o["zone"], "--machine-type", o["machine-type"], "--image", "ubuntu-minimal-2004-focal-v20200702",
 			"--image-project", "ubuntu-os-cloud", "--boot-disk-size", "10GB", 
 			"--create-disk", "mode=rw,size=10,type=pd-ssd,name=" + o["disk"],
-			"--metadata-from-file", "startup-script=startup_script.sh",
+			"--metadata-from-file", "startup-script=" + scriptPath,
 		)
 
 		_, err = cmd.Output()
@@ -89,7 +99,65 @@ Supported Commands:
 			panic(err)
 		}
 
+		cmd2 := exec.Command("gcloud", "compute", "resource-policies", "create", "snapshot-schedule", o["instance"] + "-schdl",
+	    "--description", "MY WEEKLY SNAPSHOT SCHEDULE", "--max-retention-days", "60", "--start-time", "22:00",
+	    "--weekly-schedule", "sunday", "--region", o["region"], "--on-source-disk-delete", "keep-auto-snapshots",
+	    "--project", o["project"],
+		)
+
+		_, err = cmd2.Output()
+		if err != nil {
+			fmt.Println(string(err.(*exec.ExitError).Stderr))
+			panic(err)
+		}
+
+		cmd3 := exec.Command("gcloud", "compute", "disks", "add-resource-policies", o["disk"], "--resource-policies",
+			o["instance"] + "-schdl", "--zone", o["zone"], "--project", o["project"],
+		)
+
+		_, err = cmd3.Output()
+		if err != nil {
+			fmt.Println(string(err.(*exec.ExitError).Stderr))
+			panic(err)
+		}
+
+		cmd4 := exec.Command("gcloud", "services", "enable", "vpcaccess.googleapis.com", "--project", o["project"])
+
+		_, err = cmd4.Output()
+		if err != nil {
+			fmt.Println(string(err.(*exec.ExitError).Stderr))
+		}
+
+
+		cmd5 := exec.Command("gcloud", "compute", "networks", "vpc-access", "connectors", "create",
+			o["instance"] + "-vpcc", "--network", "default", "--region", o["region"],
+			"--range", "10.8.0.0/28", "--project", o["project"])
+
+		_, err = cmd5.Output()
+		if err != nil {
+			fmt.Println(string(err.(*exec.ExitError).Stderr))
+			panic(err)
+		}
+
 		fmt.Println("Instance Name: " + o["instance"])
+		fmt.Println("VPC Connector: " + o["instance"] + "-vpcc. Needed for Appengine and Cloud run.")
+		fmt.Println("Please ssh into your instance. Run 'flaarum.prod r' to get your key for your program.")
+
+		outObject := map[string]string {
+			"instance": o["instance"], "vpc_connector": o["instance"] + "-vpcc",
+		}
+
+    jsonBytes, err := json.Marshal(outObject)
+    if err != nil {
+      panic(err)
+    }
+
+    prettyJson := pretty.Pretty(jsonBytes)
+
+    err = ioutil.WriteFile(resultsFileName, prettyJson, 0777)
+    if err != nil {
+      panic(err)
+    }
 	}
 
 }

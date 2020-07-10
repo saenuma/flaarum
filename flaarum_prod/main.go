@@ -7,6 +7,8 @@ import (
   "fmt"
   "os"
   "github.com/gookit/color"
+  "encoding/json"
+  "github.com/tidwall/pretty"
 )
 
 
