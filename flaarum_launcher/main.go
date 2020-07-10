@@ -11,6 +11,8 @@ import (
   "io/ioutil"
   "encoding/json"
   "os/exec"
+  "github.com/pkg/errors"
+  "path/filepath"
 )
 
 
@@ -18,6 +20,22 @@ const (
 	configFileName = "flaarum_config.json"
 	resultsFileName = "flaarum_launch_results.json"
 )
+
+
+func GetWritePath(fileName string) (string, error) {
+	hd, err := os.UserHomeDir()
+	if err != nil {
+		return "", errors.Wrap(err, "os error")
+	}
+	dd := os.Getenv("SNAP_USER_DATA")
+
+	if strings.HasPrefix(dd, filepath.Join(hd, "snap", "go")) || dd == "" {
+		dd = filepath.Join(hd, fileName)	
+	} else {
+		dd = filepath.Join(dd, fileName)
+	}
+	return dd, nil	
+}
 
 
 func main() {
@@ -35,8 +53,7 @@ Supported Commands:
     init   Creates a config file. Edit to your own requirements. Some of the values can be gotten from
            Google Cloud's documentation. 
 
-    l      Launches a configured instance based on the config created above. And it must
-           must be executed from the same directory that the init command was executed.
+    l      Launches a configured instance based on the config created above.
 
       `)
   case "init":
@@ -56,10 +73,17 @@ Supported Commands:
 
     prettyJson := pretty.Pretty(jsonBytes)
 
-    err = ioutil.WriteFile(configFileName, prettyJson, 0777)
+    wp, err := GetWritePath(configFileName)
+    if err != nil {
+    	panic(err)
+    }
+
+    err = ioutil.WriteFile(wp, prettyJson, 0777)
     if err != nil {
       panic(err)
     }
+
+    fmt.Printf("Edit the file at '%s' before launching.\n", wp)
 
   case "l":
   	raw, err := ioutil.ReadFile(configFileName)
@@ -152,9 +176,14 @@ Supported Commands:
       panic(err)
     }
 
+    wp, err := GetWritePath(resultsFileName)
+    if err != nil {
+    	panic(err)
+    }
+
     prettyJson := pretty.Pretty(jsonBytes)
 
-    err = ioutil.WriteFile(resultsFileName, prettyJson, 0777)
+    err = ioutil.WriteFile(wp, prettyJson, 0777)
     if err != nil {
       panic(err)
     }
