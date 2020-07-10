@@ -95,7 +95,7 @@ Supported Commands:
   	if err != nil {
   		panic(err)
   	}
-  	
+
   	o := make(map[string]string)
   	err = json.Unmarshal(raw, &o)
   	if err != nil {
@@ -182,14 +182,14 @@ Supported Commands:
       panic(err)
     }
 
-    wp, err := GetWritePath(resultsFileName)
+    outPath, err := GetWritePath(resultsFileName)
     if err != nil {
     	panic(err)
     }
 
     prettyJson := pretty.Pretty(jsonBytes)
 
-    err = ioutil.WriteFile(wp, prettyJson, 0777)
+    err = ioutil.WriteFile(outPath, prettyJson, 0777)
     if err != nil {
       panic(err)
     }
