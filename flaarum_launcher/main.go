@@ -86,10 +86,16 @@ Supported Commands:
     fmt.Printf("Edit the file at '%s' before launching.\n", wp)
 
   case "l":
-  	raw, err := ioutil.ReadFile(configFileName)
+    wp, err := GetWritePath(configFileName)
+    if err != nil {
+    	panic(err)
+    }
+
+  	raw, err := ioutil.ReadFile(wp)
   	if err != nil {
   		panic(err)
   	}
+  	
   	o := make(map[string]string)
   	err = json.Unmarshal(raw, &o)
   	if err != nil {
