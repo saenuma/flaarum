@@ -2,7 +2,6 @@
 package main
 
 import (
-	"github.com/bankole7782/flaarum/flaarum_shared"
 	"strings"
 	"os"
 	"github.com/gookit/color"
@@ -11,31 +10,9 @@ import (
   "io/ioutil"
   "encoding/json"
   "os/exec"
-  "github.com/pkg/errors"
-  "path/filepath"
+  "time"
+  "github.com/bankole7782/flaarum/flaarum_shared"
 )
-
-
-const (
-	configFileName = "flaarum_config.json"
-	resultsFileName = "flaarum_launch_results.json"
-)
-
-
-func GetWritePath(fileName string) (string, error) {
-	hd, err := os.UserHomeDir()
-	if err != nil {
-		return "", errors.Wrap(err, "os error")
-	}
-	dd := os.Getenv("SNAP_USER_DATA")
-
-	if strings.HasPrefix(dd, filepath.Join(hd, "snap", "go")) || dd == "" {
-		dd = filepath.Join(hd, fileName)	
-	} else {
-		dd = filepath.Join(dd, fileName)
-	}
-	return dd, nil	
-}
 
 
 func main() {
@@ -73,25 +50,32 @@ Supported Commands:
 
     prettyJson := pretty.Pretty(jsonBytes)
 
-    wp, err := GetWritePath(configFileName)
+    configFileName := "l" + time.Now().Format("20060102T150405") + ".json"
+
+    writePath, err := flaarum_shared.GetFlaarumPath(configFileName)
     if err != nil {
     	panic(err)
     }
 
-    err = ioutil.WriteFile(wp, prettyJson, 0777)
+    err = ioutil.WriteFile(writePath, prettyJson, 0777)
     if err != nil {
       panic(err)
     }
 
-    fmt.Printf("Edit the file at '%s' before launching.\n", wp)
+    fmt.Printf("Edit the file at '%s' before launching.\n", writePath)
 
   case "l":
-    wp, err := GetWritePath(configFileName)
+  	if len(os.Args) != 3 {
+  		color.Red.Println("The l command expects a launch file as the next argument.")
+  		os.Exit(1)
+  	}
+
+    inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[2])
     if err != nil {
     	panic(err)
     }
 
-  	raw, err := ioutil.ReadFile(wp)
+  	raw, err := ioutil.ReadFile(inputPath)
   	if err != nil {
   		panic(err)
   	}
@@ -182,7 +166,8 @@ Supported Commands:
       panic(err)
     }
 
-    outPath, err := GetWritePath(resultsFileName)
+    outFileName := "lr" + os.Args[2][1:]
+    outPath, err := flaarum_shared.GetFlaarumPath(outFileName)
     if err != nil {
     	panic(err)
     }
@@ -193,6 +178,8 @@ Supported Commands:
     if err != nil {
       panic(err)
     }
+
+    fmt.Printf("Results stored at '%s'.\n", outPath)
 	}
 
 }
