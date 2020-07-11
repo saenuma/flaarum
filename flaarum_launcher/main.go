@@ -94,9 +94,10 @@ Supported Commands:
 
 		cmd0 := exec.Command("gcloud", "services", "enable", "compute.googleapis.com", "--project", o["project"])
 
-		_, err = cmd0.Output()
+		out, err := cmd0.CombinedOutput()
 		if err != nil {
-			fmt.Println(string(err.(*exec.ExitError).Stderr))
+			color.Red.Println(out)
+      color.Red.Println(err.Error())
 		}
 
 		scriptPath := flaarum_shared.G("startup_script.sh")
@@ -107,9 +108,9 @@ Supported Commands:
 			"--metadata-from-file", "startup-script=" + scriptPath,
 		)
 
-		_, err = cmd.Output()
+		out, err = cmd.CombinedOutput()
 		if err != nil {
-			fmt.Println(string(err.(*exec.ExitError).Stderr))
+      color.Red.Println(out)
 			panic(err)
 		}
 
@@ -119,9 +120,9 @@ Supported Commands:
 	    "--project", o["project"],
 		)
 
-		_, err = cmd2.Output()
+		out, err = cmd2.CombinedOutput()
 		if err != nil {
-			fmt.Println(string(err.(*exec.ExitError).Stderr))
+      color.Red.Println(out)
 			panic(err)
 		}
 
@@ -129,17 +130,17 @@ Supported Commands:
 			o["instance"] + "-schdl", "--zone", o["zone"], "--project", o["project"],
 		)
 
-		_, err = cmd3.Output()
+		out, err = cmd3.CombinedOutput()
 		if err != nil {
-			fmt.Println(string(err.(*exec.ExitError).Stderr))
+      color.Red.Println(out)      
 			panic(err)
 		}
 
 		cmd4 := exec.Command("gcloud", "services", "enable", "vpcaccess.googleapis.com", "--project", o["project"])
 
-		_, err = cmd4.Output()
+		_, err = cmd4.CombinedOutput()
 		if err != nil {
-			fmt.Println(string(err.(*exec.ExitError).Stderr))
+      color.Red.Println(out)      
 		}
 
 
@@ -147,9 +148,9 @@ Supported Commands:
 			o["instance"] + "-vpcc", "--network", "default", "--region", o["region"],
 			"--range", "10.8.0.0/28", "--project", o["project"])
 
-		_, err = cmd5.Output()
+		out, err = cmd5.CombinedOutput()
 		if err != nil {
-			fmt.Println(string(err.(*exec.ExitError).Stderr))
+      color.Red.Println(out)
 			panic(err)
 		}
 
@@ -180,6 +181,10 @@ Supported Commands:
     }
 
     fmt.Printf("Results stored at '%s'.\n", outPath)
+
+  default:
+    color.Red.Println("Unexpected command. Run the launcher with --help to find out the supported commands.")
+    os.Exit(1)
 	}
 
 }
