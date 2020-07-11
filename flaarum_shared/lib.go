@@ -136,6 +136,22 @@ func GetKeyStrPath() string {
 }
 
 
+func GetFlaarumPath(fileName string) (string, error) {
+  hd, err := os.UserHomeDir()
+  if err != nil {
+    return "", errors.Wrap(err, "os error")
+  }
+  dd := os.Getenv("SNAP_USER_DATA")
+
+  if strings.HasPrefix(dd, filepath.Join(hd, "snap", "go")) || dd == "" {
+    dd = filepath.Join(hd, fileName)  
+  } else {
+    dd = filepath.Join(dd, fileName)
+  }
+  return dd, nil  
+}
+
+
 func GetPort() string {
   port, err := GetSetting("port")
   if err != nil {

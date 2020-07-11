@@ -52,6 +52,10 @@ func main() {
 Please Run this program from the same server that powers your flaarum.
 Please don't expose your flaarum database to the internet for security sake.
 
+Directory Commands:
+  pwd   Print working directory. This is the directory where the files needed by any command 
+        in this cli program must reside.
+
 Project(s) Commands:
 	
   lp    List Projects
@@ -80,9 +84,15 @@ Table Row Commands:
 
   dr    Delete Row: Expects one or more project, table and id combo eg. 'first_proj/users/31'
   vr    View Row: Expects a project, table and id combo eg. 'first_proj/users/31'
-
-
 			`)
+
+	case "pwd":
+		p, err := flaarum_shared.GetFlaarumPath("")
+		if err != nil {
+			color.Red.Println(err)
+			os.Exit(1)
+		}
+		fmt.Println(p)
 
 	case "lp":
 		projects, err := cl.ListProjects()
@@ -241,9 +251,14 @@ Table Row Commands:
 			os.Exit(1)
 		}
 
-		raw, err := ioutil.ReadFile(os.Args[3])
+		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
 		if err != nil {
-			color.Red.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
+			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
+			os.Exit(1)
+		}
+		raw, err := ioutil.ReadFile(inputPath)
+		if err != nil {
+			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
 		}
 
@@ -260,9 +275,14 @@ Table Row Commands:
 			os.Exit(1)
 		}
 
-		raw, err := ioutil.ReadFile(os.Args[3])
+		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
 		if err != nil {
-			color.Red.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
+			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
+			os.Exit(1)
+		}
+		raw, err := ioutil.ReadFile(inputPath)
+		if err != nil {
+			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
 		}
 
@@ -280,11 +300,17 @@ Table Row Commands:
 			os.Exit(1)
 		}
 
-		raw, err := ioutil.ReadFile(os.Args[3])
+		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
 		if err != nil {
-			color.Red.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
+			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
 			os.Exit(1)
 		}
+		raw, err := ioutil.ReadFile(inputPath)
+		if err != nil {
+			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
+			os.Exit(1)
+		}
+
 		rowData := make(map[string]string)
 		err = json.Unmarshal(raw, &rowData)
 		if err != nil {
@@ -310,11 +336,17 @@ Table Row Commands:
 			os.Exit(1)
 		}
 
-		raw, err := ioutil.ReadFile(os.Args[3])
+		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
 		if err != nil {
-			color.Red.Printf("The supplied path '%s' does not exists.\n", os.Args[3])
+			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
 			os.Exit(1)
 		}
+		raw, err := ioutil.ReadFile(inputPath)
+		if err != nil {
+			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
+			os.Exit(1)
+		}
+
 		rowData := make(map[string]string)
 		err = json.Unmarshal(raw, &rowData)
 		if err != nil {
