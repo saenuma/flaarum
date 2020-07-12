@@ -49,16 +49,9 @@ API documentation can be found on [godoc](https://godoc.org/github.com/bankole77
 4.	You don't need a key to connect with the database when not in production.
 
 
-### Production Setup (only Google Cloud)
+### Production Setup
 
-1.	Run `flaarum.launcher init` to get a config file.
-
-2.	Edit the config file to your project requirements.
-
-3.	Run `flaarum.launcher l` to launch a configured google cloud server loaded with flaarum.
-
-4.	`ssh` into your newly created instance (the name would be printed from the command above) and run 
-		`flaarum.prod r` to get your key. This key you would use in your program.
+Work in Progress
 
 
 ## CLI
