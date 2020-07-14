@@ -1,4 +1,4 @@
-// flaarum_cli provides a terminal interface to the flaarum server.
+// cli provides a terminal interface to the flaarum server.
 package main
 
 import (

@@ -1,3 +1,4 @@
+// tindexer is a program that creates indexes for tables which contains text fields.
 package main
 
 import (

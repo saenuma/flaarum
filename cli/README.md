@@ -1,3 +1,3 @@
-# flaarum_cli
+# cli
 
-flaarum_cli provides a terminal interface to a flaarum server.
+cli provides a terminal interface to a flaarum server.
