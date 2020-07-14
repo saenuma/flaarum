@@ -43,6 +43,7 @@ func init() {
       "debug": "false",
       "in_production": "false",
       "port": "22318",
+      "backup_bucket": "",
     }
 
     jsonBytes, err := json.Marshal(conf)

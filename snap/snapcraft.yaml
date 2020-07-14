@@ -39,3 +39,6 @@ apps:
     command: tindexer
     daemon: simple
     restart-condition: on-abnormal
+
+  inout:
+    command: inout

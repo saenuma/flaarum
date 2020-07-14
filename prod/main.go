@@ -70,6 +70,7 @@ Supported Commands:
       "debug": "false",
       "in_production": "true",
       "port": "22318",
+      "backup_bucket": "",
     }
 
     jsonBytes, err := json.Marshal(conf)
