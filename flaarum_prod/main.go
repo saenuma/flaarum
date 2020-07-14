@@ -26,7 +26,7 @@ Supported Commands:
 
     r     Read the current key string used 
     c     Creates and prints a new key string
-    mpr   Make production ready.
+    mpr   Make production ready. It also creates and prints a key string.
 
       `)
 
@@ -51,6 +51,16 @@ Supported Commands:
     fmt.Print(randomString)
 
   case "mpr":
+    keyPath := flaarum_shared.GetKeyStrPath()
+    randomString := flaarum_shared.UntestedRandomString(50)
+
+    err := ioutil.WriteFile(keyPath, []byte(randomString), 0777)
+    if err != nil {
+      color.Red.Printf("Error creating key string path.\nError:%s\n", err)
+      os.Exit(1)
+    }
+    fmt.Print(randomString)
+
     confPath, err := flaarum_shared.GetConfigPath()
     if err != nil {
       panic(err)
