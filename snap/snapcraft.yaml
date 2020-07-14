@@ -42,3 +42,10 @@ apps:
 
   inout:
     command: inout
+
+  rbackup:
+    command: rbackup
+    daemon: simple
+    restart-condition: on-abnormal
+    plugs:
+      - network
