@@ -39,8 +39,3 @@ apps:
     command: tindexer
     daemon: simple
     restart-condition: on-abnormal
-
-  launcher:
-    command: launcher
-    plugs:
-      - network
