@@ -51,14 +51,21 @@ API documentation can be found on [godoc](https://godoc.org/github.com/bankole77
 
 ### Production Setup
 
-1.	Launch an Ubuntu server with its boot disk set to **ssd**.
+1.	Launch an Ubuntu server with its boot disk set to **ssd**. When launching make sure it has 
 
 2.	SSH into the server and install flaarum with the command `sudo snap install flaarum`
 
 3.	Make the instance production ready by running `sudo flaarum.prod mpr` and get your key for your programs.
 
-4. 	Start the project with the commands `sudo snap start flaarum.store && sudo snap start flaarum.tindexer`
+4.	Update the config file and add `backup_bucket`. Set this to a GCloud Storage bucket.
 
+5. 	Start the project with these commands 
+
+```bash
+sudo snap start flaarum.store
+sudo snap start flaarum.tindexer
+sudo snap start flaarum.rbackup
+```
 
 ## CLI
 
