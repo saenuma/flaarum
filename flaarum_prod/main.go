@@ -1,4 +1,4 @@
-// flaarum_prod provides the reading and creating of key strings used in communicating with a flaarum server.
+// flaarum_prod provides the commands which helps in making a flaarum server production ready.
 package main
 
 import (
