@@ -13,6 +13,8 @@ import (
 	"encoding/json"
   "github.com/kljensen/snowball"  
   "fmt"
+  "strconv"
+  "github.com/adam-hanna/arrayOperations"
 )
 
 
@@ -223,4 +225,50 @@ func CleanWord(word string) string {
   toWriteWord = stemmed
 
   return toWriteWord
+}
+
+
+func GetTableStructureParsed(projName, tableName string, versionNum int) (TableStruct, error) {
+  dataPath, _ := GetDataPath()
+  raw, err := ioutil.ReadFile(filepath.Join(dataPath, projName, tableName, "structures", strconv.Itoa(versionNum)))
+  if err != nil {
+    return TableStruct{}, errors.Wrap(err, "ioutil error")
+  }
+
+  return ParseTableStructureStmt(string(raw))
+}
+
+
+func MakeSafeIndexName(v string) string {
+  return strings.ReplaceAll(v, "/", "~~a~~")
+}
+
+
+func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
+  dataPath, _ := GetDataPath()
+  indexFolder := filepath.Join(dataPath, projName, tableName, "indexes", fieldName)
+  err := os.MkdirAll(indexFolder, 0777)
+  if err != nil {
+    return errors.Wrap(err, "create directory failed.")
+  }
+  indexPath := filepath.Join(indexFolder, MakeSafeIndexName(newData))
+  if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+    err = ioutil.WriteFile(indexPath, []byte(rowId), 0777)
+    if err != nil {
+      return errors.Wrap(err, "file write failed.")
+    }
+  } else {
+    raw, err := ioutil.ReadFile(indexPath)
+    if err != nil {
+      return errors.Wrap(err, "read failed.")
+    }
+    previousEntries := strings.Split(string(raw), "\n")
+    newEntries := arrayOperations.UnionString(previousEntries, []string{rowId})
+    err = ioutil.WriteFile(indexPath, []byte(strings.Join(newEntries, "\n")), 0777)
+    if err != nil {
+      return errors.Wrap(err, "write failed.")
+    }
+  }
+
+  return nil
 }

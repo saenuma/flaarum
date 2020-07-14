@@ -16,8 +16,6 @@ import (
   "github.com/mcnijman/go-emailaddress"
   "net"
   "net/url"
-  "github.com/adam-hanna/arrayOperations"
-  "os"
 )
 
 
@@ -340,30 +338,5 @@ func saveRowData(projName, tableName, rowId string, toWrite map[string]string) e
 
 
 func makeIndex(projName, tableName, fieldName, newData, rowId string) error {
-  dataPath, _ := GetDataPath()
-  indexFolder := filepath.Join(dataPath, projName, tableName, "indexes", fieldName)
-  err := os.MkdirAll(indexFolder, 0777)
-  if err != nil {
-    return errors.Wrap(err, "create directory failed.")
-  }
-  indexPath := filepath.Join(indexFolder, makeSafeIndexName(newData))
-  if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-    err = ioutil.WriteFile(indexPath, []byte(rowId), 0777)
-    if err != nil {
-      return errors.Wrap(err, "file write failed.")
-    }
-  } else {
-    raw, err := ioutil.ReadFile(indexPath)
-    if err != nil {
-      return errors.Wrap(err, "read failed.")
-    }
-    previousEntries := strings.Split(string(raw), "\n")
-    newEntries := arrayOperations.UnionString(previousEntries, []string{rowId})
-    err = ioutil.WriteFile(indexPath, []byte(strings.Join(newEntries, "\n")), 0777)
-    if err != nil {
-      return errors.Wrap(err, "write failed.")
-    }
-  }
-
-  return nil
+  return flaarum_shared.MakeIndex(projName, tableName, fieldName, newData, rowId)
 }

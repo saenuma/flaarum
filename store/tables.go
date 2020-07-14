@@ -234,13 +234,7 @@ func getCurrentVersionNum(projName, tableName string) (int, error) {
 
 
 func getTableStructureParsed(projName, tableName string, versionNum int) (flaarum_shared.TableStruct, error) {
-	dataPath, _ := GetDataPath()
-	raw, err := ioutil.ReadFile(filepath.Join(dataPath, projName, tableName, "structures", strconv.Itoa(versionNum)))
-	if err != nil {
-		return flaarum_shared.TableStruct{}, errors.Wrap(err, "ioutil error")
-	}
-
-	return flaarum_shared.ParseTableStructureStmt(string(raw))
+	return flaarum_shared.GetTableStructureParsed(projName, tableName, versionNum)
 }
 
 

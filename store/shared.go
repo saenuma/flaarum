@@ -106,5 +106,5 @@ func isFieldOfTypeText(projName, tableName, fieldName string) bool {
 
 
 func makeSafeIndexName(v string) string {
-  return strings.ReplaceAll(v, "/", "~~a~~")
+  return flaarum_shared.MakeSafeIndexName(v)
 }
