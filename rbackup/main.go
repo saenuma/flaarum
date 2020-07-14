@@ -1,4 +1,4 @@
-// rbackup repeatedly runs 'inout' and stores the values to google cloud storage.
+// rbackup repeatedly runs 'inout' and stores the output file to google cloud storage.
 package main
 
 import (
