@@ -25,7 +25,7 @@ func main() {
 Supported Commands:
 
     r     Read the current key string used 
-    c     Creates and prints a new key string
+    c     Creates / Updates and prints a new key string
     mpr   Make production ready. It also creates and prints a key string.
 
       `)
