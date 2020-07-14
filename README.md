@@ -51,7 +51,13 @@ API documentation can be found on [godoc](https://godoc.org/github.com/bankole77
 
 ### Production Setup
 
-Work in Progress
+1.	Launch an Ubuntu server with its boot disk set to **ssd**.
+
+2.	SSH into the server and install flaarum with the command `sudo snap install flaarum`
+
+3.	Make the instance production ready by running `sudo flaarum.prod mpr` and get your key for your programs.
+
+4. 	Start the project with the commands `sudo snap start flaarum.store && sudo snap start flaarum.tindexer`
 
 
 ## CLI
