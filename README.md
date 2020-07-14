@@ -51,7 +51,7 @@ API documentation can be found on [godoc](https://godoc.org/github.com/bankole77
 
 ### Production Setup
 
-1.	Launch an Ubuntu server with its boot disk set to **ssd**. When launching make sure it has 
+1.	Launch an Ubuntu server with its boot disk set to **ssd**. When launching make sure it has access to **Google Cloud Storage API**
 
 2.	SSH into the server and install flaarum with the command `sudo snap install flaarum`
 
