@@ -20,7 +20,15 @@ var (
   STOP_WORDS []string
 )
 
-const TEXT_INTR_DELIM = "~~~"
+
+const (
+  BROWSER_DATE_FORMAT = "2006-01-02"
+  BROWSER_DATETIME_FORMAT = "2006-01-02T15:04"
+  STRING_MAX_LENGTH = 100
+  TEXT_INTR_DELIM = "~~~"
+  BACKUP_EXT = "flaa1"
+)
+
 
 func init() {
   // load stop words once
@@ -65,13 +73,6 @@ func G(objectName string) string {
 
   panic("Improperly configured.")
 }
-
-
-const (
-	BROWSER_DATE_FORMAT = "2006-01-02"
-	BROWSER_DATETIME_FORMAT = "2006-01-02T15:04"
-	STRING_MAX_LENGTH = 100
-)
 
 
 func GetConfigPath() (string, error) {
