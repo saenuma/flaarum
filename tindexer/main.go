@@ -14,12 +14,15 @@ import (
 	"os"
 	"sync"
 	"github.com/microcosm-cc/bluemonday"
+	"encoding/json"
 )
 
 var (
 	mutexesMap map[string]*sync.Mutex
 	debugMode bool
+	STOP_WORDS []string
 )
+
 
 func init() {
 	mutexesMap = make(map[string]*sync.Mutex)
@@ -31,6 +34,20 @@ func init() {
 	if debug == "true" || debug == "t" {
 		debugMode = true
 	}
+
+  // load stop words once
+  stopWordsJsonPath := flaarum_shared.G("english-stopwords.json")
+  jsonBytes, err := ioutil.ReadFile(stopWordsJsonPath)
+  if err != nil {
+    panic(err)
+  }
+  stopWordsList := make([]string, 0)
+  err = json.Unmarshal(jsonBytes, &stopWordsList)
+  if err != nil {
+    panic(err)
+  }
+  STOP_WORDS = stopWordsList
+
 }
 
 
@@ -144,7 +161,7 @@ func doIndex(textPath string) {
 		if word == "" {
 			continue
 		}
-		if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
+		if flaarum_shared.FindIn(STOP_WORDS, word) != -1 {
 			continue
 		}
 

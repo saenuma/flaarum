@@ -16,6 +16,7 @@ import (
 
 var projsMutex *sync.RWMutex // for projects and tables (table data uses different mutexes) creation, editing, deletion
 var tablesMutexes map[string]*sync.RWMutex
+var STOP_WORDS []string
 
 func init() {
 	dataPath, err := GetDataPath()
@@ -58,6 +59,19 @@ func init() {
       panic(err)
     }
   }
+
+  // load stop words once
+  stopWordsJsonPath := flaarum_shared.G("english-stopwords.json")
+  jsonBytes, err := ioutil.ReadFile(stopWordsJsonPath)
+  if err != nil {
+    panic(err)
+  }
+  stopWordsList := make([]string, 0)
+  err = json.Unmarshal(jsonBytes, &stopWordsList)
+  if err != nil {
+    panic(err)
+  }
+  STOP_WORDS = stopWordsList
 }
 
 

@@ -959,7 +959,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if word == "" {
               continue
             }
-            if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
+            if flaarum_shared.FindIn(STOP_WORDS, word) != -1 {
               continue
             }
 
@@ -1003,7 +1003,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if word == "" {
               continue
             }
-            if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
+            if flaarum_shared.FindIn(STOP_WORDS, word) != -1 {
               continue
             }
             dirFIs, err := ioutil.ReadDir(filepath.Join(otherTablePath, "tindexes", otherFieldName, word))
@@ -1040,7 +1040,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if word == "" {
               continue
             }
-            if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
+            if flaarum_shared.FindIn(STOP_WORDS, word) != -1 {
               continue
             }
             dirFIs, err := ioutil.ReadDir(filepath.Join(otherTablePath, "tindexes", otherFieldName, word))
@@ -1090,7 +1090,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if word == "" {
               continue
             }
-            if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
+            if flaarum_shared.FindIn(STOP_WORDS, word) != -1 {
               continue
             }
 
@@ -1134,7 +1134,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if word == "" {
               continue
             }
-            if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
+            if flaarum_shared.FindIn(STOP_WORDS, word) != -1 {
               continue
             }
             dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word))
@@ -1171,7 +1171,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if word == "" {
               continue
             }
-            if flaarum_shared.FindIn(flaarum_shared.STOP_WORDS, word) != -1 {
+            if flaarum_shared.FindIn(STOP_WORDS, word) != -1 {
               continue
             }
             dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word))

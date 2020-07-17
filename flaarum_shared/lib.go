@@ -18,11 +18,6 @@ import (
 )
 
 
-var (
-  STOP_WORDS []string
-)
-
-
 const (
   BROWSER_DATE_FORMAT = "2006-01-02"
   BROWSER_DATETIME_FORMAT = "2006-01-02T15:04"
@@ -30,22 +25,6 @@ const (
   TEXT_INTR_DELIM = "~~~"
   BACKUP_EXT = "flaa1"
 )
-
-
-func init() {
-  // load stop words once
-  stopWordsJsonPath := G("english-stopwords.json")
-  jsonBytes, err := ioutil.ReadFile(stopWordsJsonPath)
-  if err != nil {
-    panic(err)
-  }
-  stopWordsList := make([]string, 0)
-  err = json.Unmarshal(jsonBytes, &stopWordsList)
-  if err != nil {
-    panic(err)
-  }
-  STOP_WORDS = stopWordsList
-}
 
 
 func DoesPathExists(p string) bool {
