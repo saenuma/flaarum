@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"encoding/json"
 	"github.com/gookit/color"
+	"github.com/tidwall/pretty"
+	"os/exec"
 )
 
 func main() {
@@ -73,6 +75,8 @@ Table(s) Commands:
   ts    Table Structure Statement: Expects a project and table combo eg. 'first_proj/users' and a valid number.
   dt    Delete Table: Expects one or more project and table combo eg. 'first_proj/users'.
   et    Empty Table: Expects one or more project and table combo eg. 'first_proj/users'.
+  st    Search Table: Expects a project and a file containing the search statement.
+
 
 Table Row Commands:
 
@@ -412,6 +416,47 @@ Table Row Commands:
 		}
 		fmt.Println()
 
+	case "st":
+		if len(os.Args) != 4 {
+			color.Red.Println("'st' expects a project and a file containing the search statment.")
+			os.Exit(1)
+		}
+
+		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
+		if err != nil {
+			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
+			os.Exit(1)
+		}
+		raw, err := ioutil.ReadFile(inputPath)
+		if err != nil {
+			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
+			os.Exit(1)
+		}
+
+		cl.ProjName = os.Args[2]
+		rows, err := cl.Search(string(raw))
+		if err != nil {
+			color.Red.Printf("Error running search '%s'.\nError: %s\n", os.Args[3], err)
+			os.Exit(1)
+		}
+
+		jsonBytes, err := json.Marshal(*rows)
+		if err != nil {
+			color.Red.Printf("Error ocurred.\nError: %s\n", err)
+			os.Exit(1)
+		}
+
+    prettyJson := pretty.Pretty(jsonBytes)
+
+    cmd := exec.Command("less")
+    cmd.Stdin = strings.NewReader(string(prettyJson))
+    cmd.Stdout = os.Stdout
+
+    err = cmd.Run()
+    if err != nil {
+    	color.Red.Println("Error occured.\nError: %s\n", err)
+    	os.Exit(1)
+    }
 
 	default:
 		color.Red.Println("Unexpected command. Run the cli with --help to find out the supported commands.")
