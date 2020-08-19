@@ -70,15 +70,13 @@ Table(s) Commands:
   lt    List Tables: Expects a project name after the command.
   ct    Create Table: Expects a project name and the path to a file containing the table structure
   uts   Update Table Structure: Expects a project name and the path to a file containing the table structure
-  trc   Table Rows Count: Expects a project and table combo eg. 'first_proj/users'
   ctvn  Current Table Version Number: Expects a project and table combo eg. 'first_proj/users'
   ts    Table Structure Statement: Expects a project and table combo eg. 'first_proj/users' and a valid number.
   dt    Delete Table: Expects one or more project and table combo eg. 'first_proj/users'.
   et    Empty Table: Expects one or more project and table combo eg. 'first_proj/users'.
-  st    Search Table: Expects a project and a file containing the search statement.
 
 
-Table Row Commands:
+Table Data Commands:
 
   ir    Insert a row: Expects a project and table combo eg. 'first_proj/users' and a path containing a
         json representation of the data to be inserted into the mentioned table.
@@ -88,6 +86,13 @@ Table Row Commands:
 
   dr    Delete Row: Expects one or more project, table and id combo eg. 'first_proj/users/31'
   vr    View Row: Expects a project, table and id combo eg. 'first_proj/users/31'
+
+
+Table Search Commands:
+  st    Search Table: Expects a project and a file containing the search statement.
+  arc   All Rows Count: Expects a project and table combo eg. 'first_proj/users'
+  rc    Count of rows found in a search. Expects a project and a file containing a search statement.
+
 			`)
 
 	case "pwd":
@@ -163,9 +168,9 @@ Table Row Commands:
 		}
 		fmt.Println()
 
-	case "trc":
+	case "arc":
 		if len(os.Args) != 3 {
-			color.Red.Println("'trc' command expects a project and table combo eg. 'first_proj/users'.")
+			color.Red.Println("'arc' command expects a project and table combo eg. 'first_proj/users'.")
 			os.Exit(1)
 		}
 		parts := strings.Split(os.Args[2], "/")
@@ -179,7 +184,7 @@ Table Row Commands:
 			os.Exit(1)
 		}
 
-		fmt.Printf("Count of Rows in Table '%s' of Project '%s': %d\n", parts[1], parts[0], count)
+		fmt.Println(count)
 
 	case "ctvn":
 		if len(os.Args) != 3 {
@@ -457,6 +462,32 @@ Table Row Commands:
     	color.Red.Println("Error occured.\nError: %s\n", err)
     	os.Exit(1)
     }
+
+  case "rc":
+		if len(os.Args) != 4 {
+			color.Red.Println("'rc' expects a project and a file containing the search statment.")
+			os.Exit(1)
+		}
+
+		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
+		if err != nil {
+			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
+			os.Exit(1)
+		}
+		raw, err := ioutil.ReadFile(inputPath)
+		if err != nil {
+			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
+			os.Exit(1)
+		}
+
+		cl.ProjName = os.Args[2]
+		count, err := cl.CountRows(string(raw))
+		if err != nil {
+			color.Red.Printf("Error running search '%s'.\nError: %s\n", os.Args[3], err)
+			os.Exit(1)
+		}
+
+		fmt.Println(count)
 
 	default:
 		color.Red.Println("Unexpected command. Run the cli with --help to find out the supported commands.")
