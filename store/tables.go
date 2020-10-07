@@ -396,25 +396,25 @@ func renameTable(w http.ResponseWriter, r *http.Request) {
       newTableName, projName)))
   }
 
-  versionsFolder := filepath.Join(dataPath, projName, tableName, "versions")
-  versionsFIs, err := ioutil.ReadDir(versionsFolder)
+  structuresFolder := filepath.Join(dataPath, projName, tableName, "structures")
+  structuresFIs, err := ioutil.ReadDir(structuresFolder)
   if err != nil {
     printError(w, errors.Wrap(err, "read directory failed."))
     return
   }
 
-  for _, vfi := range versionsFIs {
-    versionPath := filepath.Join(versionsFolder, vfi.Name())
-    raw, err := ioutil.ReadFile(versionPath)
+  for _, vfi := range structuresFIs {
+    structurePath := filepath.Join(structuresFolder, vfi.Name())
+    raw, err := ioutil.ReadFile(structurePath)
     if err != nil {
       printError(w, errors.Wrap(err, "read failed."))
       return
     }
 
-    versionPathContents := string(raw)
-    out := strings.ReplaceAll(versionPathContents, tableName, newTableName)
+    structurePathContents := string(raw)
+    out := strings.ReplaceAll(structurePathContents, tableName, newTableName)
 
-    err = ioutil.WriteFile(versionPath, []byte(out), 0777)
+    err = ioutil.WriteFile(structurePath, []byte(out), 0777)
     if err != nil {
       printError(w, errors.Wrap(err, "write failed."))
       return

@@ -74,6 +74,7 @@ Table(s) Commands:
   ts    Table Structure Statement: Expects a project and table combo eg. 'first_proj/users' and a valid number.
   dt    Delete Table: Expects one or more project and table combo eg. 'first_proj/users'.
   et    Empty Table: Expects one or more project and table combo eg. 'first_proj/users'.
+  rt    Rename Table: Expects a project, old table name and the new table name.
 
 
 Table Data Commands:
@@ -168,6 +169,18 @@ Table Search Commands:
 		}
 		fmt.Println()
 
+	case "rt":
+		if len(os.Args) != 5 {
+			color.Red.Println("'rt' command expects a project name, old table name and a new table name.")
+			os.Exit(1)
+		}
+		cl.ProjName = os.Args[2]
+		err := cl.RenameTable(os.Args[3], os.Args[4])
+		if err != nil {
+			color.Red.Println("Error renamining table.\nError: %s\n", err)
+			os.Exit(1)
+		}
+		
 	case "arc":
 		if len(os.Args) != 3 {
 			color.Red.Println("'arc' command expects a project and table combo eg. 'first_proj/users'.")
