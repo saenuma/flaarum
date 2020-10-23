@@ -86,6 +86,15 @@ func createBackupAndSaveToGCloudStorage() {
 var bucketName string
 
 func main() {
+	inProd, err := flaarum_shared.GetSetting("in_production")
+	if err != nil {
+		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
+		os.Exit(1)	
+	}
+	if inProd != "true" && inProd != "t" {
+		color.Red.Println("No need to create backups when not in production mode.")
+		os.Exit(1)
+	}
 
   // test code
 	ctx := context.Background()
@@ -94,12 +103,6 @@ func main() {
   	panic(err)
   }
   defer client.Close()
-
-
-	if os.Getenv("SNAP_NAME") != "flaarum" {
-		color.Red.Println("No need to create backups when not in production mode.")
-		os.Exit(1)
-	}
 
   buck, err := flaarum_shared.GetSetting("backup_bucket")
   if err != nil {
