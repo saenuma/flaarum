@@ -49,23 +49,17 @@ API documentation can be found on [godoc](https://godoc.org/github.com/bankole77
 4.	You don't need a key to connect with the database when not in production.
 
 
-### Production Setup
+### Production Setup (Google Cloud)
 
-1.	Launch an Ubuntu server with its boot disk set to **ssd**. When launching make sure it has access to **Google Cloud Storage API**
+1.	Create a launch file with `flaarum.lgcp init` and edit it to your specifications
 
-2.	SSH into the server and install flaarum with the command `sudo snap install flaarum`
+2.	Create a service account and store the downloaded json in your flaarum folder (gotten from `flaarum.cli pwd`)
 
-3.	Make the instance production ready by running `sudo flaarum.prod mpr` and get your key for your programs.
+3.	Launch the service with `GOOGLE_APPLICATION_CREDENTIALS=/path/to/crendentials/in/your/flaarum/folder flaarum.lgcp l launchfile`
+    where launchfile is the name of the file created in step 1 excluding the path.
 
-4.	Update the config file and add `backup_bucket`. Set this to a GCloud Storage bucket.
+4.	SSH into the server and run `flaarum.prod r` to get your key string. Needed in your program to connect to your flaarum server.
 
-5. 	Start the project with these commands 
-
-```bash
-sudo snap start flaarum.store
-sudo snap start flaarum.tindexer
-sudo snap start flaarum.rbackup
-```
 
 ## CLI
 
