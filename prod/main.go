@@ -26,7 +26,8 @@ Supported Commands:
 
     r     Read the current key string used 
     c     Creates / Updates and prints a new key string
-    mpr   Make production ready. It also creates and prints a key string.
+    mpr   Make production ready. It also creates and prints a key string. It expects a google cloud bucket
+          as its only argument.
 
       `)
 
@@ -70,7 +71,7 @@ Supported Commands:
       "debug": "false",
       "in_production": "true",
       "port": "22318",
-      "backup_bucket": "",
+      "backup_bucket": os.Args[2],
     }
 
     jsonBytes, err := json.Marshal(conf)

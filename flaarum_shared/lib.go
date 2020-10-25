@@ -110,7 +110,11 @@ func GetKeyStrPath() string {
 	var keyPath string
   dd := os.Getenv("SNAP_DATA")
   if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
-    keyPath = filepath.Join("/etc", "flaarum.keyfile")
+    hd, err := os.UserHomeDir()
+    if err != nil {
+      panic(errors.Wrap(err, "os error"))
+    }
+    keyPath = filepath.Join(hd, "flaarum.keyfile")
   } else {
     keyPath = filepath.Join(dd, "flaarum.keyfile")
   }
