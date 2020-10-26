@@ -55,8 +55,9 @@ API documentation can be found on [godoc](https://godoc.org/github.com/bankole77
 
 2.	Create a service account and store the downloaded json in your flaarum folder (gotten from `flaarum.cli pwd`)
 
-3.	Launch the service with `GOOGLE_APPLICATION_CREDENTIALS=/path/to/crendentials/in/your/flaarum/folder flaarum.lgcp l launchfile`
-    where launchfile is the name of the file created in step 1 excluding the path.
+3.	Launch the service with `flaarum.lgcp l launchfile serviceaccountfile`
+    where launchfile is the name of the file created in step 1 excluding the path and serviceaccountfile is the json in step 2
+    excluding the path.
 
 4.	SSH into the server and run `flaarum.prod r` to get your key string. Needed in your program to connect to your flaarum server.
 
