@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"context"
-	// "golang.org/x/oauth2"
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	compute "google.golang.org/api/compute/v1"
 	"os"
@@ -33,10 +33,11 @@ Supported Commands:
     init   Creates a config file. Edit to your own requirements. Some of the values can be gotten from
            Google Cloud's documentation. 
 
-    l      Launches a configured instance based on the config created above. It expects a launch file (created from init)
-           as its only argument.
+    l      Launches a configured instance based on the config created above. It expects a launch file (created from 'init' above)
+           and a service account credentials file (gotten from Google Cloud).
 
       `)
+
   case "init":
 
   	initObject := map[string]string {
@@ -69,8 +70,8 @@ Supported Commands:
     fmt.Printf("Edit the file at '%s' before launching.\n", writePath)
 
   case "l":
-  	if len(os.Args) != 3 {
-  		color.Red.Println("The l command expects a launch file as the next argument.")
+  	if len(os.Args) != 4 {
+  		color.Red.Println("The l command expects a launch file and a service account credentials file.")
   		os.Exit(1)
   	}
 
@@ -95,6 +96,11 @@ Supported Commands:
   			color.Red.Println("Every field in the launch file is compulsory.")
   			os.Exit(1)
   		}
+  	}
+
+  	credentialsFilePath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
+  	if err != nil {
+  		panic(err)
   	}
 
 		instanceName := fmt.Sprintf("flaarum-%s", strings.ToLower(flaarum_shared.UntestedRandomString(4)))
@@ -122,10 +128,17 @@ sudo snap start flaarum.rbackup
 
   	ctx := context.Background()
 
-		client, err := google.DefaultClient(ctx, compute.ComputeScope)
+  	data, err := ioutil.ReadFile(credentialsFilePath)
 		if err != nil {
 			panic(err)
 		}
+		creds, err := google.CredentialsFromJSON(ctx, data, compute.ComputeScope)
+		if err != nil {
+			panic(err)
+		}
+
+		client := oauth2.NewClient(ctx, creds.TokenSource)
+		
 		computeService, err := compute.New(client)
 		if err != nil {
 			panic(err)
@@ -135,8 +148,8 @@ sudo snap start flaarum.rbackup
 		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20201014"
 
 		instance := &compute.Instance{
-			Name:        instanceName,
-			Description: "flaarum instance instance",
+			Name: instanceName,
+			Description: "flaarum instance",
 			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/" + o["machine-type"],
 			Disks: []*compute.AttachedDisk{
 				{
