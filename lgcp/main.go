@@ -329,7 +329,7 @@ sudo snap start flaarum.rbackup
 		instance := &compute.Instance{
 			Name: instanceName,
 			Description: "flaarum data instance",
-			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/" + o["machine-type"],
+			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/" + o["machine-type-evening"],
 			Disks: []*compute.AttachedDisk{
 				{
 					AutoDelete: true,
@@ -394,7 +394,7 @@ sudo snap start flaarum.gcpasr
 		ctlInstance := &compute.Instance{
 			Name: o["control-instance"],
 			Description: "flaarum control instance",
-			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/" + o["machine-type"],
+			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/e2-highcpu-2",
 			Disks: []*compute.AttachedDisk{
 				{
 					AutoDelete: true,
