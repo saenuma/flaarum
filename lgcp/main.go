@@ -216,7 +216,7 @@ sudo snap start flaarum.rbackup
   		"project": "",
   		"zone": "",
   		"disk-size": "10",
-  		"machine-type-morning": "e2-highcpu-4",
+  		"machine-type-morning": "e2-highcpu-8",
   		"machine-type-evening": "e2-highcpu-2",
   		"backup-bucket": "",
   		"timezone": "UTC",

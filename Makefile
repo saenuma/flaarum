@@ -8,6 +8,7 @@ build:
 	go build -o artifacts/inout ./inout
 	go build -o artifacts/rbackup ./rbackup
 	go build -o artifacts/lgcp ./lgcp
+	go build -o artifacts/gcpasr ./gcpasr
 
 	cp store/https-server.crt artifacts/https-server.crt
 	cp store/https-server.key artifacts/https-server.key

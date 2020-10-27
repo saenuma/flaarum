@@ -71,6 +71,15 @@ func GetConfigPath() (string, error) {
 }
 
 
+func GetCtlConfigPath() (string, error) {
+  confPath, err := GetConfigPath()
+  if err != nil {
+    return "", err
+  }
+  return strings.Replace(confPath, "flaarum.json", "flaarumctl.json", 1), nil
+}
+
+
 func GetDataPath() (string, error) {
 	dd := os.Getenv("SNAP_DATA")		
 	if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {

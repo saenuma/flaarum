@@ -9,7 +9,6 @@ import (
   "github.com/gookit/color"
   "encoding/json"
   "github.com/tidwall/pretty"
-  "strings"
 )
 
 
@@ -32,10 +31,10 @@ Supported Commands:
     mpr   Make production ready. It also creates and prints a key string. It expects a google cloud bucket
           as its only argument.
 
-    masr  Make autoscaling ready. This is for the control instance. It expects in the following order flaarum-data-instance-name
-          timezone machine-type-morning machine-type-evening.
+    masr  Make autoscaling ready. This is for the control instance. It expects in the following order projectId,
+          zone, flaarum-data-instance-name, timezone, machine-type-morning, machine-type-evening.
 
-          Example: sudo flaarum.prod masr flaarum-2sb WAT e2-highcpu-5 e2-highcpu-2
+          Example: sudo flaarum.prod masr flaat us-central1-a flaarum-2sb "Africa/Lagos" e2-highcpu-8 e2-highcpu-2
       `)
 
   case "r":
@@ -98,16 +97,18 @@ Supported Commands:
     }
 
   case "masr":
-    if len(os.Args) != 6 {
-      color.Red.Println("Expecting 5 arguments. Check the help for documentation")
+    if len(os.Args) != 8 {
+      color.Red.Println("Expecting 6 arguments. Check the help for documentation")
       os.Exit(1)
     }
 
     conf := map[string]string {
-      "instance": os.Args[2],
-      "timezone": os.Args[3],
-      "machine-type-morning": os.Args[4],
-      "machine-type-evening": os.Args[5],
+      "project": os.Args[2],
+      "zone": os.Args[3],
+      "instance": os.Args[4],
+      "timezone": os.Args[5],
+      "machine-type-morning": os.Args[6],
+      "machine-type-evening": os.Args[7],
     }
 
     jsonBytes, err := json.Marshal(conf)
@@ -117,12 +118,10 @@ Supported Commands:
 
     prettyJson := pretty.Pretty(jsonBytes)
 
-    confPath, err := flaarum_shared.GetConfigPath()
+    confPath, err := flaarum_shared.GetCtlConfigPath()
     if err != nil {
       panic(err)
     }
-
-    confPath = strings.Replace(confPath, "flaarum.json", "flaarumctl.json", 1)
 
     err = ioutil.WriteFile(confPath, prettyJson, 0777)
     if err != nil {
