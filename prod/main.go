@@ -9,6 +9,7 @@ import (
   "github.com/gookit/color"
   "encoding/json"
   "github.com/tidwall/pretty"
+  "strings"
 )
 
 
@@ -25,10 +26,16 @@ func main() {
 Supported Commands:
 
     r     Read the current key string used 
+
     c     Creates / Updates and prints a new key string
+
     mpr   Make production ready. It also creates and prints a key string. It expects a google cloud bucket
           as its only argument.
 
+    masr  Make autoscaling ready. This is for the control instance. It expects in the following order flaarum-data-instance-name
+          timezone machine-type-morning machine-type-evening.
+
+          Example: sudo flaarum.prod masr flaarum-2sb WAT e2-highcpu-5 e2-highcpu-2
       `)
 
   case "r":
@@ -52,6 +59,10 @@ Supported Commands:
     fmt.Print(randomString)
 
   case "mpr":
+    if len(os.Args) != 3 {
+      color.Red.Println("Expecting the backup_bucket as the only argument")
+      os.Exit(1)
+    }
     keyPath := flaarum_shared.GetKeyStrPath()
     randomString := flaarum_shared.UntestedRandomString(50)
 
@@ -80,6 +91,38 @@ Supported Commands:
     }
 
     prettyJson := pretty.Pretty(jsonBytes)
+
+    err = ioutil.WriteFile(confPath, prettyJson, 0777)
+    if err != nil {
+      panic(err)
+    }
+
+  case "masr":
+    if len(os.Args) != 6 {
+      color.Red.Println("Expecting 5 arguments. Check the help for documentation")
+      os.Exit(1)
+    }
+
+    conf := map[string]string {
+      "instance": os.Args[2],
+      "timezone": os.Args[3],
+      "machine-type-morning": os.Args[4],
+      "machine-type-evening": os.Args[5],
+    }
+
+    jsonBytes, err := json.Marshal(conf)
+    if err != nil {
+      panic(err)
+    }
+
+    prettyJson := pretty.Pretty(jsonBytes)
+
+    confPath, err := flaarum_shared.GetConfigPath()
+    if err != nil {
+      panic(err)
+    }
+
+    confPath = strings.Replace(confPath, "flaarum.json", "flaarumctl.json", 1)
 
     err = ioutil.WriteFile(confPath, prettyJson, 0777)
     if err != nil {
