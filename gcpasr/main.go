@@ -9,8 +9,6 @@ import (
 	"context"
 	"golang.org/x/oauth2/google"
   compute "google.golang.org/api/compute/v1"
-	"github.com/gookit/color"
-  "os"
   "io/ioutil"
   "strings"
 )
@@ -40,7 +38,7 @@ func waitForOperation(project, zone string, service *compute.Service, op *comput
 }
 
 
-func resizeToMorningMachineType() {
+func resizeToDayMachineType() {
 	ctx := context.Background()
   client, err := google.DefaultClient(ctx, compute.ComputeScope)
   if err != nil {
@@ -86,7 +84,8 @@ func resizeToMorningMachineType() {
 	fmt.Println("Successfully resized to morning machine-type")
 }
 
-func resizeToEveningMachineType() {
+
+func resizeToNightMachineType() {
 	ctx := context.Background()
   client, err := google.DefaultClient(ctx, compute.ComputeScope)
   if err != nil {
@@ -160,8 +159,8 @@ func main() {
   }
 
 	scheduler := gocron.NewScheduler(loc)
-	scheduler.Every(1).Day().At("08:00").Do(resizeToMorningMachineType)
-	scheduler.Every(1).Day().At("22:00").Do(resizeToEveningMachineType)
+	scheduler.Every(1).Day().At("08:00").Do(resizeToDayMachineType)
+	scheduler.Every(1).Day().At("22:00").Do(resizeToNightMachineType)
 
 	scheduler.StartBlocking()
 }
