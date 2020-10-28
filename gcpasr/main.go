@@ -64,7 +64,7 @@ func resizeToMorningMachineType() {
 
 	op, err = computeService.Instances.SetMachineType(confObject["project"], confObject["zone"], confObject["instance"], 
 		&compute.InstancesSetMachineTypeRequest{
-			MachineType: "/zones/" + confObject["zone"] + "/machineTypes/" + confObject["machine-type-morning"],		
+			MachineType: "/zones/" + confObject["zone"] + "/machineTypes/" + confObject["machine-type-day"],		
 	}).Context(ctx).Do()
 	if err != nil {
 		panic(err)
@@ -110,7 +110,7 @@ func resizeToEveningMachineType() {
 
 	op, err = computeService.Instances.SetMachineType(confObject["project"], confObject["zone"], confObject["instance"], 
 		&compute.InstancesSetMachineTypeRequest{
-			MachineType: "/zones/" + confObject["zone"] + "/machineTypes/" + confObject["machine-type-evening"],		
+			MachineType: "/zones/" + confObject["zone"] + "/machineTypes/" + confObject["machine-type-night"],		
 	}).Context(ctx).Do()
 	if err != nil {
 		panic(err)
@@ -136,16 +136,6 @@ func resizeToEveningMachineType() {
 var confObject map[string]string
 
 func main() {
-	inProd, err := flaarum_shared.GetSetting("in_production")
-	if err != nil {
-		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
-		os.Exit(1)	
-	}
-	if inProd != "true" && inProd != "t" {
-		color.Red.Println("No need to create backups when not in production mode.")
-		os.Exit(1)
-	}
-
   confPath, err := flaarum_shared.GetCtlConfigPath()
   if err != nil {
     panic(err)

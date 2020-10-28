@@ -23,3 +23,4 @@ flaarum_launcher/*.json
 artifacts/
 flaarum.tar.xz
 *.snap
+*.xdelta3

@@ -216,8 +216,8 @@ sudo snap start flaarum.rbackup
   		"project": "",
   		"zone": "",
   		"disk-size": "10",
-  		"machine-type-morning": "e2-highcpu-8",
-  		"machine-type-evening": "e2-highcpu-2",
+  		"machine-type-day": "e2-highcpu-8",
+  		"machine-type-night": "e2-highcpu-2",
   		"backup-bucket": "",
   		"timezone": "UTC",
   	}
@@ -329,7 +329,7 @@ sudo snap start flaarum.rbackup
 		instance := &compute.Instance{
 			Name: instanceName,
 			Description: "flaarum data instance",
-			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/" + o["machine-type-evening"],
+			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/" + o["machine-type-night"],
 			Disks: []*compute.AttachedDisk{
 				{
 					AutoDelete: true,
@@ -386,7 +386,7 @@ sudo snap install flaarum
 `
 		startupScriptControlInstance += "\nsudo flaarum.prod masr " + o["project"] + " " + o["zone"] 
 		startupScriptControlInstance += " " + o["instance"] + " " + o["timezone"]
-		startupScriptControlInstance += " " + o["machine-type-morning"] + " " + o["machine-type-evening"] + " \n"
+		startupScriptControlInstance += " " + o["machine-type-day"] + " " + o["machine-type-night"] + " \n"
 		startupScriptControlInstance += `
 sudo snap start flaarum.gcpasr
 `
@@ -394,7 +394,7 @@ sudo snap start flaarum.gcpasr
 		ctlInstance := &compute.Instance{
 			Name: o["control-instance"],
 			Description: "flaarum control instance",
-			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/e2-highcpu-2",
+			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/e2-small",
 			Disks: []*compute.AttachedDisk{
 				{
 					AutoDelete: true,
