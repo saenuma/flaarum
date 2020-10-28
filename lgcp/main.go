@@ -219,7 +219,7 @@ sudo snap start flaarum.rbackup
   		"machine-type-day": "e2-highcpu-8",
   		"machine-type-night": "e2-highcpu-2",
   		"backup-bucket": "",
-  		"timezone": "UTC",
+  		"timezone": "Africa/Lagos",
   	}
 
     jsonBytes, err := json.Marshal(initObject)
@@ -271,6 +271,10 @@ sudo snap start flaarum.rbackup
   			color.Red.Println("Every field in the launch file is compulsory.")
   			os.Exit(1)
   		}
+  	}
+
+  	if _, err = time.LoadLocation(o["timezone"]); err != nil {
+  		panic(err)
   	}
 
   	credentialsFilePath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
