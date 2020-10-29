@@ -18,6 +18,30 @@ import (
 )
 
 
+func waitForOperationRegion(project, region string, service *compute.Service, op *compute.Operation) error {
+	ctx := context.Background()
+	for {
+		result, err := service.RegionOperations.Get(project, region, op.Name).Context(ctx).Do()
+		if err != nil {
+			return fmt.Errorf("Failed retriving operation status: %s", err)
+		}
+
+		if result.Status == "DONE" {
+			if result.Error != nil {
+				var errors []string
+				for _, e := range result.Error.Errors {
+					errors = append(errors, e.Message)
+				}
+				return fmt.Errorf("Operation failed with error(s): %s", strings.Join(errors, ", "))
+			}
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	return nil
+}
+
+
 func main() {
 	if len(os.Args) < 2 {
 		color.Red.Println("Expecting a command. Run with help subcommand to view help.")
@@ -51,6 +75,7 @@ Supported Commands:
   	initObject := map[string]string {
   		"project": "",
   		"zone": "",
+  		"region": "",
   		"disk-size": "10",
   		"machine-type": "e2-highcpu-2",
   		"backup-bucket": "",
@@ -152,8 +177,26 @@ sudo snap start flaarum.rbackup
 			panic(err)
 		}
 
+		op, err := computeService.Addresses.Insert(o["project"], o["region"], &compute.Address{
+			AddressType: "INTERNAL",
+			Description: "IP address for a flaarum server (" + o["instance"] + ").",
+			Subnetwork: "regions/" + o["region"] + "/subnetworks/default",
+			Name: o["instance"] + "-ip",
+		}).Context(ctx).Do()
+		err = waitForOperationRegion(o["project"], o["region"], computeService, op)
+		if err != nil {
+			panic(err)
+		}
+
+		computeAddr, err := computeService.Addresses.Get(o["project"], o["region"], o["instance"] + "-ip").Context(ctx).Do()
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("Flaarum server address: ", computeAddr.Address)
+
 		prefix := "https://www.googleapis.com/compute/v1/projects/" + o["project"]
-		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20201014"
+		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20201028"
 
 		instance := &compute.Instance{
 			Name: instanceName,
@@ -182,6 +225,7 @@ sudo snap start flaarum.rbackup
 						},
 					},
 					Network: prefix + "/global/networks/default",
+					NetworkIP: computeAddr.Address,
 				},
 			},
 			ServiceAccounts: []*compute.ServiceAccount{
@@ -208,7 +252,7 @@ sudo snap start flaarum.rbackup
 			panic(err)
 		}
 
-		fmt.Println("Instance Name: " + o["instance"])
+		fmt.Println("Flaarum Server Name: " + o["instance"])
 
 	case "initas":
 
@@ -328,7 +372,7 @@ sudo snap start flaarum.rbackup
 		}
 
 		prefix := "https://www.googleapis.com/compute/v1/projects/" + o["project"]
-		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20201014"
+		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20201028"
 
 		instance := &compute.Instance{
 			Name: instanceName,

@@ -14,7 +14,7 @@ import (
 )
 
 
-func waitForOperation(project, zone string, service *compute.Service, op *compute.Operation) error {
+func waitForOperationZone(project, zone string, service *compute.Service, op *compute.Operation) error {
 	ctx := context.Background()
 	for {
 		result, err := service.ZoneOperations.Get(project, zone, op.Name).Context(ctx).Do()
@@ -54,7 +54,7 @@ func resizeToDayMachineType() {
 	if err != nil {
 		panic(err)
 	}
-	err = waitForOperation(confObject["project"], confObject["zone"], computeService, op)
+	err = waitForOperationZone(confObject["project"], confObject["zone"], computeService, op)
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +67,7 @@ func resizeToDayMachineType() {
 	if err != nil {
 		panic(err)
 	}
-	err = waitForOperation(confObject["project"], confObject["zone"], computeService, op)
+	err = waitForOperationZone(confObject["project"], confObject["zone"], computeService, op)
 	if err != nil {
 		panic(err)
 	}
@@ -76,7 +76,7 @@ func resizeToDayMachineType() {
 	if err != nil {
 		panic(err)
 	}
-	err = waitForOperation(confObject["project"], confObject["zone"], computeService, op)
+	err = waitForOperationZone(confObject["project"], confObject["zone"], computeService, op)
 	if err != nil {
 		panic(err)
 	}
@@ -101,7 +101,7 @@ func resizeToNightMachineType() {
 	if err != nil {
 		panic(err)
 	}
-	err = waitForOperation(confObject["project"], confObject["zone"], computeService, op)
+	err = waitForOperationZone(confObject["project"], confObject["zone"], computeService, op)
 	if err != nil {
 		panic(err)
 	}
@@ -114,7 +114,7 @@ func resizeToNightMachineType() {
 	if err != nil {
 		panic(err)
 	}
-	err = waitForOperation(confObject["project"], confObject["zone"], computeService, op)
+	err = waitForOperationZone(confObject["project"], confObject["zone"], computeService, op)
 	if err != nil {
 		panic(err)
 	}
@@ -123,7 +123,7 @@ func resizeToNightMachineType() {
 	if err != nil {
 		panic(err)
 	}
-	err = waitForOperation(confObject["project"], confObject["zone"], computeService, op)
+	err = waitForOperationZone(confObject["project"], confObject["zone"], computeService, op)
 	if err != nil {
 		panic(err)
 	}
