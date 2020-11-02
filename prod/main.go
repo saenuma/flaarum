@@ -32,9 +32,9 @@ Supported Commands:
           as its only argument.
 
     masr  Make autoscaling ready. This is for the control instance. It expects in the following order projectId,
-          zone, flaarum-data-instance-name, timezone, machine-type-day, machine-type-night.
+          zone, flaarum-data-instance-name, flaarum-data-instance-ip.
 
-          Example: sudo flaarum.prod masr flaat us-central1-a flaarum-2sb "Africa/Lagos" e2-highcpu-8 e2-highcpu-2
+          Example: sudo flaarum.prod masr project1 us-central1-a flaarum-2sb 192.168.1.31
       `)
 
   case "r":
@@ -97,8 +97,8 @@ Supported Commands:
     }
 
   case "masr":
-    if len(os.Args) != 8 {
-      color.Red.Println("Expecting 6 arguments. Check the help for documentation")
+    if len(os.Args) != 6 {
+      color.Red.Println("Expecting 4 arguments. Check the help for documentation")
       os.Exit(1)
     }
 
@@ -106,9 +106,7 @@ Supported Commands:
       "project": os.Args[2],
       "zone": os.Args[3],
       "instance": os.Args[4],
-      "timezone": os.Args[5],
-      "machine-type-day": os.Args[6],
-      "machine-type-night": os.Args[7],
+      "instance-ip": os.Args[5],
     }
 
     jsonBytes, err := json.Marshal(conf)
