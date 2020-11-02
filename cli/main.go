@@ -38,7 +38,7 @@ func main() {
 	} else {
 		keyStr = "not-yet-set"
 	}
-	cl := flaarum.NewClient(fmt.Sprintf("https://127.0.0.1:%s/", flaarum_shared.PORT), keyStr, "first_proj")
+	cl := flaarum.NewClient(fmt.Sprintf("https://127.0.0.1:%d/", flaarum_shared.PORT), keyStr, "first_proj")
 
 	err = cl.Ping()
 	if err != nil {

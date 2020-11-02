@@ -14,10 +14,19 @@ import (
   "net/http"
 	"crypto/tls"
 	"github.com/pkg/errors"
+  "github.com/tidwall/pretty"
 )
 
 
 var confObject map[string]string
+
+var MTs = []string{
+	"e2-highcpu-2",
+	"e2-highcpu-4",
+	"e2-highcpu-8",
+	"e2-highcpu-16",
+	"e2-highcpu-32",
+}
 
 func main() {
   confPath, err := flaarum_shared.GetCtlConfigPath()
@@ -94,9 +103,44 @@ func resizeMachineType() {
     panic(errors.Wrap(err, "json error."))
   }
 
-	fmt.Println("Successfully resized to morning machine-type")
+  nextActionCPU := whatToDo(respObj["cpu_usage"])
+  nextActionRAM := whatToDo(respObj["ram_usage"])
+
+  if nextActionCPU == "incr" || nextActionRAM == "incr" {
+  	// do increase
+  	if confObject["machine-type"] == MTs[len(MTs) - 1] {
+  		fmt.Println("No resizing. You've gotten to the max 'e2-highcpu-32'.")
+  		return
+  	}
+  	index := flaarum_shared.FindIn(MTs, confObject["machine-type"])
+  	innerResizeMachine(MTs[index + 1])
+
+  	fmt.Println("Successfully resized the flaarum server")
+  } else if nextActionCPU == "decr" || nextActionRAM == "dcr" {
+  	// do decrease
+		if confObject["machine-type"] == MTs[len(MTs) - 1] {
+  		fmt.Println("No resizing. You've gotten to the max 'e2-highcpu-32'.")
+  		return
+  	}
+  	index := flaarum_shared.FindIn(MTs, confObject["machine-type"])
+  	innerResizeMachine(MTs[index - 1])
+
+  	fmt.Println("Successfully resized the flaarum server")
+  } else {
+  	fmt.Println("No need for resize.")
+  }
 }
 
+
+func whatToDo(state int64) string {
+	if state > 80 {
+		return "incr"
+	} else if state < 20 {
+		return "dcr"
+	} else {
+		return "remain"
+	}
+}
 
 
 func innerResizeMachine(mt string) {
@@ -141,4 +185,23 @@ func innerResizeMachine(mt string) {
 		panic(err)
 	}
 
+	// save the machine-type in use
+	confObject["machine-type"] = mt
+
+  jsonBytes, err := json.Marshal(confObject)
+  if err != nil {
+    panic(err)
+  }
+
+  prettyJson := pretty.Pretty(jsonBytes)
+
+  confPath, err := flaarum_shared.GetCtlConfigPath()
+  if err != nil {
+    panic(err)
+  }
+
+  err = ioutil.WriteFile(confPath, prettyJson, 0777)
+  if err != nil {
+    panic(err)
+  }
 }

@@ -107,6 +107,7 @@ Supported Commands:
       "zone": os.Args[3],
       "instance": os.Args[4],
       "instance-ip": os.Args[5],
+      "machine-type": "e2-highcpu-2",
     }
 
     jsonBytes, err := json.Marshal(conf)
