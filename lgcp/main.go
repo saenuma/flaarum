@@ -453,8 +453,7 @@ sudo snap start flaarum.rbackup
 sudo snap install flaarum
 `
 		startupScriptControlInstance += "\nsudo flaarum.prod masr " + o["project"] + " " + o["zone"] 
-		startupScriptControlInstance += " " + o["instance"] + " " + o["timezone"]
-		startupScriptControlInstance += " " + o["machine-type-day"] + " " + o["machine-type-night"] + " \n"
+		startupScriptControlInstance += " " + o["instance"] + " " + computeAddr.Address + "\n"
 		startupScriptControlInstance += `
 sudo snap start flaarum.gcpasr
 `
