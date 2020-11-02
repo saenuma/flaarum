@@ -106,6 +106,9 @@ func main() {
   r.HandleFunc("/update-rows/{proj}", updateRows)
   r.HandleFunc("/count-rows/{proj}", countRows)
   r.HandleFunc("/sum-rows/{proj}", sumRows)
+
+  // stats
+  r.HandleFunc("/get-and-delete-stats", getAndDeleteStats)
 	
 	r.Use(keyEnforcementMiddleware)
 
@@ -122,11 +125,14 @@ func main() {
 
 func keyEnforcementMiddleware(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    if r.URL.Path == "/get-and-delete-stats" {
+      next.ServeHTTP(w, r)
+    }
     inProd, err := flaarum_shared.GetSetting("in_production")
     if err != nil {
       panic(err)
     }
-    if inProd == "true" {
+    if inProd == "true" || inProd == "t" {
       keyStr := r.FormValue("key-str")
       keyPath := flaarum_shared.GetKeyStrPath()
       raw, err := ioutil.ReadFile(keyPath)
