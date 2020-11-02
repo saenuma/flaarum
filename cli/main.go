@@ -21,8 +21,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	serverPort := flaarum_shared.GetPort()
-
 	var keyStr string
 	inProd, err := flaarum_shared.GetSetting("in_production")
 	if err != nil {
@@ -40,7 +38,7 @@ func main() {
 	} else {
 		keyStr = "not-yet-set"
 	}
-	cl := flaarum.NewClient(fmt.Sprintf("https://127.0.0.1:%s/", serverPort), keyStr, "first_proj")
+	cl := flaarum.NewClient(fmt.Sprintf("https://127.0.0.1:%s/", flaarum_shared.PORT), keyStr, "first_proj")
 
 	err = cl.Ping()
 	if err != nil {

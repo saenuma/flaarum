@@ -20,8 +20,6 @@ import (
 
 func createBackupAndSaveToGCloudStorage() {
 
-	serverPort := flaarum_shared.GetPort()
-
 	var keyStr string
 	inProd, err := flaarum_shared.GetSetting("in_production")
 	if err != nil {
@@ -39,7 +37,7 @@ func createBackupAndSaveToGCloudStorage() {
 	} else {
 		keyStr = "not-yet-set"
 	}
-	cl := flaarum.NewClient(fmt.Sprintf("https://127.0.0.1:%s/", serverPort), keyStr, "first_proj")
+	cl := flaarum.NewClient(fmt.Sprintf("https://127.0.0.1:%d/", flaarum_shared.PORT), keyStr, "first_proj")
 
 	err = cl.Ping()
 	if err != nil {

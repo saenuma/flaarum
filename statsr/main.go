@@ -16,14 +16,12 @@ import (
 
 func main() {
 	scheduler := gocron.NewScheduler(time.UTC)
-	scheduler.Every(30).Minutes().Do( storeStats )
+	scheduler.Every(10).Seconds().Do( storeStats )
 	scheduler.StartBlocking()
 }
 
 
 func storeStats() {
-	serverPort := flaarum_shared.GetPort()
-
 	var keyStr string
 	inProd, err := flaarum_shared.GetSetting("in_production")
 	if err != nil {
@@ -41,7 +39,7 @@ func storeStats() {
 	} else {
 		keyStr = "not-yet-set"
 	}
-	cl := flaarum.NewClient(fmt.Sprintf("https://127.0.0.1:%s/", serverPort), keyStr, "first_proj")
+	cl := flaarum.NewClient(fmt.Sprintf("https://127.0.0.1:%s/", flaarum_shared.PORT), keyStr, "first_proj")
 
 	err = cl.Ping()
 	if err != nil {
@@ -60,8 +58,8 @@ func storeStats() {
 			table: server_stats
 			table-type: logs
 			fields:
-				cpu_usage float64 required
-				ram_usage float64 required
+				cpu_usage float required
+				ram_usage float required
 			::
 			`)
 		if err != nil {

@@ -24,6 +24,7 @@ const (
   STRING_MAX_LENGTH = 100
   TEXT_INTR_DELIM = "~~~"
   BACKUP_EXT = "flaa1"
+  PORT = 22318
 )
 
 
@@ -145,17 +146,6 @@ func GetFlaarumPath(fileName string) (string, error) {
   }
   return dd, nil  
 }
-
-
-func GetPort() string {
-  port, err := GetSetting("port")
-  if err != nil {
-    panic(err)
-  }
-
-  return port
-}
-
 
 
 func FindIn(container []string, elem string) int {

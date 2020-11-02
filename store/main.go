@@ -43,7 +43,6 @@ func init() {
     conf := map[string]string {
       "debug": "false",
       "in_production": "false",
-      "port": "22318",
       "backup_bucket": "",
     }
 
@@ -112,10 +111,9 @@ func main() {
 	
 	r.Use(keyEnforcementMiddleware)
 
-  port := flaarum_shared.GetPort()
-  fmt.Println("Serving on port: " + port)
+  fmt.Printf("Serving on port: %d\n",flaarum_shared.PORT)
 
-	err := http.ListenAndServeTLS(fmt.Sprintf(":%s", port), flaarum_shared.G("https-server.crt"), 
+	err := http.ListenAndServeTLS(fmt.Sprintf(":%d", flaarum_shared.PORT), flaarum_shared.G("https-server.crt"), 
     flaarum_shared.G("https-server.key"), r)
 	if err != nil {
 		panic(err)
