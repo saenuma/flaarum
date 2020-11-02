@@ -19,39 +19,9 @@ parts:
     source-type: tar
 
 apps:
-  store:
-    command: store
-    daemon: simple
-    restart-condition: on-abnormal
-    plugs:
-      - network
-      - network-bind
-
-  prod:
-    command: prod
 
   cli:
     command: cli
-    plugs:
-      - network
-
-  tindexer:
-    command: tindexer
-    daemon: simple
-    restart-condition: on-abnormal
-
-  inout:
-    command: inout
-
-  rbackup:
-    command: rbackup
-    daemon: simple
-    restart-condition: on-abnormal
-    plugs:
-      - network
-
-  lgcp:
-    command: lgcp
     plugs:
       - network
 
@@ -61,4 +31,43 @@ apps:
     restart-condition: on-abnormal
     plugs:
       - network
-      
+
+  inout:
+    command: inout
+
+
+  lgcp:
+    command: lgcp
+    plugs:
+      - network
+
+  prod:
+    command: prod
+
+  rbackup:
+    command: rbackup
+    daemon: simple
+    restart-condition: on-abnormal
+    plugs:
+      - network
+
+  store:
+    command: store
+    daemon: simple
+    restart-condition: on-abnormal
+    plugs:
+      - network
+      - network-bind
+
+  stats:
+    command: stats
+    daemon: simple
+    restart-condition: on-abnormal
+
+
+  tindexer:
+    command: tindexer
+    daemon: simple
+    restart-condition: on-abnormal
+    plugs:
+      - network
