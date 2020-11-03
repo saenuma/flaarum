@@ -65,6 +65,11 @@ Available Commands:
 
 		tblFIs, err := ioutil.ReadDir(projPath)
 		for _, tblFI := range tblFIs {
+
+			if projName == "first_proj" && tblFI.Name() == "server_stats" {
+				continue
+			}
+			
 			err := copy.Copy(filepath.Join(projPath, tblFI.Name(), "structures"), filepath.Join(tmpFolder, "out", tblFI.Name(), "structures"))
 			if err != nil {
 				panic(err)

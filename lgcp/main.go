@@ -156,7 +156,7 @@ sudo snap install flaarum
 		startupScript += `
 sudo snap start flaarum.store
 sudo snap start flaarum.tindexer
-sudo snap start flaarum.rbackup
+sudo snap start flaarum.gcprb
 sudo snap start flaarum.statsr
 `
 
@@ -349,7 +349,7 @@ sudo snap install flaarum
 		startupScript += `
 sudo snap start flaarum.store
 sudo snap start flaarum.tindexer
-sudo snap start flaarum.rbackup
+sudo snap start flaarum.gcprb
 sudo snap start flaarum.statsr
 `
 
