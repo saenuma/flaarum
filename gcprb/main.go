@@ -85,7 +85,7 @@ func createBackupAndSaveToGCloudStorage() {
 
 	  }
 
-	  fmt.Println("Successfully ran backup.")
+	  fmt.Println("Successfully ran backup at " + time.Now().String())
 
 	  contents := flaarum.RightDateTimeFormat(time.Now())
 		ioutil.WriteFile(bkupFilePath, []byte(contents), 0777)
