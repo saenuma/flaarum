@@ -395,7 +395,7 @@ sudo snap start flaarum.statsr
 		instance := &compute.Instance{
 			Name: instanceName,
 			Description: "flaarum data instance",
-			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/" + o["machine-type-night"],
+			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/e2-highcpu-2",
 			Disks: []*compute.AttachedDisk{
 				{
 					AutoDelete: true,
