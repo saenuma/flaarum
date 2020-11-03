@@ -157,7 +157,7 @@ sudo snap install flaarum
 sudo snap start flaarum.store
 sudo snap start flaarum.tindexer
 sudo snap start flaarum.gcprb
-sudo snap start flaarum.statsr
+sudo snap stop --disable flaarum.statsr
 `
 
   	ctx := context.Background()
