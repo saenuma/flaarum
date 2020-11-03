@@ -7,8 +7,7 @@ import (
   "fmt"
   "os"
   "github.com/gookit/color"
-  "encoding/json"
-  "github.com/tidwall/pretty"
+  "github.com/bankole7782/zazabul"
 )
 
 
@@ -77,21 +76,17 @@ Supported Commands:
       panic(err)
     }
 
-    conf := map[string]string {
-      "debug": "false",
-      "in_production": "true",
-      "port": "22318",
-      "backup_bucket": os.Args[2],
-    }
-
-    jsonBytes, err := json.Marshal(conf)
+    conf, err := zazabul.LoadConfigFile(confPath)
     if err != nil {
       panic(err)
     }
 
-    prettyJson := pretty.Pretty(jsonBytes)
+    conf.Update(map[string]string{
+      "backup_bucket": os.Args[2],
+      "in_production": "true",
+    })
 
-    err = ioutil.WriteFile(confPath, prettyJson, 0777)
+    err = conf.Write(confPath)
     if err != nil {
       panic(err)
     }
@@ -102,27 +97,46 @@ Supported Commands:
       os.Exit(1)
     }
 
-    conf := map[string]string {
-      "project": os.Args[2],
-      "zone": os.Args[3],
-      "instance": os.Args[4],
-      "instance-ip": os.Args[5],
-      "machine-type": "e2-highcpu-2",
-    }
+    tmpl := `// project is the Google Cloud Project name
+// It can be created either from the Google Cloud Console or from the gcloud command
+project:  
 
-    jsonBytes, err := json.Marshal(conf)
+// zone is the Google Cloud Zone which must be derived from a region.
+// for instance a region could be 'us-central1' and the zone could be 'us-central1-a'
+zone:  
+
+// instance name is the name of the instance that would be controlled
+instance:
+
+
+// instance-ip is the IP address of the instance to be controlled
+instance-ip: 
+
+// machine-type is the type of machine configuration to use to launch your flaarum server.
+// You must get this value from the Google Cloud Compute documentation if not it would fail.
+// It is not necessary it must be an e2 instance.
+machine-type: e2-highcpu-2
+
+`
+    conf, err := zazabul.ParseConfig(tmpl)
     if err != nil {
       panic(err)
     }
 
-    prettyJson := pretty.Pretty(jsonBytes)
+    conf.Update(map[string]string {
+      "project": os.Args[2],
+      "zone": os.Args[3],
+      "instance": os.Args[4],
+      "instance-ip": os.Args[5],
+    })
+
 
     confPath, err := flaarum_shared.GetCtlConfigPath()
     if err != nil {
       panic(err)
     }
 
-    err = ioutil.WriteFile(confPath, prettyJson, 0777)
+    err = conf.Write(confPath)
     if err != nil {
       panic(err)
     }

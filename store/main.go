@@ -10,8 +10,9 @@ import (
 	"sync"
 	"io/ioutil"
 	"github.com/bankole7782/flaarum/flaarum_shared"
-  "github.com/tidwall/pretty"
+  "github.com/bankole7782/zazabul"
   "encoding/json"
+  "github.com/pkg/errors"
 )
 
 var projsMutex *sync.RWMutex // for projects and tables (table data uses different mutexes) creation, editing, deletion
@@ -40,23 +41,11 @@ func init() {
   }
 
   if ! doesPathExists(confPath) {
-    conf := map[string]string {
-      "debug": "false",
-      "in_production": "false",
-      "backup_bucket": "",
-    }
-
-    jsonBytes, err := json.Marshal(conf)
+    conf, err := zazabul.ParseConfig(flaarum_shared.RootConfigTemplate)
     if err != nil {
       panic(err)
     }
-
-    prettyJson := pretty.Pretty(jsonBytes)
-
-    err = ioutil.WriteFile(confPath, prettyJson, 0777)
-    if err != nil {
-      panic(err)
-    }
+    conf.Write(confPath)
   }
 
   // load stop words once
@@ -126,11 +115,10 @@ func keyEnforcementMiddleware(next http.Handler) http.Handler {
     if r.URL.Path == "/get-and-delete-stats" {
       next.ServeHTTP(w, r)
     } else {
-      inProd, err := flaarum_shared.GetSetting("in_production")
-      if err != nil {
-        panic(err)
-      }
-      if inProd == "true" || inProd == "t" {
+      inProd := flaarum_shared.GetSetting("in_production")
+      if inProd == "" {
+        panic(errors.New("Have you installed and launched flaarum.store"))
+      } else if inProd == "true" {
         keyStr := r.FormValue("key-str")
         keyPath := flaarum_shared.GetKeyStrPath()
         raw, err := ioutil.ReadFile(keyPath)

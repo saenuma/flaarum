@@ -9,12 +9,11 @@ import (
 	"os"
 	"github.com/gookit/color"
 	"io/ioutil"
-	"encoding/json"
 	"github.com/bankole7782/flaarum/flaarum_shared"
 	"time"
-	"github.com/tidwall/pretty"
 	"strings"
 	"strconv"
+	"github.com/bankole7782/zazabul"
 )
 
 
@@ -71,33 +70,50 @@ Supported Commands:
       `)
 
   case "initb":
-
-  	initObject := map[string]string {
-  		"project": "",
-  		"zone": "",
-  		"region": "",
-  		"disk-size": "10",
-  		"machine-type": "e2-highcpu-2",
-  		"backup-bucket": "",
-  	}
-
-    jsonBytes, err := json.Marshal(initObject)
-    if err != nil {
-      panic(err)
-    }
-
-    prettyJson := pretty.Pretty(jsonBytes)
-
-    configFileName := "lb" + time.Now().Format("20060102T150405") + ".json"
+    configFileName := "lb" + time.Now().Format("20060102T150405") + ".zconf"
 
     writePath, err := flaarum_shared.GetFlaarumPath(configFileName)
     if err != nil {
     	panic(err)
     }
 
-    err = ioutil.WriteFile(writePath, prettyJson, 0777)
+    var	tmpl = `// project is the Google Cloud Project name
+// It can be created either from the Google Cloud Console or from the gcloud command
+project:  
+
+// region is the Google Cloud Region name
+// Specify the region you want to launch your flaarum server in.
+region:   
+
+
+// zone is the Google Cloud Zone which must be derived from the region above.
+// for instance a region could be 'us-central1' and the zone could be 'us-central1-a'
+zone:  
+
+// disk-size is the size of the root disk of the server. The data created is also stored in the root disk.
+// It is measured in Gigabytes (GB) and a number is expected.
+// 10 is the minimum.
+disk-size: 10
+
+// machine-type is the type of machine configuration to use to launch your flaarum server.
+// You must get this value from the Google Cloud Compute documentation if not it would fail.
+// It is not necessary it must be an e2 instance.
+machine-type: e2-highcpu-2
+
+// You are to create a bucket in Google cloud storage and set it to this value.
+// This is where the backups for your flaarum installation would be saved to.
+backup_bucket: 
+
+`
+
+    conf, err := zazabul.ParseConfig(tmpl)
     if err != nil {
-      panic(err)
+    	panic(err)
+    }
+
+    err = conf.Write(writePath)
+    if err != nil {
+    	panic(err)
     }
 
     fmt.Printf("Edit the file at '%s' before launching.\n", writePath)
@@ -113,19 +129,13 @@ Supported Commands:
     	panic(err)
     }
 
-  	raw, err := ioutil.ReadFile(inputPath)
+  	conf, err := zazabul.LoadConfigFile(inputPath)
   	if err != nil {
   		panic(err)
   	}
 
-  	o := make(map[string]string)
-  	err = json.Unmarshal(raw, &o)
-  	if err != nil {
-  		panic(err)
-  	}
-
-  	for _, v := range o {
-  		if v == "" {
+  	for _, item := range conf.Items {
+  		if item.Value == "" {
   			color.Red.Println("Every field in the launch file is compulsory.")
   			os.Exit(1)
   		}
@@ -139,9 +149,7 @@ Supported Commands:
 		instanceName := fmt.Sprintf("flaarum-%s", strings.ToLower(flaarum_shared.UntestedRandomString(4)))
 		diskName := fmt.Sprintf("%s-disk", instanceName)
   	
-  	o["instance"] = instanceName
-  	o["disk"] = diskName
-  	diskSizeInt, err := strconv.ParseInt(o["disk-size"], 10, 64)
+  	diskSizeInt, err := strconv.ParseInt(conf.Get("disk-size"), 10, 64)
   	if err != nil {
   		color.Red.Println("The 'disk-size' variable must be a number greater or equal to 10")
   		os.Exit(1)
@@ -152,7 +160,7 @@ Supported Commands:
 
 sudo snap install flaarum
 `
-		startupScript += "\nsudo flaarum.prod mpr " + o["backup-bucket"] + " \n"
+		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup-bucket") + " \n"
 		startupScript += `
 sudo snap start flaarum.store
 sudo snap start flaarum.tindexer
@@ -178,31 +186,31 @@ sudo snap stop --disable flaarum.statsr
 			panic(err)
 		}
 
-		op, err := computeService.Addresses.Insert(o["project"], o["region"], &compute.Address{
+		op, err := computeService.Addresses.Insert(conf.Get("project"), conf.Get("region"), &compute.Address{
 			AddressType: "INTERNAL",
-			Description: "IP address for a flaarum server (" + o["instance"] + ").",
-			Subnetwork: "regions/" + o["region"] + "/subnetworks/default",
-			Name: o["instance"] + "-ip",
+			Description: "IP address for a flaarum server (" + instanceName + ").",
+			Subnetwork: "regions/" + conf.Get("region") + "/subnetworks/default",
+			Name: instanceName + "-ip",
 		}).Context(ctx).Do()
-		err = waitForOperationRegion(o["project"], o["region"], computeService, op)
+		err = waitForOperationRegion(conf.Get("project"), conf.Get("region"), computeService, op)
 		if err != nil {
 			panic(err)
 		}
 
-		computeAddr, err := computeService.Addresses.Get(o["project"], o["region"], o["instance"] + "-ip").Context(ctx).Do()
+		computeAddr, err := computeService.Addresses.Get(conf.Get("project"), conf.Get("region"), instanceName + "-ip").Context(ctx).Do()
 		if err != nil {
 			panic(err)
 		}
 
 		fmt.Println("Flaarum server address: ", computeAddr.Address)
 
-		prefix := "https://www.googleapis.com/compute/v1/projects/" + o["project"]
+		prefix := "https://www.googleapis.com/compute/v1/projects/" + conf.Get("project")
 		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20201028"
 
 		instance := &compute.Instance{
 			Name: instanceName,
 			Description: "flaarum instance",
-			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/" + o["machine-type"],
+			MachineType: prefix + "/zones/" + conf.Get("zone") + "/machineTypes/" + conf.Get("machine-type"),
 			Disks: []*compute.AttachedDisk{
 				{
 					AutoDelete: true,
@@ -210,9 +218,9 @@ sudo snap stop --disable flaarum.statsr
 					Type:       "PERSISTENT",
 
 					InitializeParams: &compute.AttachedDiskInitializeParams{
-						DiskName:    o["disk"],
+						DiskName:    diskName,
 						SourceImage: imageURL,
-						DiskType: prefix + "/zones/" + o["zone"] + "/diskTypes/pd-ssd",
+						DiskType: prefix + "/zones/" + conf.Get("zone") + "/diskTypes/pd-ssd",
 						DiskSizeGb: diskSizeInt,
 					},
 				},
@@ -248,30 +256,38 @@ sudo snap stop --disable flaarum.statsr
 			},
 		}
 
-		_, err = computeService.Instances.Insert(o["project"], o["zone"], instance).Do()
+		_, err = computeService.Instances.Insert(conf.Get("project"), conf.Get("zone"), instance).Do()
 		if err != nil {
 			panic(err)
 		}
 
-		fmt.Println("Flaarum Server Name: " + o["instance"])
+		fmt.Println("Flaarum Server Name: " + instanceName)
 
 	case "initas":
 
-		initObject := map[string]string {
-  		"project": "",
-  		"region": "",
-  		"zone": "",
-  		"disk-size": "10",
-  		"backup-bucket": "",
-  	}
+    var	tmpl = `// project is the Google Cloud Project name
+// It can be created either from the Google Cloud Console or from the gcloud command
+project:  
 
-    jsonBytes, err := json.Marshal(initObject)
-    if err != nil {
-      panic(err)
-    }
+// region is the Google Cloud Region name
+// Specify the region you want to launch your flaarum server in.
+region:   
 
-    prettyJson := pretty.Pretty(jsonBytes)
 
+// zone is the Google Cloud Zone which must be derived from the region above.
+// for instance a region could be 'us-central1' and the zone could be 'us-central1-a'
+zone:  
+
+// disk-size is the size of the root disk of the server. The data created is also stored in the root disk.
+// It is measured in Gigabytes (GB) and a number is expected.
+// 10 is the minimum.
+disk-size: 10
+
+// You are to create a bucket in Google cloud storage and set it to this value.
+// This is where the backups for your flaarum installation would be saved to.
+backup_bucket: 
+
+`
     configFileName := "las" + time.Now().Format("20060102T150405") + ".json"
 
     writePath, err := flaarum_shared.GetFlaarumPath(configFileName)
@@ -279,7 +295,12 @@ sudo snap stop --disable flaarum.statsr
     	panic(err)
     }
 
-    err = ioutil.WriteFile(writePath, prettyJson, 0777)
+    conf, err := zazabul.ParseConfig(tmpl)
+    if err != nil {
+    	panic(err)
+    }
+
+    err = conf.Write(writePath)
     if err != nil {
       panic(err)
     }
@@ -298,26 +319,16 @@ sudo snap stop --disable flaarum.statsr
     	panic(err)
     }
 
-  	raw, err := ioutil.ReadFile(inputPath)
+  	conf, err := zazabul.LoadConfigFile(inputPath)
   	if err != nil {
   		panic(err)
   	}
 
-  	o := make(map[string]string)
-  	err = json.Unmarshal(raw, &o)
-  	if err != nil {
-  		panic(err)
-  	}
-
-  	for _, v := range o {
-  		if v == "" {
+  	for _, item := range conf.Items {
+  		if item.Value == "" {
   			color.Red.Println("Every field in the launch file is compulsory.")
   			os.Exit(1)
   		}
-  	}
-
-  	if _, err = time.LoadLocation(o["timezone"]); err != nil {
-  		panic(err)
   	}
 
   	credentialsFilePath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
@@ -329,12 +340,11 @@ sudo snap stop --disable flaarum.statsr
 		instanceName := fmt.Sprintf("flaarum-%s", suffix)
 		diskName := fmt.Sprintf("%s-disk", instanceName)
   	
-  	o["instance"] = instanceName
-  	o["control-instance"] = fmt.Sprintf("flaarumctl-%s", suffix)
-  	o["control-instance-disk"] = o["control-instance"] + "-disk"
+  	instanceName = instanceName
+  	ctlInstanceName := fmt.Sprintf("flaarumctl-%s", suffix)
+  	ctlInstanceDisk := ctlInstanceName + "-disk"
 
-  	o["disk"] = diskName
-  	diskSizeInt, err := strconv.ParseInt(o["disk-size"], 10, 64)
+  	diskSizeInt, err := strconv.ParseInt(conf.Get("disk-size"), 10, 64)
   	if err != nil {
   		color.Red.Println("The 'disk-size' variable must be a number greater or equal to 10")
   		os.Exit(1)
@@ -345,7 +355,7 @@ sudo snap stop --disable flaarum.statsr
 
 sudo snap install flaarum
 `
-		startupScript += "\nsudo flaarum.prod mpr " + o["backup-bucket"] + " \n"
+		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup-bucket") + " \n"
 		startupScript += `
 sudo snap start flaarum.store
 sudo snap start flaarum.tindexer
@@ -371,31 +381,31 @@ sudo snap start flaarum.statsr
 			panic(err)
 		}
 
-		op, err := computeService.Addresses.Insert(o["project"], o["region"], &compute.Address{
+		op, err := computeService.Addresses.Insert(conf.Get("project"), conf.Get("region"), &compute.Address{
 			AddressType: "INTERNAL",
-			Description: "IP address for a flaarum server (" + o["instance"] + ").",
-			Subnetwork: "regions/" + o["region"] + "/subnetworks/default",
-			Name: o["instance"] + "-ip",
+			Description: "IP address for a flaarum server (" + instanceName + ").",
+			Subnetwork: "regions/" + conf.Get("region") + "/subnetworks/default",
+			Name: instanceName + "-ip",
 		}).Context(ctx).Do()
-		err = waitForOperationRegion(o["project"], o["region"], computeService, op)
+		err = waitForOperationRegion(conf.Get("project"), conf.Get("region"), computeService, op)
 		if err != nil {
 			panic(err)
 		}
 
-		computeAddr, err := computeService.Addresses.Get(o["project"], o["region"], o["instance"] + "-ip").Context(ctx).Do()
+		computeAddr, err := computeService.Addresses.Get(conf.Get("project"), conf.Get("region"), instanceName + "-ip").Context(ctx).Do()
 		if err != nil {
 			panic(err)
 		}
 
 		fmt.Println("Flaarum server address: ", computeAddr.Address)
 
-		prefix := "https://www.googleapis.com/compute/v1/projects/" + o["project"]
+		prefix := "https://www.googleapis.com/compute/v1/projects/" + conf.Get("project")
 		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20201028"
 
 		instance := &compute.Instance{
 			Name: instanceName,
 			Description: "flaarum data instance",
-			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/e2-highcpu-2",
+			MachineType: prefix + "/zones/" + conf.Get("zone") + "/machineTypes/e2-highcpu-2",
 			Disks: []*compute.AttachedDisk{
 				{
 					AutoDelete: true,
@@ -403,9 +413,9 @@ sudo snap start flaarum.statsr
 					Type:       "PERSISTENT",
 
 					InitializeParams: &compute.AttachedDiskInitializeParams{
-						DiskName:    o["disk"],
+						DiskName:    diskName,
 						SourceImage: imageURL,
-						DiskType: prefix + "/zones/" + o["zone"] + "/diskTypes/pd-ssd",
+						DiskType: prefix + "/zones/" + conf.Get("zone") + "/diskTypes/pd-ssd",
 						DiskSizeGb: diskSizeInt,
 					},
 				},
@@ -441,7 +451,7 @@ sudo snap start flaarum.statsr
 			},
 		}
 
-		_, err = computeService.Instances.Insert(o["project"], o["zone"], instance).Do()
+		_, err = computeService.Instances.Insert(conf.Get("project"), conf.Get("zone"), instance).Do()
 		if err != nil {
 			panic(err)
 		}
@@ -451,16 +461,16 @@ sudo snap start flaarum.statsr
 
 sudo snap install flaarum
 `
-		startupScriptControlInstance += "\nsudo flaarum.prod masr " + o["project"] + " " + o["zone"] 
-		startupScriptControlInstance += " " + o["instance"] + " " + computeAddr.Address + "\n"
+		startupScriptControlInstance += "\nsudo flaarum.prod masr " + conf.Get("project") + " " + conf.Get("zone") 
+		startupScriptControlInstance += " " + instanceName + " " + computeAddr.Address + "\n"
 		startupScriptControlInstance += `
 sudo snap start flaarum.gcpasr
 `
 
 		ctlInstance := &compute.Instance{
-			Name: o["control-instance"],
+			Name: ctlInstanceName,
 			Description: "flaarum control instance",
-			MachineType: prefix + "/zones/" + o["zone"] + "/machineTypes/e2-small",
+			MachineType: prefix + "/zones/" + conf.Get("zone") + "/machineTypes/e2-small",
 			Disks: []*compute.AttachedDisk{
 				{
 					AutoDelete: true,
@@ -468,7 +478,7 @@ sudo snap start flaarum.gcpasr
 					Type:       "PERSISTENT",
 
 					InitializeParams: &compute.AttachedDiskInitializeParams{
-						DiskName:    o["control-instance-disk"],
+						DiskName:    ctlInstanceDisk,
 						SourceImage: imageURL,
 					},
 				},
@@ -503,13 +513,13 @@ sudo snap start flaarum.gcpasr
 			},
 		}
 
-		_, err = computeService.Instances.Insert(o["project"], o["zone"], ctlInstance).Do()
+		_, err = computeService.Instances.Insert(conf.Get("project"), conf.Get("zone"), ctlInstance).Do()
 		if err != nil {
 			panic(err)
 		}
 
-		fmt.Println("Flaarum Server Name: " + o["instance"])  	
-		fmt.Println("Flaarum Control Server Name: ", o["control-instance"])
+		fmt.Println("Flaarum Server Name: " + instanceName)  	
+		fmt.Println("Flaarum Control Server Name: ", ctlInstanceName)
   }
 
 }

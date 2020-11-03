@@ -14,11 +14,11 @@ import (
   "net/http"
 	"crypto/tls"
 	"github.com/pkg/errors"
-  "github.com/tidwall/pretty"
+  "github.com/bankole7782/zazabul"
 )
 
 
-var confObject map[string]string
+var confObject zazabul.Config
 
 var MTs = []string{
 	"e2-highcpu-2",
@@ -34,18 +34,12 @@ func main() {
     panic(err)
   }
 
-	raw, err := ioutil.ReadFile(confPath)
+	conf, err := zazabul.LoadConfigFile(confPath)
 	if err != nil {
 		panic(err)
 	}
 
-	o := make(map[string]string)
-	err = json.Unmarshal(raw, &o)
-	if err != nil {
-		panic(err)
-	}
-
-	confObject = o
+	confObject = conf
 
 	scheduler := gocron.NewScheduler(time.UTC)
 	scheduler.Every(6).Hours().Do(resizeMachineType)
@@ -83,7 +77,7 @@ func resizeMachineType() {
 
 	httpCl := &http.Client{Transport: tr}
 
-	resp, err := httpCl.Get(fmt.Sprintf("https:%s:%d/get-and-delete-stats", confObject["flaarum-ip"], flaarum_shared.PORT))
+	resp, err := httpCl.Get(fmt.Sprintf("https:%s:%d/get-and-delete-stats", confObject.Get("instance-ip"), flaarum_shared.PORT))
 	if err != nil {
 		panic(errors.Wrap(err, "http error"))
 	}
@@ -108,21 +102,21 @@ func resizeMachineType() {
 
   if nextActionCPU == "incr" || nextActionRAM == "incr" {
   	// do increase
-  	if confObject["machine-type"] == MTs[len(MTs) - 1] {
-  		fmt.Println("No resizing. You've gotten to the max 'e2-highcpu-32'.")
+  	if confObject.Get("machine-type") == MTs[len(MTs) - 1] {
+  		fmt.Println("No resizing. You've gotten to the max server.")
   		return
   	}
-  	index := flaarum_shared.FindIn(MTs, confObject["machine-type"])
+  	index := flaarum_shared.FindIn(MTs, confObject.Get("machine-type"))
   	innerResizeMachine(MTs[index + 1])
 
   	fmt.Println("Successfully resized the flaarum server")
   } else if nextActionCPU == "decr" || nextActionRAM == "dcr" {
   	// do decrease
-		if confObject["machine-type"] == MTs[0] {
-  		fmt.Println("No resizing. You've gotten to the minimum 'e2-highcpu-2'.")
+		if confObject.Get("machine-type") == MTs[0] {
+  		fmt.Println("No resizing. You've gotten to the smallest server.")
   		return
   	}
-  	index := flaarum_shared.FindIn(MTs, confObject["machine-type"])
+  	index := flaarum_shared.FindIn(MTs, confObject.Get("machine-type"))
   	innerResizeMachine(MTs[index - 1])
 
   	fmt.Println("Successfully resized the flaarum server")
@@ -155,52 +149,47 @@ func innerResizeMachine(mt string) {
 		panic(err)
 	}
 
-	op, err := computeService.Instances.Stop(confObject["project"], confObject["zone"], confObject["instance"]).Context(ctx).Do()
+	op, err := computeService.Instances.Stop(confObject.Get("project"), confObject.Get("zone"), confObject.Get("instance")).Context(ctx).Do()
 	if err != nil {
 		panic(err)
 	}
-	err = waitForOperationZone(confObject["project"], confObject["zone"], computeService, op)
+	err = waitForOperationZone(confObject.Get("project"), confObject.Get("zone"), computeService, op)
 	if err != nil {
 		panic(err)
 	}
 
-	op, err = computeService.Instances.SetMachineType(confObject["project"], confObject["zone"], confObject["instance"], 
+	op, err = computeService.Instances.SetMachineType(confObject.Get("project"), confObject.Get("zone"), confObject.Get("instance"), 
 		&compute.InstancesSetMachineTypeRequest{
-			MachineType: "/zones/" + confObject["zone"] + "/machineTypes/" + mt,		
+			MachineType: "/zones/" + confObject.Get("zone") + "/machineTypes/" + mt,		
 	}).Context(ctx).Do()
 	if err != nil {
 		panic(err)
 	}
-	err = waitForOperationZone(confObject["project"], confObject["zone"], computeService, op)
+	err = waitForOperationZone(confObject.Get("project"), confObject.Get("zone"), computeService, op)
 	if err != nil {
 		panic(err)
 	}
 
-	op, err = computeService.Instances.Start(confObject["project"], confObject["zone"], confObject["instance"]).Context(ctx).Do()
+	op, err = computeService.Instances.Start(confObject.Get("project"), confObject.Get("zone"), confObject.Get("instance")).Context(ctx).Do()
 	if err != nil {
 		panic(err)
 	}
-	err = waitForOperationZone(confObject["project"], confObject["zone"], computeService, op)
+	err = waitForOperationZone(confObject.Get("project"), confObject.Get("zone"), computeService, op)
 	if err != nil {
 		panic(err)
 	}
 
 	// save the machine-type in use
-	confObject["machine-type"] = mt
-
-  jsonBytes, err := json.Marshal(confObject)
-  if err != nil {
-    panic(err)
-  }
-
-  prettyJson := pretty.Pretty(jsonBytes)
+	confObject.Update(map[string]string{
+		"machine-type": mt,
+	})
 
   confPath, err := flaarum_shared.GetCtlConfigPath()
   if err != nil {
     panic(err)
   }
 
-  err = ioutil.WriteFile(confPath, prettyJson, 0777)
+  err = confObject.Write(confPath)
   if err != nil {
     panic(err)
   }

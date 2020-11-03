@@ -10,11 +10,11 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"time"
-	"encoding/json"
   "github.com/kljensen/snowball"  
   "fmt"
   "strconv"
   "github.com/adam-hanna/arrayOperations"
+  "github.com/bankole7782/zazabul"
 )
 
 
@@ -27,6 +27,22 @@ const (
   PORT = 22318
 )
 
+var RootConfigTemplate = `// debug can be set to either false or true
+// when it is set to true it would print more detailed error messages
+debug: false
+
+// in_production can be set to either false or true.
+// when set to true, it makes the flaarum installation enforce a key
+// this key can be gotten from 'flaarum.prod r' if it has been created with 'flaarum.prod c'
+in_production: false
+
+// backup_bucket is only required during production.
+// You are to create a bucket in Google cloud storage and set it to this value.
+// This is where the backups for your flaarum installation would be saved to.
+backup_bucket: 
+
+
+    `
 
 func DoesPathExists(p string) bool {
 	if _, err := os.Stat(p); os.IsNotExist(err) {
@@ -64,9 +80,9 @@ func GetConfigPath() (string, error) {
 		if err != nil {
 			return "", errors.Wrap(err, "os error")
 		}
-		dd = filepath.Join(hd, ".flaarum.json")	
+		dd = filepath.Join(hd, ".flaarum.zconf")	
 	} else {
-		dd = filepath.Join(dd, "flaarum.json")
+		dd = filepath.Join(dd, "flaarum.zconf")
 	}
 	return dd, nil	
 }
@@ -77,7 +93,7 @@ func GetCtlConfigPath() (string, error) {
   if err != nil {
     return "", err
   }
-  return strings.Replace(confPath, "flaarum.json", "flaarumctl.json", 1), nil
+  return strings.Replace(confPath, "flaarum.zconf", "flaarumctl.zconf", 1), nil
 }
 
 
@@ -96,23 +112,19 @@ func GetDataPath() (string, error) {
 }
 
 
-func GetSetting(settingName string) (string, error) {
-	settingFilePath, err := GetConfigPath()
+func GetSetting(settingName string) string {
+	confPath, err := GetConfigPath()
 	if err != nil {
-		return "", err
+    fmt.Println("%+v", err)
+    return ""
 	}
-  raw, err := ioutil.ReadFile(settingFilePath)
+
+  conf, err := zazabul.LoadConfigFile(confPath)
   if err != nil {
-    return "", errors.Wrap(err, "read failed.")
+    fmt.Println("%+v", err)
   }
 
-  settingObj := make(map[string]string)
-  err = json.Unmarshal(raw, &settingObj)
-  if err != nil {
-    return "", errors.Wrap(err, "json failed.")
-  }
-
-  return settingObj[settingName], nil
+  return conf.Get(settingName)
 }
 
 

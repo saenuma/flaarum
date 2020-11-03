@@ -96,12 +96,12 @@ func createBackupAndSaveToGCloudStorage() {
 var bucketName string
 
 func main() {
-	inProd, err := flaarum_shared.GetSetting("in_production")
-	if err != nil {
+	inProd := flaarum_shared.GetSetting("in_production")
+	if inProd == "" {
 		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
 		os.Exit(1)	
 	}
-	if inProd != "true" && inProd != "t" {
+	if inProd != "true" {
 		color.Red.Println("No need to create backups when not in production mode.")
 		os.Exit(1)
 	}
@@ -114,9 +114,10 @@ func main() {
   }
   defer client.Close()
 
-  buck, err := flaarum_shared.GetSetting("backup_bucket")
-  if err != nil {
-  	panic(err)
+  buck := flaarum_shared.GetSetting("backup_bucket")
+  if buck == "" {
+  	color.Red.Println("The 'backup_bucket' config was not set.")
+  	os.Exit(1)
   }
 
   configFilePath, err := flaarum_shared.GetConfigPath()

@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/storage v1.10.0
 	github.com/adam-hanna/arrayOperations v0.2.6
 	github.com/bankole7782/mof v0.0.0-20200317202416-46aa3f7786db
+	github.com/bankole7782/zazabul v1.0.0
 	github.com/go-co-op/gocron v0.2.0
 	github.com/gookit/color v1.2.5
 	github.com/gorilla/mux v1.7.4

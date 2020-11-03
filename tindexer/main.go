@@ -27,11 +27,8 @@ var (
 func init() {
 	mutexesMap = make(map[string]*sync.Mutex)
 
-	debug, err := flaarum_shared.GetSetting("debug")
-	if err != nil {
-		panic(err)
-	}
-	if debug == "true" || debug == "t" {
+	debug := flaarum_shared.GetSetting("debug")
+	if debug == "true" {
 		debugMode = true
 	}
 

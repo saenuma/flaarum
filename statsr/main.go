@@ -24,12 +24,12 @@ func main() {
 
 func storeStats() {
 	var keyStr string
-	inProd, err := flaarum_shared.GetSetting("in_production")
-	if err != nil {
+	inProd := flaarum_shared.GetSetting("in_production")
+	if inProd == "" {
 		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
 		os.Exit(1)	
 	}
-	if inProd == "true" || inProd == "t" {
+	if inProd == "true" {
 		keyStrPath := flaarum_shared.GetKeyStrPath()
 		raw, err := ioutil.ReadFile(keyStrPath)
 		if err != nil {
