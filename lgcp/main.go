@@ -288,7 +288,7 @@ disk-size: 10
 backup_bucket: 
 
 `
-    configFileName := "las" + time.Now().Format("20060102T150405") + ".json"
+    configFileName := "las" + time.Now().Format("20060102T150405") + ".zconf"
 
     writePath, err := flaarum_shared.GetFlaarumPath(configFileName)
     if err != nil {
