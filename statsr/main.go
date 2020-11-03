@@ -15,9 +15,8 @@ import (
 
 
 func main() {
-	fmt.Println("Started statsr")
 	scheduler := gocron.NewScheduler(time.UTC)
-	scheduler.Every(10).Seconds().Do( storeStats )
+	scheduler.Every(1).Minute().Do( storeStats )
 	scheduler.StartBlocking()
 }
 
