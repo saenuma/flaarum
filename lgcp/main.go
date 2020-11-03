@@ -157,6 +157,7 @@ sudo snap install flaarum
 sudo snap start flaarum.store
 sudo snap start flaarum.tindexer
 sudo snap start flaarum.rbackup
+sudo snap start flaarum.statsr
 `
 
   	ctx := context.Background()
@@ -349,6 +350,7 @@ sudo snap install flaarum
 sudo snap start flaarum.store
 sudo snap start flaarum.tindexer
 sudo snap start flaarum.rbackup
+sudo snap start flaarum.statsr
 `
 
   	ctx := context.Background()

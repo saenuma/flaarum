@@ -22,7 +22,6 @@ func main() {
 
 
 func storeStats() {
-	fmt.Println("Began a statsr action")
 	var keyStr string
 	inProd, err := flaarum_shared.GetSetting("in_production")
 	if err != nil {
