@@ -118,7 +118,7 @@ func resizeMachineType() {
   	fmt.Println("Successfully resized the flaarum server")
   } else if nextActionCPU == "decr" || nextActionRAM == "dcr" {
   	// do decrease
-		if confObject["machine-type"] == MTs[len(MTs) - 1] {
+		if confObject["machine-type"] == MTs[0] {
   		fmt.Println("No resizing. You've gotten to the minimum 'e2-highcpu-2'.")
   		return
   	}
