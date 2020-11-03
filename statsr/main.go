@@ -11,6 +11,7 @@ import (
 	"github.com/shirou/gopsutil/v3/cpu"
 	"time"
 	"io/ioutil"
+	"github.com/pkg/errors"
 )
 
 
@@ -36,46 +37,48 @@ func storeStats() {
 			os.Exit(1)
 		}
 		keyStr = string(raw)
-	} else {
-		keyStr = "not-yet-set"
-	}
-	cl := flaarum.NewClient(fmt.Sprintf("https://127.0.0.1:%d/", flaarum_shared.PORT), keyStr, "first_proj")
 
-	err = cl.Ping()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+		cl := flaarum.NewClient(fmt.Sprintf("https://127.0.0.1:%d/", flaarum_shared.PORT), keyStr, "first_proj")
 
-	tables, err := cl.ListTables()
-	if err != nil {
-		panic(err)
-	}
+		err = cl.Ping()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 
-	if flaarum_shared.FindIn(tables, "server_stats") == -1 {
-		// table doesn't exist
-		err = cl.CreateTable(`
-			table: server_stats
-			table-type: logs
-			fields:
-				cpu_usage float required
-				ram_usage float required
-			::
-			`)
+		tables, err := cl.ListTables()
 		if err != nil {
 			panic(err)
 		}
+
+		if flaarum_shared.FindIn(tables, "server_stats") == -1 {
+			// table doesn't exist
+			err = cl.CreateTable(`
+				table: server_stats
+				table-type: logs
+				fields:
+					cpu_usage float required
+					ram_usage float required
+				::
+				`)
+			if err != nil {
+				panic(errors.Wrap(err, "flaarum table error"))
+			}
+		}
+
+		v, _ := mem.VirtualMemory()
+		cpuPercent, _ := cpu.Percent(0, false)
+
+		_, err = cl.InsertRowAny("server_stats", map[string]interface{} {
+			"cpu_usage": cpuPercent[0], "ram_usage": v.UsedPercent,
+		})
+		if err != nil {
+			fmt.Printf("%+v\n", errors.Wrap(err, "flaarum insert error"))
+		}
+
+		fmt.Println("Server stats for " + time.Now().String() + " recorded.")
+	} else {
+		fmt.Println("Server not in production so not storing stats.")
 	}
 
-	v, _ := mem.VirtualMemory()
-	cpuPercent, _ := cpu.Percent(0, false)
-
-	_, err = cl.InsertRowAny("server_stats", map[string]interface{} {
-		"cpu_usage": cpuPercent[0], "ram_usage": v.UsedPercent,
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println("Server stats for " + time.Now().String() + " recorded.")
 }
