@@ -61,7 +61,7 @@ func (cl *Client) GetCurrentTableVersionNum(tableName string) (int64, error) {
 	urlValues := url.Values{}
 	urlValues.Add("key-str", cl.KeyStr)
 	
-	resp, err := httpCl.PostForm(fmt.Sprintf("%s/get-current-version-num/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
+	resp, err := httpCl.PostForm(fmt.Sprintf("%sget-current-version-num/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
 	if err != nil {
 		return -1, errors.Wrap(err, "http error")
 	}
@@ -87,7 +87,7 @@ func (cl *Client) GetTableStructure(tableName string, versionNum int64) (string,
 	urlValues := url.Values{}
 	urlValues.Add("key-str", cl.KeyStr)
 	
-	resp, err := httpCl.PostForm(fmt.Sprintf("%s/get-table-structure/%s/%s/%d", cl.Addr, cl.ProjName, tableName, versionNum), 
+	resp, err := httpCl.PostForm(fmt.Sprintf("%sget-table-structure/%s/%s/%d", cl.Addr, cl.ProjName, tableName, versionNum), 
 		urlValues)
 	if err != nil {
 		return "", errors.Wrap(err, "http error")
