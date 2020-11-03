@@ -36,15 +36,15 @@ func getAndDeleteStats(w http.ResponseWriter, r *http.Request) {
 		ramUsageTotal += ramUsageFloat
 	}
 
+	jsonRet := map[string]int64 {
+		"cpu_avg": int64( math.Ceil( cpuUsageTotal / float64(len(*rows))) ),
+		"ram_avg": int64( math.Ceil( ramUsageTotal / float64(len(*rows))) ),
+	}
+
 	err = innerDelete("first_proj", "server_stats", rows)
 	if err != nil {
 		printError(w, errors.Wrap(err, "delete error"))
 		return
-	}
-
-	jsonRet := map[string]int64 {
-		"cpu_avg": int64( math.Ceil( cpuUsageTotal / float64(len(*rows))) ),
-		"ram_avg": int64( math.Ceil( ramUsageTotal / float64(len(*rows))) ),
 	}
 
 	jsonBytes, err := json.Marshal(jsonRet)

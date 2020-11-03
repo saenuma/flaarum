@@ -119,7 +119,7 @@ func resizeMachineType() {
   } else if nextActionCPU == "decr" || nextActionRAM == "dcr" {
   	// do decrease
 		if confObject["machine-type"] == MTs[len(MTs) - 1] {
-  		fmt.Println("No resizing. You've gotten to the max 'e2-highcpu-32'.")
+  		fmt.Println("No resizing. You've gotten to the minimum 'e2-highcpu-2'.")
   		return
   	}
   	index := flaarum_shared.FindIn(MTs, confObject["machine-type"])
@@ -133,9 +133,9 @@ func resizeMachineType() {
 
 
 func whatToDo(state int64) string {
-	if state > 80 {
+	if state >= 80 {
 		return "incr"
-	} else if state < 20 {
+	} else if state <= 20 {
 		return "dcr"
 	} else {
 		return "remain"

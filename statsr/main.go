@@ -15,13 +15,15 @@ import (
 
 
 func main() {
+	fmt.Println("Started statsr")
 	scheduler := gocron.NewScheduler(time.UTC)
-	scheduler.Every(30).Minutes().Do( storeStats )
+	scheduler.Every(10).Seconds().Do( storeStats )
 	scheduler.StartBlocking()
 }
 
 
 func storeStats() {
+	fmt.Println("Began a statsr action")
 	var keyStr string
 	inProd, err := flaarum_shared.GetSetting("in_production")
 	if err != nil {
@@ -70,9 +72,12 @@ func storeStats() {
 	v, _ := mem.VirtualMemory()
 	cpuPercent, _ := cpu.Percent(0, false)
 
-	cl.InsertRowAny("server_stats", map[string]interface{} {
+	_, err = cl.InsertRowAny("server_stats", map[string]interface{} {
 		"cpu_usage": cpuPercent[0], "ram_usage": v.UsedPercent,
 	})
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	fmt.Println("Server stats for " + time.Now().String() + " recorded.")
 }

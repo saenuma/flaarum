@@ -261,10 +261,7 @@ sudo snap start flaarum.rbackup
   		"region": "",
   		"zone": "",
   		"disk-size": "10",
-  		"machine-type-day": "e2-highcpu-8",
-  		"machine-type-night": "e2-highcpu-2",
   		"backup-bucket": "",
-  		"timezone": "Africa/Lagos",
   	}
 
     jsonBytes, err := json.Marshal(initObject)

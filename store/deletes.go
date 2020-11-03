@@ -127,6 +127,11 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 func innerDelete(projName, tableName string, rows *[]map[string]string) error {
   dataPath, _ := GetDataPath()
 
+  ts, err := getCurrentTableStructureParsed(projName, tableName)
+  if err != nil {
+    return err
+  }
+
   for _, row := range *rows {
     // delete index
     for f, d := range row {
@@ -135,16 +140,15 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
       }
 
       if ! isFieldOfTypeText(projName, tableName, f) {
-        err := deleteIndex(projName, tableName, f, d, row["id"], row["_version"])
-        if err != nil {
-          return err
-        }
+        deleteIndex(projName, tableName, f, d, row["id"], row["_version"])
       } else {
-        newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + f + ".rtext"
-        err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "data", newTextFileName), 
-          []byte("ok"), 0777)
-        if err != nil {
-          return err
+        if ts.TableType != "logs" {
+          newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + f + ".rtext"
+          err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "data", newTextFileName), 
+            []byte("ok"), 0777)
+          if err != nil {
+            return err
+          }          
         }
       }
     }
