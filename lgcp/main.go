@@ -90,15 +90,15 @@ region:
 // for instance a region could be 'us-central1' and the zone could be 'us-central1-a'
 zone:  
 
-// disk-size is the size of the root disk of the server. The data created is also stored in the root disk.
+// disk_size is the size of the root disk of the server. The data created is also stored in the root disk.
 // It is measured in Gigabytes (GB) and a number is expected.
 // 10 is the minimum.
-disk-size: 10
+disk_size: 10
 
-// machine-type is the type of machine configuration to use to launch your flaarum server.
+// machine_type is the type of machine configuration to use to launch your flaarum server.
 // You must get this value from the Google Cloud Compute documentation if not it would fail.
 // It is not necessary it must be an e2 instance.
-machine-type: e2-highcpu-2
+machine_type: e2-highcpu-2
 
 // You are to create a bucket in Google cloud storage and set it to this value.
 // This is where the backups for your flaarum installation would be saved to.
@@ -149,9 +149,9 @@ backup_bucket:
 		instanceName := fmt.Sprintf("flaarum-%s", strings.ToLower(flaarum_shared.UntestedRandomString(4)))
 		diskName := fmt.Sprintf("%s-disk", instanceName)
   	
-  	diskSizeInt, err := strconv.ParseInt(conf.Get("disk-size"), 10, 64)
+  	diskSizeInt, err := strconv.ParseInt(conf.Get("disk_size"), 10, 64)
   	if err != nil {
-  		color.Red.Println("The 'disk-size' variable must be a number greater or equal to 10")
+  		color.Red.Println("The 'disk_size' variable must be a number greater or equal to 10")
   		os.Exit(1)
   	}
 
@@ -210,7 +210,7 @@ sudo snap stop --disable flaarum.statsr
 		instance := &compute.Instance{
 			Name: instanceName,
 			Description: "flaarum instance",
-			MachineType: prefix + "/zones/" + conf.Get("zone") + "/machineTypes/" + conf.Get("machine-type"),
+			MachineType: prefix + "/zones/" + conf.Get("zone") + "/machineTypes/" + conf.Get("machine_type"),
 			Disks: []*compute.AttachedDisk{
 				{
 					AutoDelete: true,
@@ -278,14 +278,19 @@ region:
 // for instance a region could be 'us-central1' and the zone could be 'us-central1-a'
 zone:  
 
-// disk-size is the size of the root disk of the server. The data created is also stored in the root disk.
+// disk_size is the size of the root disk of the server. The data created is also stored in the root disk.
 // It is measured in Gigabytes (GB) and a number is expected.
 // 10 is the minimum.
-disk-size: 10
+disk_size: 10
 
 // You are to create a bucket in Google cloud storage and set it to this value.
 // This is where the backups for your flaarum installation would be saved to.
 backup_bucket: 
+
+
+// The resize_frequency is the number of hours before the flaarum control server resizes the flaarum data 
+// server. You can set it to a lower value to test if the autoscaling works perfectly.
+resize_frequency: 6
 
 `
     configFileName := "las" + time.Now().Format("20060102T150405") + ".zconf"
@@ -344,9 +349,9 @@ backup_bucket:
   	ctlInstanceName := fmt.Sprintf("flaarumctl-%s", suffix)
   	ctlInstanceDisk := ctlInstanceName + "-disk"
 
-  	diskSizeInt, err := strconv.ParseInt(conf.Get("disk-size"), 10, 64)
+  	diskSizeInt, err := strconv.ParseInt(conf.Get("disk_size"), 10, 64)
   	if err != nil {
-  		color.Red.Println("The 'disk-size' variable must be a number greater or equal to 10")
+  		color.Red.Println("The 'disk_size' variable must be a number greater or equal to 10")
   		os.Exit(1)
   	}
 

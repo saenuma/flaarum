@@ -77,7 +77,7 @@ func resizeMachineType() {
 
 	httpCl := &http.Client{Transport: tr}
 
-	resp, err := httpCl.Get(fmt.Sprintf("https:%s:%d/get-and-delete-stats", confObject.Get("instance-ip"), flaarum_shared.PORT))
+	resp, err := httpCl.Get(fmt.Sprintf("https:%s:%d/get-and-delete-stats", confObject.Get("instance_ip"), flaarum_shared.PORT))
 	if err != nil {
 		panic(errors.Wrap(err, "http error"))
 	}
@@ -102,21 +102,21 @@ func resizeMachineType() {
 
   if nextActionCPU == "incr" || nextActionRAM == "incr" {
   	// do increase
-  	if confObject.Get("machine-type") == MTs[len(MTs) - 1] {
+  	if confObject.Get("machine_type") == MTs[len(MTs) - 1] {
   		fmt.Println("No resizing. You've gotten to the max server.")
   		return
   	}
-  	index := flaarum_shared.FindIn(MTs, confObject.Get("machine-type"))
+  	index := flaarum_shared.FindIn(MTs, confObject.Get("machine_type"))
   	innerResizeMachine(MTs[index + 1])
 
   	fmt.Println("Successfully resized the flaarum server")
-  } else if nextActionCPU == "decr" || nextActionRAM == "dcr" {
+  } else if nextActionCPU == "dcr" || nextActionRAM == "dcr" {
   	// do decrease
-		if confObject.Get("machine-type") == MTs[0] {
+		if confObject.Get("machine_type") == MTs[0] {
   		fmt.Println("No resizing. You've gotten to the smallest server.")
   		return
   	}
-  	index := flaarum_shared.FindIn(MTs, confObject.Get("machine-type"))
+  	index := flaarum_shared.FindIn(MTs, confObject.Get("machine_type"))
   	innerResizeMachine(MTs[index - 1])
 
   	fmt.Println("Successfully resized the flaarum server")
@@ -179,9 +179,9 @@ func innerResizeMachine(mt string) {
 		panic(err)
 	}
 
-	// save the machine-type in use
+	// save the machine_type in use
 	confObject.Update(map[string]string{
-		"machine-type": mt,
+		"machine_type": mt,
 	})
 
   confPath, err := flaarum_shared.GetCtlConfigPath()
