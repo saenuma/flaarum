@@ -15,6 +15,7 @@ import (
 	"crypto/tls"
 	"github.com/pkg/errors"
   "github.com/bankole7782/zazabul"
+  "strconv"
 )
 
 
@@ -40,9 +41,12 @@ func main() {
 	}
 
 	confObject = conf
-
+	resizeFrequency, err := strconv.ParseUint(conf.Get("resize_frequency"), 10, 64)
+	if err != nil {
+		panic(err)
+	}
 	scheduler := gocron.NewScheduler(time.UTC)
-	scheduler.Every(6).Hours().Do(resizeMachineType)
+	scheduler.Every(resizeFrequency).Hours().Do(resizeMachineType)
 	scheduler.StartBlocking()
 }
 

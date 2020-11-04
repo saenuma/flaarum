@@ -104,6 +104,13 @@ machine_type: e2-highcpu-2
 // This is where the backups for your flaarum installation would be saved to.
 backup_bucket: 
 
+
+// backup_frequency is the number of days before conducting a backup. 
+// It must be a number not a float. The default is 14 which is two weeks.
+// You can set it to a lower value to test if the backup works perfectly.
+// The minimum value is 1
+backup_frequency: 14
+
 `
 
     conf, err := zazabul.ParseConfig(tmpl)
@@ -120,7 +127,7 @@ backup_bucket:
 
   case "lb":
   	if len(os.Args) != 4 {
-  		color.Red.Println("The l command expects a launch file and a service account credentials file.")
+  		color.Red.Println("The lb command expects a launch file and a service account credentials file.")
   		os.Exit(1)
   	}
 
@@ -160,7 +167,7 @@ backup_bucket:
 
 sudo snap install flaarum
 `
-		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup-bucket") + " \n"
+		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup_bucket") + " " + conf.Get("backup_frequency")+ " \n"
 		startupScript += `
 sudo snap start flaarum.store
 sudo snap start flaarum.tindexer
@@ -278,14 +285,22 @@ region:
 // for instance a region could be 'us-central1' and the zone could be 'us-central1-a'
 zone:  
 
+
 // disk_size is the size of the root disk of the server. The data created is also stored in the root disk.
 // It is measured in Gigabytes (GB) and a number is expected.
 // 10 is the minimum.
 disk_size: 10
 
+
 // You are to create a bucket in Google cloud storage and set it to this value.
 // This is where the backups for your flaarum installation would be saved to.
 backup_bucket: 
+
+// backup_frequency is the number of days before conducting a backup. 
+// It must be a number not a float. The default is 14 which is two weeks.
+// You can set it to a lower value to test if the backup works perfectly.
+// The minimum value is 1
+backup_frequency: 14
 
 
 // The resize_frequency is the number of hours before the flaarum control server resizes the flaarum data 
@@ -315,7 +330,7 @@ resize_frequency: 6
   case "las":
 
   	if len(os.Args) != 4 {
-  		color.Red.Println("The l command expects a launch file and a service account credentials file.")
+  		color.Red.Println("The las command expects a launch file and a service account credentials file.")
   		os.Exit(1)
   	}
 
@@ -360,7 +375,7 @@ resize_frequency: 6
 
 sudo snap install flaarum
 `
-		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup-bucket") + " \n"
+		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup_bucket") + " " + conf.Get("backup_frequency")+ " \n"
 		startupScript += `
 sudo snap start flaarum.store
 sudo snap start flaarum.tindexer

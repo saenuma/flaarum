@@ -41,8 +41,13 @@ in_production: false
 // This is where the backups for your flaarum installation would be saved to.
 backup_bucket: 
 
+// backup_frequency is the number of days before conducting a backup. 
+// It must be a number not a float. The default is 14 which is two weeks.
+// You can set it to a lower value to test if the backup works perfectly.
+// The minimum value is 1
+backup_frequency: 14
 
-    `
+`
 
 func DoesPathExists(p string) bool {
 	if _, err := os.Stat(p); os.IsNotExist(err) {

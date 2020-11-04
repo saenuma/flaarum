@@ -28,7 +28,7 @@ Supported Commands:
     c     Creates / Updates and prints a new key string
 
     mpr   Make production ready. It also creates and prints a key string. It expects a google cloud bucket
-          as its only argument.
+          and a backup_frequency ( in number of days).
 
     masr  Make autoscaling ready. This is for the control instance. It expects in the following order projectId,
           zone, flaarum_data_instance_name, flaarum_data_instance_ip, resize_frequency.
@@ -57,8 +57,8 @@ Supported Commands:
     fmt.Print(randomString)
 
   case "mpr":
-    if len(os.Args) != 3 {
-      color.Red.Println("Expecting the backup_bucket as the only argument")
+    if len(os.Args) != 4 {
+      color.Red.Println("Expecting the backup_bucket and the backup_frequency (number of days)")
       os.Exit(1)
     }
     keyPath := flaarum_shared.GetKeyStrPath()
@@ -84,6 +84,7 @@ Supported Commands:
     conf.Update(map[string]string{
       "backup_bucket": os.Args[2],
       "in_production": "true",
+      "backup_frequency": os.Args[3],
     })
 
     err = conf.Write(confPath)

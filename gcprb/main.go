@@ -16,23 +16,29 @@ import (
 	"github.com/bankole7782/flaarum"
 	"path/filepath"
 	"strings"
+	"strconv"
+	"github.com/pkg/errors"
 )
 
 
 func createBackupAndSaveToGCloudStorage() {
 
 	tmp, _ := flaarum_shared.GetConfigPath()
-	bkupFilePath := strings.Replace(tmp, "flaarum.json", "last-bkup-dt.txt", 1)
+	bkupFilePath := strings.Replace(tmp, "flaarum.zconf", "last-bkup-dt.txt", 1)
 	raw, err := ioutil.ReadFile(bkupFilePath)
 	if err != nil {
 		contents := flaarum.RightDateTimeFormat(time.Now())
 		ioutil.WriteFile(bkupFilePath, []byte(contents), 0777)
 	}
 
+	backupFrequency, err := strconv.ParseUint(flaarum_shared.GetSetting("backup_frequency"), 10, 64)
+	if err != nil {
+		panic(errors.Wrap(err, "strconv error."))
+	}
 	lastBackupTime, _ := time.Parse(flaarum_shared.BROWSER_DATETIME_FORMAT, string(raw))
 	daysSinceLastBackup := time.Now().Sub(lastBackupTime).Hours() / 24
 
-	if daysSinceLastBackup >= 14 {
+	if uint64(daysSinceLastBackup) >= backupFrequency {
 
 		keyStrPath := flaarum_shared.GetKeyStrPath()
 		raw, err := ioutil.ReadFile(keyStrPath)
