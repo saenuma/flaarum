@@ -13,7 +13,9 @@ import (
 	"github.com/gookit/color"
 	"encoding/json"
 	"sync"
+	"strings"
 	"strconv"
+	"github.com/pkg/errors"
 )
 
 
@@ -217,6 +219,11 @@ Available Commands:
 		    	panic(err)
 		    }
 
+		    ts, err := flaarum_shared.GetTableStructureParsed(projName, tblFI.Name(), 1)
+		    if err != nil {
+		    	panic(err)
+		    }
+
 		    for _, rowFI := range rowFIs {
 					rowMap := make(map[string]string)
 					rowBytes, err := ioutil.ReadFile(filepath.Join(dataPath, projName, tblFI.Name(), "data", rowFI.Name()))
@@ -228,31 +235,45 @@ Available Commands:
 						panic(err)
 					}
 
-					// create indexes
-				  for k, v := range rowMap {
-				  	if k == "id" {
-				  		continue
-				  	}
+					if ts.TableType == "proper" {
+						// create indexes
+					  for k, v := range rowMap {
+					  	if k == "id" {
+					  		continue
+					  	}
 
-				    if isFieldExemptedFromIndexingVersioned(projName, tblFI.Name(), k, rowMap["_version"]) {
-				      
-				    	// create a .text file which is a message to the tindexer program.
-			        newTextFileName := rowFI.Name() + flaarum_shared.TEXT_INTR_DELIM + k + ".text"
-			        err = ioutil.WriteFile(filepath.Join(dataPath, projName, tblFI.Name(), "data", newTextFileName), []byte(v), 0777)
-			        if err != nil {
-			          panic(err)
-			        }
+					    if isFieldExemptedFromIndexingVersioned(projName, tblFI.Name(), k, rowMap["_version"]) {
+					      
+					    	// create a .text file which is a message to the tindexer program.
+				        newTextFileName := rowFI.Name() + flaarum_shared.TEXT_INTR_DELIM + k + ".text"
+				        err = ioutil.WriteFile(filepath.Join(dataPath, projName, tblFI.Name(), "data", newTextFileName), []byte(v), 0777)
+				        if err != nil {
+				          fmt.Printf("%+v\n", errors.Wrap(err, "ioutil error."))
+				        }
 
-				    } else {
+					    } else {
 
-					    err := flaarum_shared.MakeIndex(projName, tblFI.Name(), k, v, rowFI.Name())
-					    if err != nil {
-					      panic(err)
+						    err := flaarum_shared.MakeIndex(projName, tblFI.Name(), k, v, rowFI.Name())
+						    if err != nil {
+						      panic(err)
+						    }
+
 					    }
 
-				    }
+					  }					
+					} else {
 
-				  }
+						for k, v := range rowMap {
+				      if k == "created" || strings.HasPrefix(k, "created_") || k == "_version" {
+				        err = flaarum_shared.MakeIndex(projName, tblFI.Name(), k, v, rowFI.Name())
+				        if err != nil {
+				          fmt.Printf("%+v\n", err)
+				        }        
+				      }						
+						}
+
+					}
+	
 		    }
 
 			}(tblFI, &wg)
