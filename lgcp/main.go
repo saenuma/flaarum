@@ -476,14 +476,14 @@ sudo snap start flaarum.statsr
 			panic(err)
 		}
 
-		var startupScriptControlInstance = `
+		var startupScriptCtlInstance = `
 #! /bin/bash
 
 sudo snap install flaarum
 `
-		startupScriptControlInstance += "\nsudo flaarum.prod masr " + conf.Get("project") + " " + conf.Get("zone") 
-		startupScriptControlInstance += " " + instanceName + " " + computeAddr.Address + "\n"
-		startupScriptControlInstance += `
+		startupScriptCtlInstance += "\nsudo flaarum.prod masr " + conf.Get("project") + " " + conf.Get("zone") 
+		startupScriptCtlInstance += " " + instanceName + " " + computeAddr.Address + " " + conf.Get("resize_frequency") + " \n"
+		startupScriptCtlInstance += `
 sudo snap start flaarum.gcpasr
 `
 
@@ -527,7 +527,7 @@ sudo snap start flaarum.gcpasr
 				Items: []*compute.MetadataItems {
 					{
 						Key: "startup-script",
-						Value: &startupScriptControlInstance,
+						Value: &startupScriptCtlInstance,
 					},
 				},
 			},

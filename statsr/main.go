@@ -55,7 +55,7 @@ func storeStats() {
 			// table doesn't exist
 			err = cl.CreateTable(`
 				table: server_stats
-				table-type: logs
+				table_type: logs
 				fields:
 					cpu_usage float required
 					ram_usage float required

@@ -61,7 +61,7 @@ func validateTableStruct(projName string, tableStruct flaarum_shared.TableStruct
 
 func formatTableStruct(tableStruct flaarum_shared.TableStruct) string {
 	stmt := "table: " + tableStruct.TableName + "\n"
-	stmt += "table-type: " + tableStruct.TableType + "\n"
+	stmt += "table_type: " + tableStruct.TableType + "\n"
 	stmt += "fields:\n"
 	for _, fieldStruct := range tableStruct.Fields {
 		stmt += "\t" + fieldStruct.FieldName + " " + fieldStruct.FieldType

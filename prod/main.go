@@ -93,8 +93,8 @@ Supported Commands:
     }
 
   case "masr":
-    if len(os.Args) != 6 {
-      color.Red.Println("Expecting 4 arguments. Check the help for documentation")
+    if len(os.Args) != 7 {
+      color.Red.Println("Expecting 5 arguments. Check the help for documentation")
       os.Exit(1)
     }
 
@@ -133,6 +133,7 @@ resize_frequency: 6
       "zone": os.Args[3],
       "instance": os.Args[4],
       "instance_ip": os.Args[5],
+      "resize_frequency": os.Args[6],
     })
 
 

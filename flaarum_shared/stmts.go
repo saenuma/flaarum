@@ -59,9 +59,9 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 
 	ts.TableType = "proper"
 
-	tableTypeBeginIndex := strings.Index(stmt, "table-type:")
+	tableTypeBeginIndex := strings.Index(stmt, "table_type:")
 	if tableTypeBeginIndex != -1 {
-		tableTypeBeginIndex += len("table-type:")
+		tableTypeBeginIndex += len("table_type:")
 		tableTypeEndIndex := strings.Index(stmt[tableTypeBeginIndex: ], "\n")
 
 		tableType := strings.TrimSpace(stmt[tableTypeBeginIndex: tableTypeBeginIndex + tableTypeEndIndex ])
