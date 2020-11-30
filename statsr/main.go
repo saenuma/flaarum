@@ -79,6 +79,7 @@ func storeStats() {
 		fmt.Println("Server stats for " + time.Now().String() + " recorded.")
 	} else {
 		fmt.Println("Server not in production so not storing stats.")
+		os.Exit(1)
 	}
 
 }
