@@ -212,7 +212,7 @@ sudo snap stop --disable flaarum.statsr
 		fmt.Println("Flaarum server address: ", computeAddr.Address)
 
 		prefix := "https://www.googleapis.com/compute/v1/projects/" + conf.Get("project")
-		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20201028"
+		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20201111"
 
 		instance := &compute.Instance{
 			Name: instanceName,
@@ -420,7 +420,7 @@ sudo snap start flaarum.statsr
 		fmt.Println("Flaarum server address: ", computeAddr.Address)
 
 		prefix := "https://www.googleapis.com/compute/v1/projects/" + conf.Get("project")
-		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20201028"
+		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20201111"
 
 		instance := &compute.Instance{
 			Name: instanceName,
