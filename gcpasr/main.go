@@ -81,7 +81,7 @@ func resizeMachineType() {
 
 	httpCl := &http.Client{Transport: tr}
 
-	resp, err := httpCl.Get(fmt.Sprintf("https:%s:%d/get-and-delete-stats", confObject.Get("instance_ip"), flaarum_shared.PORT))
+	resp, err := httpCl.Get(fmt.Sprintf("https://%s:%d/get-and-delete-stats", confObject.Get("instance_ip"), flaarum_shared.PORT))
 	if err != nil {
 		panic(errors.Wrap(err, "http error"))
 	}
