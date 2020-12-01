@@ -69,7 +69,6 @@ Supported Commands:
       color.Red.Printf("Error creating key string path.\nError:%s\n", err)
       os.Exit(1)
     }
-    fmt.Print(randomString)
 
     confPath, err := flaarum_shared.GetConfigPath()
     if err != nil {
@@ -85,6 +84,7 @@ Supported Commands:
       "backup_bucket": os.Args[2],
       "in_production": "true",
       "backup_frequency": os.Args[3],
+      "debug": "false",
     })
 
     err = conf.Write(confPath)
