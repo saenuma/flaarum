@@ -102,8 +102,8 @@ func resizeMachineType() {
     panic(errors.Wrap(err, "json error."))
   }
 
-  nextActionCPU := whatToDo(respObj["cpu_usage"])
-  nextActionRAM := whatToDo(respObj["ram_usage"])
+  nextActionCPU := whatToDo(respObj["cpu_avg"])
+  nextActionRAM := whatToDo(respObj["ram_avg"])
 
   if nextActionCPU == "incr" || nextActionRAM == "incr" {
   	// do increase
