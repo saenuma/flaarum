@@ -96,6 +96,7 @@ func resizeMachineType() {
 	}
 
 	respObj := make(map[string]int64)
+	fmt.Println(string(body))
   err = json.Unmarshal(body, &respObj)
   if err != nil {
     panic(errors.Wrap(err, "json error."))
@@ -131,9 +132,9 @@ func resizeMachineType() {
 
 
 func whatToDo(state int64) string {
-	if state >= 80 {
+	if state >= 70 {
 		return "incr"
-	} else if state <= 20 {
+	} else if state <= 30 {
 		return "dcr"
 	} else {
 		return "remain"
