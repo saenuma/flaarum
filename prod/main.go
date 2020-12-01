@@ -62,15 +62,19 @@ Supported Commands:
       color.Red.Println("Expecting the backup_bucket and the backup_frequency (number of days)")
       os.Exit(1)
     }
+
     keyPath := flaarum_shared.GetKeyStrPath()
-    randomString := flaarum_shared.UntestedRandomString(50)
+    if ! doesPathExists(keyPath) {
+      randomString := flaarum_shared.UntestedRandomString(50)
 
-    err := ioutil.WriteFile(keyPath, []byte(randomString), 0777)
-    if err != nil {
-      color.Red.Printf("Error creating key string path.\nError:%s\n", err)
-      os.Exit(1)
+      err := ioutil.WriteFile(keyPath, []byte(randomString), 0777)
+      if err != nil {
+        color.Red.Printf("Error creating key string path.\nError:%s\n", err)
+        os.Exit(1)
+      }
+          
     }
-
+  
     confPath, err := flaarum_shared.GetConfigPath()
     if err != nil {
       panic(err)
@@ -161,4 +165,12 @@ resize_frequency: 6
   }
 
 
+}
+
+
+func doesPathExists(p string) bool {
+  if _, err := os.Stat(p); os.IsNotExist(err) {
+    return false
+  }
+  return true
 }
