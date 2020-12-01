@@ -41,6 +41,30 @@ func waitForOperationRegion(project, region string, service *compute.Service, op
 }
 
 
+func waitForOperationZone(project, zone string, service *compute.Service, op *compute.Operation) error {
+	ctx := context.Background()
+	for {
+		result, err := service.ZoneOperations.Get(project, zone, op.Name).Context(ctx).Do()
+		if err != nil {
+			return fmt.Errorf("Failed retriving operation status: %s", err)
+		}
+
+		if result.Status == "DONE" {
+			if result.Error != nil {
+				var errors []string
+				for _, e := range result.Error.Errors {
+					errors = append(errors, e.Message)
+				}
+				return fmt.Errorf("Operation failed with error(s): %s", strings.Join(errors, ", "))
+			}
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	return nil
+}
+
+
 func main() {
 	if len(os.Args) < 2 {
 		color.Red.Println("Expecting a command. Run with help subcommand to view help.")
@@ -166,10 +190,10 @@ backup_frequency: 14
 #! /bin/bash
 
 sudo snap install flaarum
+sudo snap start flaarum.store
 `
 		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup_bucket") + " " + conf.Get("backup_frequency")+ " \n"
 		startupScript += `
-sudo snap start flaarum.store
 sudo snap start flaarum.tindexer
 sudo snap start flaarum.gcprb
 sudo snap stop --disable flaarum.statsr
@@ -263,7 +287,11 @@ sudo snap stop --disable flaarum.statsr
 			},
 		}
 
-		_, err = computeService.Instances.Insert(conf.Get("project"), conf.Get("zone"), instance).Do()
+		op, err = computeService.Instances.Insert(conf.Get("project"), conf.Get("zone"), instance).Do()
+		if err != nil {
+			panic(err)
+		}
+		err = waitForOperationZone(conf.Get("project"), conf.Get("zone"), computeService, op)
 		if err != nil {
 			panic(err)
 		}
@@ -374,13 +402,13 @@ resize_frequency: 6
 #! /bin/bash
 
 sudo snap install flaarum
+sudo snap start flaarum.store
 `
 		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup_bucket") + " " + conf.Get("backup_frequency")+ " \n"
 		startupScript += `
-sudo snap start flaarum.store
 sudo snap start flaarum.tindexer
 sudo snap start flaarum.gcprb
-sudo snap start flaarum.statsr
+sudo snap restart flaarum.statsr
 `
 
   	ctx := context.Background()
@@ -471,10 +499,15 @@ sudo snap start flaarum.statsr
 			},
 		}
 
-		_, err = computeService.Instances.Insert(conf.Get("project"), conf.Get("zone"), instance).Do()
+		op, err = computeService.Instances.Insert(conf.Get("project"), conf.Get("zone"), instance).Do()
 		if err != nil {
 			panic(err)
 		}
+		err = waitForOperationZone(conf.Get("project"), conf.Get("zone"), computeService, op)
+		if err != nil {
+			panic(err)
+		}
+
 
 		var startupScriptCtlInstance = `
 #! /bin/bash
@@ -484,7 +517,7 @@ sudo snap install flaarum
 		startupScriptCtlInstance += "\nsudo flaarum.prod masr " + conf.Get("project") + " " + conf.Get("zone") 
 		startupScriptCtlInstance += " " + instanceName + " " + computeAddr.Address + " " + conf.Get("resize_frequency") + " \n"
 		startupScriptCtlInstance += `
-sudo snap start flaarum.gcpasr
+sudo snap restart flaarum.gcpasr
 `
 
 		ctlInstance := &compute.Instance{
@@ -533,10 +566,15 @@ sudo snap start flaarum.gcpasr
 			},
 		}
 
-		_, err = computeService.Instances.Insert(conf.Get("project"), conf.Get("zone"), ctlInstance).Do()
+		op, err = computeService.Instances.Insert(conf.Get("project"), conf.Get("zone"), ctlInstance).Do()
 		if err != nil {
 			panic(err)
 		}
+		err = waitForOperationZone(conf.Get("project"), conf.Get("zone"), computeService, op)
+		if err != nil {
+			panic(err)
+		}
+
 
 		fmt.Println("Flaarum Server Name: " + instanceName)  	
 		fmt.Println("Flaarum Control Server Name: ", ctlInstanceName)

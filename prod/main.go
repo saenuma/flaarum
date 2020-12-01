@@ -8,6 +8,7 @@ import (
   "os"
   "github.com/gookit/color"
   "github.com/bankole7782/zazabul"
+  "time"
 )
 
 
@@ -75,9 +76,16 @@ Supported Commands:
       panic(err)
     }
 
-    conf, err := zazabul.LoadConfigFile(confPath)
-    if err != nil {
-      panic(err)
+    var conf zazabul.Config
+
+    for {
+      conf, err = zazabul.LoadConfigFile(confPath)
+      if err != nil {
+        time.Sleep(3 * time.Second)
+        continue
+      } else {
+        break
+      }
     }
 
     conf.Update(map[string]string{
