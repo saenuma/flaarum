@@ -121,9 +121,6 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 			return nil, errors.Wrap(err, "ioutil error.")
 		}
 		for _, dataFI := range dataFIs {
-      if strings.HasSuffix(dataFI.Name(), ".text") || strings.HasSuffix(dataFI.Name(), ".rtext") {
-        continue
-      }
 			retIds = append(retIds, dataFI.Name())
 		}
 

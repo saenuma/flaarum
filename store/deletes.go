@@ -144,7 +144,7 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
       } else {
         if ts.TableType != "logs" {
           newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + f + ".rtext"
-          err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "data", newTextFileName), 
+          err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName), 
             []byte("ok"), 0777)
           if err != nil {
             return err
@@ -245,27 +245,41 @@ func innerDeleteField(projName, tableName, fieldName string, rows *[]map[string]
     return errors.New(fmt.Sprintf("table '%s' of database '%s' does not exists.", tableName, projName))
   }
 
-  td, err := getCurrentTableStructureParsed(projName, tableName)
-  if err != nil {
-    return err
-  }
+  dataPath, _ := GetDataPath()
 
-  for _, fd := range td.Fields {
-    if fd.FieldName == fieldName && fd.Required {
-      return errors.New(fmt.Sprintf("The field '%s' is required and so cannot be deleted.", fieldName))
-    }
-  }
 
   for _, row := range *rows {
+    versionNum, _ := strconv.Atoi(row["_version"])
+    ts, err := getTableStructureParsed(projName, tableName, versionNum)
+    if err != nil {
+      return err
+    }
+
+    for _, fd := range ts.Fields {
+      if fd.FieldName == fieldName && fd.Required {
+        return errors.New(fmt.Sprintf("The field '%s' is required and so cannot be deleted.", fieldName))
+      }
+    }
+
     f := fieldName
     data, ok := row[f]
     if ok {
-      isFieldExempted := isFieldOfTypeText(projName, tableName, f)
+      isFieldExempted := isFieldOfTypeTextVersioned(projName, tableName, f, row["_version"])
       if isFieldExempted == false {
         err := deleteIndex(projName, tableName, f, data, row["id"], row["_version"])
         if err != nil {
           return err
         }
+      } else {
+        if ts.TableType != "logs" {
+          newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + f + ".rtext"
+          err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName), 
+            []byte("ok"), 0777)
+          if err != nil {
+            return err
+          }          
+        }
+
       }
 
       delete(row, f)
@@ -284,7 +298,7 @@ func innerDeleteField(projName, tableName, fieldName string, rows *[]map[string]
     rowId := row["id"]
     delete(row, "id")
     // write data
-    err := saveRowData(projName, tableName, rowId, row)
+    err = saveRowData(projName, tableName, rowId, row)
     if err != nil {
       return err
     }

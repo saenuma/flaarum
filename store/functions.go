@@ -7,6 +7,8 @@ import (
   "strconv"
   "github.com/bankole7782/flaarum/flaarum_shared"
   "github.com/pkg/errors"
+  "path/filepath"
+  "io/ioutil"
 )
 
 
@@ -30,6 +32,29 @@ func countRows(w http.ResponseWriter, r *http.Request) {
 
   rows, err := innerSearch(projName, stmt)
   fmt.Fprintf(w, "%d", len(*rows))
+}
+
+
+func allRowsCount(w http.ResponseWriter, r *http.Request) {
+  vars := mux.Vars(r)
+  projName := vars["proj"]
+  tableName := vars["tbl"]
+
+  dataPath, _ := GetDataPath()
+  tablePath := filepath.Join(dataPath, projName, tableName)
+
+  createTableMutexIfNecessary(projName, tableName)
+  fullTableName := projName + ":" + tableName
+  tablesMutexes[fullTableName].RLock()
+  defer tablesMutexes[fullTableName].RUnlock()
+
+  dataFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+  if err != nil {
+    printError(w, errors.Wrap(err, "ioutil error."))
+    return
+  }
+
+  fmt.Fprintf(w, "%d", len(dataFIs))
 }
 
 

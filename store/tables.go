@@ -122,7 +122,7 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	toMake := []string{"data", "indexes", "tindexes", "structures"}
+	toMake := []string{"data", "indexes", "tindexes", "structures", "txtinstrs"}
 	for _, tm := range toMake {
 		err := os.MkdirAll(filepath.Join(dataPath, projName, tableStruct.TableName, tm), 0777)
 		if err != nil {
@@ -324,7 +324,7 @@ func emptyTable(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  toDelete := []string{"data", "indexes", "tindexes", "lastId"}
+  toDelete := []string{"data", "indexes", "tindexes", "txtinstrs", "lastId"}
   for _, todo := range toDelete {
     err := os.RemoveAll(filepath.Join(dataPath, projName, tableName, todo))
     if err != nil {
@@ -333,7 +333,7 @@ func emptyTable(w http.ResponseWriter, r *http.Request) {
     }
   }
 
-  for _, tm := range toDelete[:3] {
+  for _, tm := range toDelete[:4] {
     toMakePath := filepath.Join(dataPath, projName, tableName, tm)
     err := os.MkdirAll(toMakePath, 0777)
     if err != nil {

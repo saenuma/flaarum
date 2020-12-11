@@ -264,7 +264,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
       if isFieldOfTypeText(projName, tableName, k) {
         // create a .text file which is a message to the tindexer program.
         newTextFileName := nextIdStr + flaarum_shared.TEXT_INTR_DELIM + k + ".text"
-        err = ioutil.WriteFile(filepath.Join(tablePath, "data", newTextFileName), []byte(v), 0777)
+        err = ioutil.WriteFile(filepath.Join(tablePath, "txtinstrs", newTextFileName), []byte(v), 0777)
         if err != nil {
           printError(w, errors.Wrap(err, "ioutil error"))
           return
