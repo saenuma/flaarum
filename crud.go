@@ -390,7 +390,7 @@ func (cl Client) AllRowsCount(tableName string) (int64, error) {
   urlValues := url.Values{}
   urlValues.Set("key-str", cl.KeyStr)
 
-  resp, err := httpCl.PostForm(fmt.Sprintf("%scount-rows/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
+  resp, err := httpCl.PostForm(fmt.Sprintf("%sall-rows-count/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
   if err != nil {
     return 0, errors.Wrap(err, "server read failed.")
   }
