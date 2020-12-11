@@ -1,3 +1,4 @@
+// statsr repeatedly stores the CPU and RAM usage of a server. It is much needed for autoscaling deployments.
 package main
 
 import (

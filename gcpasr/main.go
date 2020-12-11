@@ -1,3 +1,4 @@
+// gcpasr is the autoscaling resizer for Google Cloud projects. It is expected to run on the control instance.
 package main
 
 import (

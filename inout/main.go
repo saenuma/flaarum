@@ -1,3 +1,4 @@
+// inout creates compressed backup files and can restore a flaarum project from the said files.
 package main
 
 import (

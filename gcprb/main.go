@@ -1,4 +1,4 @@
-// gcprb repeatedly runs 'inout' and stores the output file to google cloud storage.
+// gcprb repeatedly runs 'flaarum.inout' and stores the output file to google cloud storage.
 package main
 
 import (
