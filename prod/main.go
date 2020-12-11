@@ -28,7 +28,7 @@ Supported Commands:
 
     c     Creates / Updates and prints a new key string
 
-    mpr   Make production ready. It also creates and prints a key string. It expects a google cloud bucket
+    mpr   Make production ready. It also creates a key string. It expects a google cloud bucket
           and a backup_frequency ( in number of days).
 
     masr  Make autoscaling ready. This is for the control instance. It expects in the following order projectId,
