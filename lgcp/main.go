@@ -1,3 +1,4 @@
+// lgcp is the launcher program for Google Cloud platform
 package main
 
 import (
