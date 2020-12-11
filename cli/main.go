@@ -186,9 +186,7 @@ Table Search Commands:
 		}
 		parts := strings.Split(os.Args[2], "/")
 		cl.ProjName = parts[0]
-		count, err := cl.CountRows(fmt.Sprintf(`
-			table: %s
-			`, parts[1]))
+		count, err := cl.AllRowsCount(parts[1])
 
 		if err != nil {
 			color.Red.Printf("Error reading table '%s' of project '%s' row count.\nError: %s\n", parts[1], parts[0], err)

@@ -386,6 +386,33 @@ func (cl Client) CountRows(stmt string) (int64, error) {
 }
 
 
+func (cl Client) AllRowsCount(tableName string) (int64, error) {
+  urlValues := url.Values{}
+  urlValues.Set("key-str", cl.KeyStr)
+
+  resp, err := httpCl.PostForm(fmt.Sprintf("%scount-rows/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
+  if err != nil {
+    return 0, errors.Wrap(err, "server read failed.")
+  }
+  defer resp.Body.Close()
+
+  body, err := ioutil.ReadAll(resp.Body)
+  if err != nil {
+    return 0, errors.Wrap(err, "ioutil read failed.")
+  }
+
+  if resp.StatusCode == 200 {
+    r := string(body)
+    trueR, err := strconv.ParseInt(r, 10, 64)
+    if err != nil {
+      return 0, errors.Wrap(err, "strconv failed.")
+    }
+    return trueR, nil
+  } else {
+    return 0, errors.New(string(body))
+  }
+}
+
 // Sums the fields of a row and returns int64 if it is an int field or float64
 // if it a float field.
 func (cl Client) SumRows(stmt, toSumField string) (interface{}, error) {

@@ -94,6 +94,7 @@ func main() {
   r.HandleFunc("/update-rows/{proj}", updateRows)
   r.HandleFunc("/count-rows/{proj}", countRows)
   r.HandleFunc("/sum-rows/{proj}", sumRows)
+  r.HandleFunc("/all-rows-count/{proj}/{tbl}", allRowsCount)
 
   // stats
   r.HandleFunc("/get-and-delete-stats", getAndDeleteStats)
