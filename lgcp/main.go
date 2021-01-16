@@ -15,6 +15,7 @@ import (
 	"strings"
 	"strconv"
 	"github.com/bankole7782/zazabul"
+	// "google.golang.org/api/option"
 )
 
 
@@ -180,7 +181,8 @@ backup_frequency: 14
 
 		instanceName := fmt.Sprintf("flaarum-%s", strings.ToLower(flaarum_shared.UntestedRandomString(4)))
 		diskName := fmt.Sprintf("%s-disk", instanceName)
-  	
+  	dataDiskName := fmt.Sprintf("%s-ddisk", instanceName)
+
   	diskSizeInt, err := strconv.ParseInt(conf.Get("disk_size"), 10, 64)
   	if err != nil {
   		color.Red.Println("The 'disk_size' variable must be a number greater or equal to 10")
@@ -195,6 +197,16 @@ sudo snap start flaarum.store
 `
 		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup_bucket") + " " + conf.Get("backup_frequency")+ " \n"
 		startupScript += `
+
+DATA_BTRFS=/var/snap/flaarum/current/data_btrfs
+if  [ ! -d "$DATA_BTRFS" ]; then
+	sudo mkfs.btrfs /dev/sdb
+	sudo mkdir -p $DATA_BTRFS
+fi
+sudo mount -o discard,defaults /dev/sdb $DATA_BTRFS
+sudo chmod a+w $DATA_BTRFS
+
+sudo snap restart flaarum.store
 sudo snap start flaarum.tindexer
 sudo snap start flaarum.gcprb
 sudo snap stop --disable flaarum.statsr
@@ -224,6 +236,7 @@ sudo snap stop --disable flaarum.statsr
 			Subnetwork: "regions/" + conf.Get("region") + "/subnetworks/default",
 			Name: instanceName + "-ip",
 		}).Context(ctx).Do()
+
 		err = waitForOperationRegion(conf.Get("project"), conf.Get("region"), computeService, op)
 		if err != nil {
 			panic(err)
@@ -237,7 +250,18 @@ sudo snap stop --disable flaarum.statsr
 		fmt.Println("Flaarum server address: ", computeAddr.Address)
 
 		prefix := "https://www.googleapis.com/compute/v1/projects/" + conf.Get("project")
-		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20201111"
+		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20210113"
+
+		op, err = computeService.Disks.Insert(conf.Get("project"), conf.Get("zone"), &compute.Disk{
+			Description: "Data disk for a flaarum server (" + instanceName + ").",
+			SizeGb: diskSizeInt,
+			Type: prefix + "/zones/" + conf.Get("zone") + "/diskTypes/pd-ssd",
+			Name: dataDiskName,
+		}).Context(ctx).Do()
+		err = waitForOperationZone(conf.Get("project"), conf.Get("zone"), computeService, op)
+		if err != nil {
+			panic(err)
+		}
 
 		instance := &compute.Instance{
 			Name: instanceName,
@@ -252,6 +276,17 @@ sudo snap stop --disable flaarum.statsr
 					InitializeParams: &compute.AttachedDiskInitializeParams{
 						DiskName:    diskName,
 						SourceImage: imageURL,
+						DiskType: prefix + "/zones/" + conf.Get("zone") + "/diskTypes/pd-ssd",
+						DiskSizeGb: 10,
+					},
+				},
+				{
+					AutoDelete: false,
+					Boot:       false,
+					Type:       "PERSISTENT",
+
+					InitializeParams: &compute.AttachedDiskInitializeParams{
+						DiskName:    dataDiskName,
 						DiskType: prefix + "/zones/" + conf.Get("zone") + "/diskTypes/pd-ssd",
 						DiskSizeGb: diskSizeInt,
 					},
@@ -388,8 +423,8 @@ resize_frequency: 6
   	suffix := strings.ToLower(flaarum_shared.UntestedRandomString(4))
 		instanceName := fmt.Sprintf("flaarum-%s", suffix)
 		diskName := fmt.Sprintf("%s-disk", instanceName)
+  	dataDiskName := fmt.Sprintf("%s-ddisk", instanceName)
   	
-  	instanceName = instanceName
   	ctlInstanceName := fmt.Sprintf("flaarumctl-%s", suffix)
   	ctlInstanceDisk := ctlInstanceName + "-disk"
 
@@ -407,6 +442,14 @@ sudo snap start flaarum.store
 `
 		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup_bucket") + " " + conf.Get("backup_frequency")+ " \n"
 		startupScript += `
+DATA_BTRFS=/var/snap/flaarum/current/data_btrfs
+if  [ ! -d "$DATA_BTRFS" ]; then
+	sudo mkfs.btrfs /dev/sdb
+	sudo mkdir -p $DATA_BTRFS
+fi
+sudo mount -o discard,defaults /dev/sdb $DATA_BTRFS
+sudo chmod a+w $DATA_BTRFS
+
 sudo snap start flaarum.tindexer
 sudo snap start flaarum.gcprb
 sudo snap restart flaarum.statsr
@@ -449,7 +492,18 @@ sudo snap restart flaarum.statsr
 		fmt.Println("Flaarum server address: ", computeAddr.Address)
 
 		prefix := "https://www.googleapis.com/compute/v1/projects/" + conf.Get("project")
-		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20201111"
+		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20210113"
+
+		op, err = computeService.Disks.Insert(conf.Get("project"), conf.Get("zone"), &compute.Disk{
+			Description: "Data disk for a flaarum server (" + instanceName + ").",
+			SizeGb: diskSizeInt,
+			Type: prefix + "/zones/" + conf.Get("zone") + "/diskTypes/pd-ssd",
+			Name: dataDiskName,
+		}).Context(ctx).Do()
+		err = waitForOperationZone(conf.Get("project"), conf.Get("zone"), computeService, op)
+		if err != nil {
+			panic(err)
+		}
 
 		instance := &compute.Instance{
 			Name: instanceName,
@@ -464,6 +518,17 @@ sudo snap restart flaarum.statsr
 					InitializeParams: &compute.AttachedDiskInitializeParams{
 						DiskName:    diskName,
 						SourceImage: imageURL,
+						DiskType: prefix + "/zones/" + conf.Get("zone") + "/diskTypes/pd-ssd",
+						DiskSizeGb: diskSizeInt,
+					},
+				},
+				{
+					AutoDelete: false,
+					Boot:       false,
+					Type:       "PERSISTENT",
+
+					InitializeParams: &compute.AttachedDiskInitializeParams{
+						DiskName:    dataDiskName,
 						DiskType: prefix + "/zones/" + conf.Get("zone") + "/diskTypes/pd-ssd",
 						DiskSizeGb: diskSizeInt,
 					},

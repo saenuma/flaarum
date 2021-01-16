@@ -103,17 +103,23 @@ func GetCtlConfigPath() (string, error) {
 
 
 func GetDataPath() (string, error) {
-	dd := os.Getenv("SNAP_DATA")		
-	if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
-		hd, err := os.UserHomeDir()
-		if err != nil {
-			return "", errors.Wrap(err, "os error")
-		}
-		dd = filepath.Join(hd, ".flaarum_data")	
-	} else {
-		dd = filepath.Join(dd, "data")
-	}
-	return dd, nil
+  inProd := GetSetting("in_production")
+  if inProd == "true" {
+    return "/var/snap/flaarum/current/data_btrfs", nil
+  } else {
+    dd := os.Getenv("SNAP_DATA")    
+    if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
+      hd, err := os.UserHomeDir()
+      if err != nil {
+        return "", errors.Wrap(err, "os error")
+      }
+      dd = filepath.Join(hd, ".flaarum_data") 
+    } else {
+      dd = filepath.Join(dd, "data")
+    }
+    return dd, nil  
+  }
+  
 }
 
 
