@@ -519,7 +519,7 @@ sudo snap restart flaarum.statsr
 						DiskName:    diskName,
 						SourceImage: imageURL,
 						DiskType: prefix + "/zones/" + conf.Get("zone") + "/diskTypes/pd-ssd",
-						DiskSizeGb: diskSizeInt,
+						DiskSizeGb: 10,
 					},
 				},
 				{
