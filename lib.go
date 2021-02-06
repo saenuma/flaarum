@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"crypto/tls"
 	"github.com/pkg/errors"
-	"strings"
 	"io/ioutil"
 	"github.com/bankole7782/flaarum/flaarum_shared"
 	"time"
@@ -28,12 +27,8 @@ type Client struct {
 	ProjName string
 }
 
-func NewClient(addr, keyStr, projName string) Client {
-	if ! strings.HasSuffix(addr, "/") {
-		addr += "/"
-	}
-
-	return Client{addr, keyStr, projName}
+func NewClient(ip, keyStr, projName string) Client {
+	return Client{"https://" + ip + ":22318/", keyStr, projName}
 }
 
 

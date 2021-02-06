@@ -28,7 +28,7 @@ func storeStats() {
 	inProd := flaarum_shared.GetSetting("in_production")
 	if inProd == "" {
 		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
-		os.Exit(1)	
+		os.Exit(1)
 	}
 	if inProd == "true" {
 		keyStrPath := flaarum_shared.GetKeyStrPath()
@@ -39,7 +39,7 @@ func storeStats() {
 		}
 		keyStr = string(raw)
 
-		cl := flaarum.NewClient(fmt.Sprintf("https://127.0.0.1:%d/", flaarum_shared.PORT), keyStr, "first_proj")
+		cl := flaarum.NewClient("127.0.0.1", keyStr, "first_proj")
 
 		err = cl.Ping()
 		if err != nil {

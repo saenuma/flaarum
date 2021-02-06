@@ -60,7 +60,7 @@ func (cl *Client) UpdateTableStructure(stmt string) error {
 func (cl *Client) GetCurrentTableVersionNum(tableName string) (int64, error) {
 	urlValues := url.Values{}
 	urlValues.Add("key-str", cl.KeyStr)
-	
+
 	resp, err := httpCl.PostForm(fmt.Sprintf("%sget-current-version-num/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
 	if err != nil {
 		return -1, errors.Wrap(err, "http error")
@@ -86,8 +86,8 @@ func (cl *Client) GetCurrentTableVersionNum(tableName string) (int64, error) {
 func (cl *Client) GetTableStructure(tableName string, versionNum int64) (string, error) {
 	urlValues := url.Values{}
 	urlValues.Add("key-str", cl.KeyStr)
-	
-	resp, err := httpCl.PostForm(fmt.Sprintf("%sget-table-structure/%s/%s/%d", cl.Addr, cl.ProjName, tableName, versionNum), 
+
+	resp, err := httpCl.PostForm(fmt.Sprintf("%sget-table-structure/%s/%s/%d", cl.Addr, cl.ProjName, tableName, versionNum),
 		urlValues)
 	if err != nil {
 		return "", errors.Wrap(err, "http error")
@@ -102,7 +102,7 @@ func (cl *Client) GetTableStructure(tableName string, versionNum int64) (string,
 		return string(body), nil
 	} else {
 		return "", errors.New(string(body))
-	}	
+	}
 }
 
 
@@ -124,7 +124,7 @@ func (cl *Client) GetCurrentTableStructureParsed(tableName string) (flaarum_shar
 	if err != nil {
 		return flaarum_shared.TableStruct{}, err
 	}
-	return flaarum_shared.ParseTableStructureStmt(stmt)	
+	return flaarum_shared.ParseTableStructureStmt(stmt)
 }
 
 

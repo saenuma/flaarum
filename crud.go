@@ -14,7 +14,7 @@ import (
 
 
 // InsertRowStr inserts a row into a table. It expects the input to be of type map[string]string.
-// It returns a string which is parsable to an int64 for proper tables. For 'logs' tables it 
+// It returns a string which is parsable to an int64 for proper tables. For 'logs' tables it
 // returns a string which is not parsable to int64
 func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (string, error) {
 	urlValues := url.Values{}
@@ -84,7 +84,7 @@ func (cl *Client) convertInterfaceMapToStringMap(tableName string, oldMap map[st
     case time.Time:
       ft, ok := fieldNamesToFieldTypes[k]
       if ! ok {
-        return nil, errors.New(fmt.Sprintf("The field '%s' is not in the structure of table '%s' of project '%s'", 
+        return nil, errors.New(fmt.Sprintf("The field '%s' is not in the structure of table '%s' of project '%s'",
           k, tableName, cl.ProjName))
       }
       if ft == "date" {

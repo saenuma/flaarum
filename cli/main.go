@@ -25,7 +25,7 @@ func main() {
 	inProd := flaarum_shared.GetSetting("in_production")
 	if inProd == "" {
 		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
-		os.Exit(1)	
+		os.Exit(1)
 	}
 	if inProd == "true"{
 		keyStrPath := flaarum_shared.GetKeyStrPath()
@@ -38,7 +38,7 @@ func main() {
 	} else {
 		keyStr = "not-yet-set"
 	}
-	cl := flaarum.NewClient(fmt.Sprintf("https://127.0.0.1:%d/", flaarum_shared.PORT), keyStr, "first_proj")
+	cl := flaarum.NewClient("127.0.0.1", keyStr, "first_proj")
 
 	err := cl.Ping()
 	if err != nil {
@@ -53,11 +53,11 @@ Please Run this program from the same server that powers your flaarum.
 Please don't expose your flaarum database to the internet for security sake.
 
 Directory Commands:
-  pwd   Print working directory. This is the directory where the files needed by any command 
+  pwd   Print working directory. This is the directory where the files needed by any command
         in this cli program must reside.
 
 Project(s) Commands:
-	
+
   lp    List Projects
   cp    Create Project: Expects the name(s) of projects after the command.
   rp    Rename Project. Expects the name of the project to rename  followed by the new name of the project.
@@ -178,7 +178,7 @@ Table Search Commands:
 			color.Red.Println("Error renamining table.\nError: %s\n", err)
 			os.Exit(1)
 		}
-		
+
 	case "arc":
 		if len(os.Args) != 3 {
 			color.Red.Println("'arc' command expects a project and table combo eg. 'first_proj/users'.")
@@ -204,7 +204,7 @@ Table Search Commands:
 		cl.ProjName = parts[0]
 		vnum, err := cl.GetCurrentTableVersionNum(parts[1])
 		if err != nil {
-			color.Red.Printf("Error reading current table version number of table '%s' of Project '%s'.\nError: %s\n", 
+			color.Red.Printf("Error reading current table version number of table '%s' of Project '%s'.\nError: %s\n",
 				parts[1], parts[0], err)
 			os.Exit(1)
 		}
@@ -225,7 +225,7 @@ Table Search Commands:
 		}
 		tableStructStmt, err := cl.GetTableStructure(parts[1], vnum)
 		if err != nil {
-			color.Red.Printf("Error reading table structure number '%s' of table '%s' of Project '%s'.\nError: %s\n", 
+			color.Red.Printf("Error reading table structure number '%s' of table '%s' of Project '%s'.\nError: %s\n",
 				vnumStr, parts[1], parts[0], err)
 			os.Exit(1)
 		}

@@ -75,7 +75,7 @@ func (cl *Client) ListProjects() ([]string, error) {
 		return ret, nil
 	} else {
 		return []string{}, errors.New(string(body))
-	}	
+	}
 }
 
 
