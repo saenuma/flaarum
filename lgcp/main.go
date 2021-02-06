@@ -79,18 +79,18 @@ func main() {
 
 Supported Commands:
 
-    initb    Creates a config file for basic deployment (non-autoscaling). Edit to your own requirements. 
-             Some of the values can be gotten from Google Cloud's documentation. 
+    initb    Creates a config file for basic deployment (non-autoscaling). Edit to your own requirements.
+             Some of the values can be gotten from Google Cloud's documentation.
 
     lb       Launches a configured instance based on the config created above. It expects a launch file (created from 'init' above)
              and a service account credentials file (gotten from Google Cloud).
 
     initas   Creates a config file for auto scaling deployment. The method of autoscaling is to launch a large server in the
-             morning and resize in the evening to a small server. Good for websites facing one country. Edit it to your own 
-             requirements. Some of the values can be gotten from Google Cloud's documentation. 
+             morning and resize in the evening to a small server. Good for websites facing one country. Edit it to your own
+             requirements. Some of the values can be gotten from Google Cloud's documentation.
 
     las      Launches an autoscaling deployment from the config created above. The deployment would have two servers.
-             It expects a launch file (created from 'init' above) and a service account credentials file 
+             It expects a launch file (created from 'init' above) and a service account credentials file
              (gotten from Google Cloud).
 
       `)
@@ -105,16 +105,16 @@ Supported Commands:
 
     var	tmpl = `// project is the Google Cloud Project name
 // It can be created either from the Google Cloud Console or from the gcloud command
-project:  
+project:
 
 // region is the Google Cloud Region name
 // Specify the region you want to launch your flaarum server in.
-region:   
+region:
 
 
 // zone is the Google Cloud Zone which must be derived from the region above.
 // for instance a region could be 'us-central1' and the zone could be 'us-central1-a'
-zone:  
+zone:
 
 // disk_size is the size of the root disk of the server. The data created is also stored in the root disk.
 // It is measured in Gigabytes (GB) and a number is expected.
@@ -128,10 +128,10 @@ machine_type: e2-highcpu-2
 
 // You are to create a bucket in Google cloud storage and set it to this value.
 // This is where the backups for your flaarum installation would be saved to.
-backup_bucket: 
+backup_bucket:
 
 
-// backup_frequency is the number of days before conducting a backup. 
+// backup_frequency is the number of days before conducting a backup.
 // It must be a number not a float. The default is 14 which is two weeks.
 // You can set it to a lower value to test if the backup works perfectly.
 // The minimum value is 1
@@ -224,7 +224,7 @@ sudo snap stop --disable flaarum.statsr
 		}
 
 		client := oauth2.NewClient(ctx, creds.TokenSource)
-		
+
 		computeService, err := compute.New(client)
 		if err != nil {
 			panic(err)
@@ -250,7 +250,12 @@ sudo snap stop --disable flaarum.statsr
 		fmt.Println("Flaarum server address: ", computeAddr.Address)
 
 		prefix := "https://www.googleapis.com/compute/v1/projects/" + conf.Get("project")
-		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20210113"
+
+		image, err := computeService.Images.GetFromFamily("ubuntu-os-cloud", "ubuntu-minimal-2004-lts").Context(ctx).Do()
+		if err != nil {
+			panic(err)
+		}
+		imageURL := image.SelfLink
 
 		op, err = computeService.Disks.Insert(conf.Get("project"), conf.Get("zone"), &compute.Disk{
 			Description: "Data disk for a flaarum server (" + instanceName + ").",
@@ -338,16 +343,16 @@ sudo snap stop --disable flaarum.statsr
 
     var	tmpl = `// project is the Google Cloud Project name
 // It can be created either from the Google Cloud Console or from the gcloud command
-project:  
+project:
 
 // region is the Google Cloud Region name
 // Specify the region you want to launch your flaarum server in.
-region:   
+region:
 
 
 // zone is the Google Cloud Zone which must be derived from the region above.
 // for instance a region could be 'us-central1' and the zone could be 'us-central1-a'
-zone:  
+zone:
 
 
 // disk_size is the size of the root disk of the server. The data created is also stored in the root disk.
@@ -358,16 +363,16 @@ disk_size: 10
 
 // You are to create a bucket in Google cloud storage and set it to this value.
 // This is where the backups for your flaarum installation would be saved to.
-backup_bucket: 
+backup_bucket:
 
-// backup_frequency is the number of days before conducting a backup. 
+// backup_frequency is the number of days before conducting a backup.
 // It must be a number not a float. The default is 14 which is two weeks.
 // You can set it to a lower value to test if the backup works perfectly.
 // The minimum value is 1
 backup_frequency: 14
 
 
-// The resize_frequency is the number of hours before the flaarum control server resizes the flaarum data 
+// The resize_frequency is the number of hours before the flaarum control server resizes the flaarum data
 // server. You can set it to a lower value to test if the autoscaling works perfectly.
 resize_frequency: 6
 
@@ -424,7 +429,7 @@ resize_frequency: 6
 		instanceName := fmt.Sprintf("flaarum-%s", suffix)
 		diskName := fmt.Sprintf("%s-disk", instanceName)
   	dataDiskName := fmt.Sprintf("%s-ddisk", instanceName)
-  	
+
   	ctlInstanceName := fmt.Sprintf("flaarumctl-%s", suffix)
   	ctlInstanceDisk := ctlInstanceName + "-disk"
 
@@ -467,7 +472,7 @@ sudo snap restart flaarum.statsr
 		}
 
 		client := oauth2.NewClient(ctx, creds.TokenSource)
-		
+
 		computeService, err := compute.New(client)
 		if err != nil {
 			panic(err)
@@ -492,7 +497,12 @@ sudo snap restart flaarum.statsr
 		fmt.Println("Flaarum server address: ", computeAddr.Address)
 
 		prefix := "https://www.googleapis.com/compute/v1/projects/" + conf.Get("project")
-		imageURL := "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-2004-focal-v20210113"
+
+		image, err := computeService.Images.GetFromFamily("ubuntu-os-cloud", "ubuntu-minimal-2004-lts").Context(ctx).Do()
+		if err != nil {
+			panic(err)
+		}
+		imageURL := image.SelfLink
 
 		op, err = computeService.Disks.Insert(conf.Get("project"), conf.Get("zone"), &compute.Disk{
 			Description: "Data disk for a flaarum server (" + instanceName + ").",
@@ -580,7 +590,7 @@ sudo snap restart flaarum.statsr
 
 sudo snap install flaarum
 `
-		startupScriptCtlInstance += "\nsudo flaarum.prod masr " + conf.Get("project") + " " + conf.Get("zone") 
+		startupScriptCtlInstance += "\nsudo flaarum.prod masr " + conf.Get("project") + " " + conf.Get("zone")
 		startupScriptCtlInstance += " " + instanceName + " " + computeAddr.Address + " " + conf.Get("resize_frequency") + " \n"
 		startupScriptCtlInstance += `
 sudo snap restart flaarum.gcpasr
@@ -642,7 +652,7 @@ sudo snap restart flaarum.gcpasr
 		}
 
 
-		fmt.Println("Flaarum Server Name: " + instanceName)  	
+		fmt.Println("Flaarum Server Name: " + instanceName)
 		fmt.Println("Flaarum Control Server Name: ", ctlInstanceName)
   }
 
