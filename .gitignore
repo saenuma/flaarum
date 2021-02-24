@@ -15,10 +15,8 @@
 # vendor/
 
 tmp/
-flaarum_store/tmp/
-flaarum_store/flaarum_store
-flaarum_key/flaarum_key
-flaarum_launcher/*.json
+store/tmp/
+store/store
 
 artifacts/
 flaarum.tar.xz

@@ -144,11 +144,11 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
       } else {
         if ts.TableType != "logs" {
           newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + f + ".rtext"
-          err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName), 
+          err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName),
             []byte("ok"), 0777)
           if err != nil {
             return err
-          }          
+          }
         }
       }
     }
@@ -166,7 +166,7 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
 
 func deleteIndex(projName, tableName, fieldName, data, rowId, version string) error {
   if confirmFieldType(projName, tableName, fieldName, "date", version) {
-    valueInTimeType, err := time.Parse(flaarum_shared.BROWSER_DATE_FORMAT, data)
+    valueInTimeType, err := time.Parse(flaarum_shared.DATE_FORMAT, data)
     if err != nil {
       return errors.New(fmt.Sprintf("The value '%s' to field '%s' is not a date.", data, fieldName ))
     }
@@ -184,7 +184,7 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
       }
     }
   } else if confirmFieldType(projName, tableName, fieldName, "datetime", version) {
-    valueInTimeType, err := time.Parse(flaarum_shared.BROWSER_DATETIME_FORMAT, data)
+    valueInTimeType, err := time.Parse(flaarum_shared.DATETIME_FORMAT, data)
     if err != nil {
       return errors.New(fmt.Sprintf("The value '%s' to field '%s' is not a datetime.", data, fieldName))
     }
@@ -195,6 +195,8 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
     dMap[f + "_month"] = strconv.Itoa(int(valueInTimeType.Month()))
     dMap[f + "_day"] = strconv.Itoa(valueInTimeType.Day())
     dMap[f + "_hour"] = strconv.Itoa(valueInTimeType.Hour())
+    dMap[f + "_date"] = valueInTimeType.Format(flaarum_shared.DATE_FORMAT)
+    dMap[f + "_tzname"], _ = valueInTimeType.Zone()
 
     for toDeleteField, fieldData := range dMap {
       err := deleteIndex(projName, tableName, toDeleteField, fieldData, rowId, version)
@@ -273,11 +275,11 @@ func innerDeleteField(projName, tableName, fieldName string, rows *[]map[string]
       } else {
         if ts.TableType != "logs" {
           newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + f + ".rtext"
-          err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName), 
+          err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName),
             []byte("ok"), 0777)
           if err != nil {
             return err
-          }          
+          }
         }
 
       }

@@ -62,7 +62,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
           return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in the short bool format.", v, k))
         }
       } else if fd.FieldType == "date" {
-        valueInTimeType, err := time.Parse(flaarum_shared.BROWSER_DATE_FORMAT, v)
+        valueInTimeType, err := time.Parse(flaarum_shared.DATE_FORMAT, v)
         if err != nil {
           return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in date format.", v, k))
         }
@@ -70,7 +70,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
         dataMap[k + "_month"] = strconv.Itoa(int(valueInTimeType.Month()))
         dataMap[k + "_day"] = strconv.Itoa(valueInTimeType.Day())
       } else if fd.FieldType == "datetime" {
-        valueInTimeType, err := time.Parse(flaarum_shared.BROWSER_DATETIME_FORMAT, v)
+        valueInTimeType, err := time.Parse(flaarum_shared.DATETIME_FORMAT, v)
         if err != nil {
           return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in datetime format.", v, k))
         }
@@ -78,7 +78,8 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
         dataMap[k + "_month"] = strconv.Itoa(int(valueInTimeType.Month()))
         dataMap[k + "_day"] = strconv.Itoa(valueInTimeType.Day())
         dataMap[k + "_hour"] = strconv.Itoa(valueInTimeType.Hour())
-        dataMap[k + "_date"] = valueInTimeType.Format(flaarum_shared.BROWSER_DATE_FORMAT)
+        dataMap[k + "_date"] = valueInTimeType.Format(flaarum_shared.DATE_FORMAT)
+				dataMap[k + "_tzname"], _ = valueInTimeType.Zone()
       } else if fd.FieldType == "email" {
         _, err := emailaddress.Parse(v)
         if err != nil {
@@ -154,7 +155,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
       	joiner = "and"
       }
 
-      wherePartFragment += fmt.Sprintf("%s %s = '%s' \n", joiner, fieldName, value) 
+      wherePartFragment += fmt.Sprintf("%s %s = '%s' \n", joiner, fieldName, value)
     }
 
     if len(ug) > 1 {
@@ -172,7 +173,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
         return nil, errors.New(
           fmt.Sprintf("The fields '%s' form a unique group and their data taken together is not unique.",
           strings.Join(ug, ", ")))
-      }      
+      }
     }
 
   }
@@ -292,12 +293,13 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
   } else if tableStruct.TableType == "logs" {
     nextId := flaarum_shared.UntestedRandomString(15)
     timeNow := time.Now()
-    toInsert["created"] = timeNow.Format(flaarum_shared.BROWSER_DATETIME_FORMAT)
+    toInsert["created"] = timeNow.Format(flaarum_shared.DATETIME_FORMAT)
     toInsert["created_year"] = strconv.Itoa(timeNow.Year())
     toInsert["created_month"] = strconv.Itoa(int(timeNow.Month()))
     toInsert["created_day"] = strconv.Itoa(timeNow.Day())
     toInsert["created_hour"] = strconv.Itoa(timeNow.Hour())
-    toInsert["created_date"] = timeNow.Format(flaarum_shared.BROWSER_DATE_FORMAT)
+		toInsert["created_date"] = timeNow.Format(flaarum_shared.DATE_FORMAT)
+    toInsert["created_tzname"], _ = timeNow.Zone()
 
     err = saveRowData(projName, tableName, nextId, toInsert)
     if err != nil {
@@ -312,7 +314,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
         if err != nil {
           printError(w, err)
           return
-        }        
+        }
       }
     }
 

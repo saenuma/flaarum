@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"time"
-  "github.com/kljensen/snowball"  
+  "github.com/kljensen/snowball"
   "fmt"
   "strconv"
   "github.com/adam-hanna/arrayOperations"
@@ -19,8 +19,8 @@ import (
 
 
 const (
-  BROWSER_DATE_FORMAT = "2006-01-02"
-  BROWSER_DATETIME_FORMAT = "2006-01-02T15:04"
+  DATE_FORMAT = "2006-01-02"
+  DATETIME_FORMAT = "2006-01-02T15:04 MST"
   STRING_MAX_LENGTH = 100
   TEXT_INTR_DELIM = "~~~"
   BACKUP_EXT = "flaa1"
@@ -39,9 +39,9 @@ in_production: false
 // backup_bucket is only required during production.
 // You are to create a bucket in Google cloud storage and set it to this value.
 // This is where the backups for your flaarum installation would be saved to.
-backup_bucket: 
+backup_bucket:
 
-// backup_frequency is the number of days before conducting a backup. 
+// backup_frequency is the number of days before conducting a backup.
 // It must be a number not a float. The default is 14 which is two weeks.
 // You can set it to a lower value to test if the backup works perfectly.
 // The minimum value is 1
@@ -85,11 +85,11 @@ func GetConfigPath() (string, error) {
 		if err != nil {
 			return "", errors.Wrap(err, "os error")
 		}
-		dd = filepath.Join(hd, ".flaarum.zconf")	
+		dd = filepath.Join(hd, ".flaarum.zconf")
 	} else {
 		dd = filepath.Join(dd, "flaarum.zconf")
 	}
-	return dd, nil	
+	return dd, nil
 }
 
 
@@ -107,19 +107,19 @@ func GetDataPath() (string, error) {
   if inProd == "true" {
     return "/var/snap/flaarum/current/data_btrfs", nil
   } else {
-    dd := os.Getenv("SNAP_DATA")    
+    dd := os.Getenv("SNAP_DATA")
     if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
       hd, err := os.UserHomeDir()
       if err != nil {
         return "", errors.Wrap(err, "os error")
       }
-      dd = filepath.Join(hd, ".flaarum_data") 
+      dd = filepath.Join(hd, ".flaarum_data")
     } else {
       dd = filepath.Join(dd, "data")
     }
-    return dd, nil  
+    return dd, nil
   }
-  
+
 }
 
 
@@ -163,11 +163,11 @@ func GetFlaarumPath(fileName string) (string, error) {
   dd := os.Getenv("SNAP_USER_DATA")
 
   if strings.HasPrefix(dd, filepath.Join(hd, "snap", "go")) || dd == "" {
-    dd = filepath.Join(hd, fileName)  
+    dd = filepath.Join(hd, fileName)
   } else {
     dd = filepath.Join(dd, fileName)
   }
-  return dd, nil  
+  return dd, nil
 }
 
 

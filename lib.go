@@ -56,10 +56,10 @@ func (cl *Client) Ping() error {
 
 // Converts a time.Time to the date format expected in flaarum
 func RightDateFormat(d time.Time) string {
-	return d.Format(flaarum_shared.BROWSER_DATE_FORMAT)
+	return d.Format(flaarum_shared.DATE_FORMAT)
 }
 
 // Converts a time.Time to the datetime format expected in flaarum
 func RightDateTimeFormat(d time.Time) string {
-	return d.Format(flaarum_shared.BROWSER_DATETIME_FORMAT)
+	return d.Format(flaarum_shared.DATETIME_FORMAT)
 }
