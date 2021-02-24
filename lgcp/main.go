@@ -355,6 +355,11 @@ region:
 zone:
 
 
+// machine class is either 'e2' or 'n2d'.
+// The n2d supports higher machines than the e2. But the e2 seems to be cheaper and it is the default
+// in Google Cloud Console. Please consider the documentation for more details.
+machine_class: e2
+
 // disk_size is the size of the root disk of the server. The data created is also stored in the root disk.
 // It is measured in Gigabytes (GB) and a number is expected.
 // 10 is the minimum.
@@ -515,10 +520,14 @@ sudo snap restart flaarum.statsr
 			panic(err)
 		}
 
+		firstMT := "e2-highcpu-2"
+		if conf.Get("machine_class") == "n2d" {
+			firstMT = "n2d-highcpu-2"
+		}
 		instance := &compute.Instance{
 			Name: instanceName,
 			Description: "flaarum data instance",
-			MachineType: prefix + "/zones/" + conf.Get("zone") + "/machineTypes/e2-highcpu-2",
+			MachineType: prefix + "/zones/" + conf.Get("zone") + "/machineTypes/" + firstMT,
 			Disks: []*compute.AttachedDisk{
 				{
 					AutoDelete: true,
@@ -591,7 +600,8 @@ sudo snap restart flaarum.statsr
 sudo snap install flaarum
 `
 		startupScriptCtlInstance += "\nsudo flaarum.prod masr " + conf.Get("project") + " " + conf.Get("zone")
-		startupScriptCtlInstance += " " + instanceName + " " + computeAddr.Address + " " + conf.Get("resize_frequency") + " \n"
+		startupScriptCtlInstance += " " + instanceName + " " + computeAddr.Address + " " + conf.Get("resize_frequency")
+		startupScriptCtlInstance += " " + conf.Get("machine_class") + " \n"
 		startupScriptCtlInstance += `
 sudo snap restart flaarum.gcpasr
 `

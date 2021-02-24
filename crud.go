@@ -166,13 +166,13 @@ func (cl *Client) ParseRow (rowStr map[string]string, tableStruct flaarum_shared
           tmpRow[k] = false
         }
       } else if fieldType == "date" {
-        vTime1, err1 := time.Parse(flaarum_shared.BROWSER_DATE_FORMAT, v)
+        vTime1, err1 := time.Parse(flaarum_shared.DATE_FORMAT, v)
         if err1 != nil {
           return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in date format.", v, k))
         }
         tmpRow[k] = vTime1
       } else if fieldType == "datetime" {
-        vTime1, err1 := time.Parse(flaarum_shared.BROWSER_DATETIME_FORMAT, v)
+        vTime1, err1 := time.Parse(flaarum_shared.DATETIME_FORMAT, v)
         if err1 != nil {
           return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in datetime format.", v, k))
         }

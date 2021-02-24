@@ -35,7 +35,7 @@ func createBackupAndSaveToGCloudStorage() {
 	if err != nil {
 		panic(errors.Wrap(err, "strconv error."))
 	}
-	lastBackupTime, _ := time.Parse(flaarum_shared.BROWSER_DATETIME_FORMAT, string(raw))
+	lastBackupTime, _ := time.Parse(flaarum_shared.DATETIME_FORMAT, string(raw))
 	daysSinceLastBackup := time.Now().Sub(lastBackupTime).Hours() / 24
 
 	if uint64(daysSinceLastBackup) >= backupFrequency {

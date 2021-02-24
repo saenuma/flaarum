@@ -21,13 +21,28 @@ import (
 
 
 var confObject zazabul.Config
+var MTs []string
 
-var MTs = []string{
+var E2MTs = []string {
 	"e2-highcpu-2",
 	"e2-highcpu-4",
 	"e2-highcpu-8",
 	"e2-highcpu-16",
 	"e2-highcpu-32",
+}
+
+var N2DMTs = []string {
+	"n2d-highcpu-2",
+	"n2d-highcpu-4",
+	"n2d-highcpu-8",
+	"n2d-highcpu-16",
+	"n2d-highcpu-32",
+	"n2d-highcpu-48",
+	"n2d-highcpu-64",
+	"n2d-highcpu-80",
+	"n2d-highcpu-96",
+	"n2d-highcpu-128",
+	"n2d-highcpu-224",
 }
 
 func main() {
@@ -39,6 +54,12 @@ func main() {
 	conf, err := zazabul.LoadConfigFile(confPath)
 	if err != nil {
 		panic(err)
+	}
+
+	if conf.Get("machine_class") == "e2" {
+		MTs = E2MTs
+	} else if conf.Get("machine_class") == "n2d" {
+		MTs = N2DMTs
 	}
 
 	confObject = conf
@@ -164,9 +185,9 @@ func innerResizeMachine(mt string) {
 		panic(err)
 	}
 
-	op, err = computeService.Instances.SetMachineType(confObject.Get("project"), confObject.Get("zone"), confObject.Get("instance"), 
+	op, err = computeService.Instances.SetMachineType(confObject.Get("project"), confObject.Get("zone"), confObject.Get("instance"),
 		&compute.InstancesSetMachineTypeRequest{
-			MachineType: "/zones/" + confObject.Get("zone") + "/machineTypes/" + mt,		
+			MachineType: "/zones/" + confObject.Get("zone") + "/machineTypes/" + mt,
 	}).Context(ctx).Do()
 	if err != nil {
 		panic(err)

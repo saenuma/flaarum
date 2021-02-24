@@ -24,7 +24,7 @@ func main() {
 
 Supported Commands:
 
-    r     Read the current key string used 
+    r     Read the current key string used
 
     c     Creates / Updates and prints a new key string
 
@@ -72,9 +72,9 @@ Supported Commands:
         color.Red.Printf("Error creating key string path.\nError:%s\n", err)
         os.Exit(1)
       }
-          
+
     }
-  
+
     confPath, err := flaarum_shared.GetConfigPath()
     if err != nil {
       panic(err)
@@ -105,32 +105,36 @@ Supported Commands:
     }
 
   case "masr":
-    if len(os.Args) != 7 {
+    if len(os.Args) != 8 {
       color.Red.Println("Expecting 5 arguments. Check the help for documentation")
       os.Exit(1)
     }
 
     tmpl := `// project is the Google Cloud Project name
 // It can be created either from the Google Cloud Console or from the gcloud command
-project:  
+project:
 
 // zone is the Google Cloud Zone which must be derived from a region.
 // for instance a region could be 'us-central1' and the zone could be 'us-central1-a'
-zone:  
+zone:
 
 // instance name is the name of the instance that would be controlled
 instance:
 
 
 // instance_ip is the IP address of the instance to be controlled
-instance_ip: 
+instance_ip:
 
 // machine_type is the type of machine configuration to use to launch your flaarum server.
 // You must get this value from the Google Cloud Compute documentation if not it would fail.
-// It is not necessary it must be an e2 instance.
 machine_type: e2-highcpu-2
 
-// The resize_frequency is the number of hours before the flaarum control server resizes the flaarum data 
+// machine class is either 'e2' or 'n2d'.
+// The n2d supports higher machines than the e2. But the e2 seems to be cheaper and it is the default
+// in Google Cloud Console. Please consider the documentation for more details.
+machine_class: e2
+
+// The resize_frequency is the number of hours before the flaarum control server resizes the flaarum data
 // server. You can set it to a lower value to test if the autoscaling works perfectly.
 resize_frequency: 6
 
@@ -140,14 +144,18 @@ resize_frequency: 6
       panic(err)
     }
 
+    var firstMT = "e2-highcpu-2"
+    if os.Args[7] == "n2d" {
+      firstMT = "n2d-highcpu-2"
+    }
     conf.Update(map[string]string {
       "project": os.Args[2],
       "zone": os.Args[3],
       "instance": os.Args[4],
       "instance_ip": os.Args[5],
       "resize_frequency": os.Args[6],
+      "machine_type": firstMT,
     })
-
 
     confPath, err := flaarum_shared.GetCtlConfigPath()
     if err != nil {
