@@ -270,6 +270,8 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
           printError(w, errors.Wrap(err, "ioutil error"))
           return
         }
+			} else if isNotIndexedField(projName, tableName, k) {
+					// do nothing.
       } else {
         err := makeIndex(projName, tableName, k, v, nextIdStr)
         if err != nil {

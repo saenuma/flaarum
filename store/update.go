@@ -77,6 +77,8 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
       _, ok := fieldsDescs[k]
       if ok {
         newRow[k] = v
+      } else if isNotIndexedFieldVersioned(projName, tableName, k, row["_version"]) {
+        // do nothing
       } else {
         err = deleteIndex(projName, tableName, k, v, row["id"], row["_version"])
         if err != nil {
@@ -119,7 +121,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
       if isFieldOfTypeText(projName, tableName, fieldName) {
         // create a .text file which is a message to the tindexer program.
         newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + fieldName + ".text"
-        err = ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "data", newTextFileName), 
+        err = ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName),
           []byte(newData), 0777)
         if err != nil {
           printError(w, errors.Wrap(err, "ioutil error"))
@@ -127,6 +129,11 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
         }
         continue
       }
+
+      if isNotIndexedField(projName, tableName, fieldName) {
+        continue
+      }
+      
       allOldRows := *rows
       oldRow := allOldRows[i]
 

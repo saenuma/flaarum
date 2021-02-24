@@ -68,7 +68,7 @@ func confirmFieldType(projName, tableName, fieldName, fieldType, version string)
   if err != nil {
     return false
   }
-  
+
   if fieldName == "id" {
     if tableStruct.TableType == "proper" && fieldType == "int" {
       return true
@@ -116,7 +116,7 @@ func isFieldOfTypeText(projName, tableName, fieldName string) bool {
 
 
 func isFieldOfTypeTextVersioned(projName, tableName, fieldName, version string) bool {
-  versionInt, _ := strconv.Atoi(version)  
+  versionInt, _ := strconv.Atoi(version)
   ts, _ := getTableStructureParsed(projName, tableName, versionInt)
   for _, fd := range ts.Fields {
     if fd.FieldName == fieldName && fd.FieldType == "text" {
@@ -129,4 +129,26 @@ func isFieldOfTypeTextVersioned(projName, tableName, fieldName, version string) 
 
 func makeSafeIndexName(v string) string {
   return flaarum_shared.MakeSafeIndexName(v)
+}
+
+func isNotIndexedField(projName, tableName, fieldName string) bool {
+	ts, _ := getCurrentTableStructureParsed(projName, tableName)
+  for _, fd := range ts.Fields {
+    if fd.FieldName == fieldName && fd.NotIndexed == true {
+      return true
+    }
+  }
+  return false
+}
+
+
+func isNotIndexedFieldVersioned(projName, tableName, fieldName, version string) bool {
+	versionInt, _ := strconv.Atoi(version)
+	ts, _ := getTableStructureParsed(projName, tableName, versionInt)
+	for _, fd := range ts.Fields {
+		if fd.FieldName == fieldName && fd.NotIndexed == true {
+			return true
+		}
+	}
+	return false
 }

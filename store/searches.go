@@ -127,28 +127,36 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 	} else {
 		// validation
 		fieldNamesToFieldTypes := make(map[string]string)
+		fieldNamesToNotIndexedStatus := make(map[string]bool)
 
 		for _, fieldStruct := range tableStruct.Fields {
 			fieldNamesToFieldTypes[fieldStruct.FieldName] = fieldStruct.FieldType
 		}
-
+		for _, fieldStruct := range tableStruct.Fields {
+			fieldNamesToNotIndexedStatus[fieldStruct.FieldName] = fieldStruct.NotIndexed
+		}
     ftsCount := 0
 		for i, whereStruct := range stmtStruct.WhereOptions {
 			if i != 0 {
 				if whereStruct.Joiner != "and" && whereStruct.Joiner != "or" {
 					return nil, errors.New("Invalid statment: joiner must be one of 'and', 'or'.")
-				}				
+				}
 			}
 
 			if fieldNamesToFieldTypes[whereStruct.FieldName] == "text" && whereStruct.Relation != "fts" {
-				return nil, errors.New(fmt.Sprintf("The field '%s' is not searchable with '%s' since it is of type 'text'", 
+				return nil, errors.New(fmt.Sprintf("The field '%s' is not searchable with '%s' since it is of type 'text'",
 					whereStruct.FieldName, whereStruct.Relation))
 			}
 
       if fieldNamesToFieldTypes[whereStruct.FieldName] != "text" && whereStruct.Relation == "fts" {
-        return nil, errors.New(fmt.Sprintf("The field '%s' is not searchable with fts since it is not of type 'text'", 
+        return nil, errors.New(fmt.Sprintf("The field '%s' is not searchable with fts since it is not of type 'text'",
           whereStruct.FieldName))
       }
+
+			if fieldNamesToNotIndexedStatus[whereStruct.FieldName] == true {
+				return nil, errors.New(fmt.Sprintf("The field '%s' is not searchable because it has the 'nindex' attribute",
+					whereStruct.FieldName))
+			}
 
       if whereStruct.Relation == "fts" {
         ftsCount += 1
@@ -1027,7 +1035,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               }
 
               tmpIds = append(tmpIds, dirFI.Name())
-            }            
+            }
           }
 
           excludedIDsOnly := make([]string, 0)
@@ -1158,7 +1166,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               }
 
               tmpIds = append(tmpIds, dirFI.Name())
-            }            
+            }
           }
 
           excludedIDsOnly := make([]string, 0)
@@ -1199,7 +1207,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
           beforeFilter = append(beforeFilter, stringIds)
         }
-      
+
       }
 
 		}
@@ -1321,7 +1329,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           } else {
             return elems[i][stmtStruct.OrderBy] < elems[j][stmtStruct.OrderBy]
           }
-        } else if confirmFieldType(projName, tableName, stmtStruct.OrderBy, "text", elems[i]["_version"]) && 
+        } else if confirmFieldType(projName, tableName, stmtStruct.OrderBy, "text", elems[i]["_version"]) &&
           confirmFieldType(projName, tableName, stmtStruct.OrderBy, "text", elems[j]["_version"]) {
             x := textWeights[ elems[i]["id"] ]
             y := textWeights[ elems[j]["id"] ]

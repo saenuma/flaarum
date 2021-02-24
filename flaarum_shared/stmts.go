@@ -24,6 +24,7 @@ type FieldStruct struct {
 	FieldType string
 	Required bool
 	Unique bool
+	NotIndexed bool
 }
 
 type FKeyStruct struct {
@@ -99,7 +100,7 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 		if err := NameValidate(parts[0]); err != nil {
 			return ts, err
 		}
-		
+
 		if FindIn([]string{"int", "float", "string", "text", "bool", "date", "datetime", "email", "url", "ipaddr"}, parts[1]) == -1 {
 			return ts, errors.New(fmt.Sprintf("Bad Statement: the field type '%s' is not allowed in flaarum.", parts[1]))
 		}
@@ -110,6 +111,8 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 					fs.Required = true
 				} else if otherPart == "unique" {
 					fs.Unique = true
+				} else if otherPart == "nindex" {
+					fs.NotIndexed = true
 				}
 			}
 		}
@@ -214,7 +217,7 @@ func specialSplitLine(line string) ([]string, error) {
 type WhereStruct struct {
 	FieldName string
 	Relation string // eg. '=', '!=', '<', etc.
-	FieldValue string 
+	FieldValue string
 	Joiner string // one of 'and', 'or', 'orf'
 	FieldValues []string // for 'in' and 'nin' queries
 }

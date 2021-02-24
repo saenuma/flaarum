@@ -139,9 +139,9 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
         continue
       }
 
-      if ! isFieldOfTypeText(projName, tableName, f) {
-        deleteIndex(projName, tableName, f, d, row["id"], row["_version"])
-      } else {
+      if isNotIndexedField(projName, tableName, f) {
+        // do nothing
+      } else if isFieldOfTypeText(projName, tableName, f) {
         if ts.TableType != "logs" {
           newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + f + ".rtext"
           err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName),
@@ -150,6 +150,8 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
             return err
           }
         }
+      } else {
+        deleteIndex(projName, tableName, f, d, row["id"], row["_version"])
       }
     }
 
