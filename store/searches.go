@@ -215,7 +215,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           }
         }
 
-      } else if whereStruct.Relation == "neq" {
+      } else if whereStruct.Relation == "!=" {
         if whereStruct.FieldName == "id" {
           rows, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
           if err != nil {
@@ -277,7 +277,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           beforeFilter = append(beforeFilter, stringIds)
         }
 
-      } else if whereStruct.Relation == "gt" || whereStruct.Relation == "gteq" {
+      } else if whereStruct.Relation == ">" || whereStruct.Relation == ">=" {
 
         if whereStruct.FieldName == "id" {
           stringIds := make([]string, 0)
@@ -473,7 +473,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
         }
 
 
-      } else if whereStruct.Relation == "lt" || whereStruct.Relation == "lteq" {
+      } else if whereStruct.Relation == "<" || whereStruct.Relation == "<=" {
 
         if whereStruct.FieldName == "id" {
           stringIds := make([]string, 0)
