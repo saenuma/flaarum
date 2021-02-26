@@ -16,6 +16,6 @@ build:
 	cp store/https-server.key artifacts/https-server.key
 	cp english-stopwords.json artifacts/english-stopwords.json
 
-snap:
+pkg:
 	snapcraft clean all-needed-files
 	snapcraft --debug
