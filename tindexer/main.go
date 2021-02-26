@@ -87,7 +87,7 @@ func main() {
 			} else if strings.HasSuffix(info.Name(), ".rtext") {
 				wg.Add(1)
 				go removeIndexWG(path, &wg)
-				count += 1	
+				count += 1
 			}
 		}
 
@@ -98,9 +98,9 @@ func main() {
 
 	if err != nil {
 		P(err)
-		return	
+		return
 	}
-	
+
 	fmt.Println("Started...")
 
 	// watch for new files
@@ -147,7 +147,7 @@ func doIndex(textPath string) {
 	if err != nil {
 		return
 	}
-	
+
 	textStrippedOfHtml := bluemonday.StrictPolicy().Sanitize(string(raw))
 	words := strings.Fields(textStrippedOfHtml)
 
@@ -245,7 +245,7 @@ func removeIndexInner(projName, tableName, fieldName, textIndex string) {
 	if err != nil {
 		P(errors.Wrap(err, "ioutil error."))
 		return
-	}	
+	}
 
 	for _, dirFI := range dirsFIs {
 		lookingForPath := filepath.Join(dataPath, projName, tableName, "tindexes", fieldName, dirFI.Name(), textIndex)

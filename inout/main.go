@@ -215,6 +215,12 @@ Available Commands:
 		    	panic(err)
 		    }
 
+				toMakePath := filepath.Join(dataPath, projName, tblFI.Name(), "txtinstrs")
+				err = os.MkdirAll(toMakePath, 0777)
+				if err != nil {
+					panic(err)
+				}
+
 		    rowFIs, err := ioutil.ReadDir(filepath.Join(dataPath, projName, tblFI.Name(), "data"))
 		    if err != nil {
 		    	panic(err)
@@ -247,7 +253,7 @@ Available Commands:
 
 					    	// create a .text file which is a message to the tindexer program.
 				        newTextFileName := rowFI.Name() + flaarum_shared.TEXT_INTR_DELIM + k + ".text"
-				        err = ioutil.WriteFile(filepath.Join(dataPath, projName, tblFI.Name(), "data", newTextFileName), []byte(v), 0777)
+				        err = ioutil.WriteFile(filepath.Join(dataPath, projName, tblFI.Name(), "txtinstrs", newTextFileName), []byte(v), 0777)
 				        if err != nil {
 				          fmt.Printf("%+v\n", errors.Wrap(err, "ioutil error."))
 				        }

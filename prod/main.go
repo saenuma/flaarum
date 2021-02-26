@@ -32,9 +32,9 @@ Supported Commands:
           and a backup_frequency ( in number of days).
 
     masr  Make autoscaling ready. This is for the control instance. It expects in the following order projectId,
-          zone, flaarum_data_instance_name, flaarum_data_instance_ip, resize_frequency.
+          zone, flaarum_data_instance_name, flaarum_data_instance_ip, resize_frequency, machine_class.
 
-          Example: sudo flaarum.prod masr project1 us-central1-a flaarum-2sb 192.168.1.31 6
+          Example: sudo flaarum.prod masr project1 us-central1-a flaarum-2sb 192.168.1.31 6 n2d
       `)
 
   case "r":
