@@ -41,7 +41,7 @@ Supported Commands:
 
   case "t":
     if len(os.Args) < 5 {
-      color.Red.Println("Expecting two inputs")
+      color.Red.Println("Expecting three inputs: the address, the keystring and the number of threads. The number of threads should start from twenty.")
       return
     }
 
