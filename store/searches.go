@@ -301,7 +301,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               return nil, errors.Wrap(err, "strconv failed.")
             }
 
-            if woValueUint == uintId && whereStruct.Relation == "gteq"{
+            if woValueUint == uintId && whereStruct.Relation == ">="{
               stringIds = append(stringIds, strconv.FormatUint(uintId, 10))
             } else if uintId > woValueUint {
               stringIds = append(stringIds, strconv.FormatUint(uintId, 10))
@@ -352,7 +352,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
                     return nil, errors.Wrap(err, "strconv failed.")
                   }
                   currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
-                  if whereStruct.Relation == "gteq" && woValueInInt == currIndexNameInInt {
+                  if whereStruct.Relation == ">=" && woValueInInt == currIndexNameInInt {
                     trueWhereValues = append(trueWhereValues, rowMap["id"])
                   } else if woValueInInt < currIndexNameInInt {
                     trueWhereValues = append(trueWhereValues, rowMap["id"])
@@ -363,7 +363,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
                   return nil, errors.Wrap(err, "strconv failed.")
                 }
                 currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
-                if whereStruct.Relation == "gteq" && woValueInInt == currIndexNameInInt {
+                if whereStruct.Relation == ">=" && woValueInInt == currIndexNameInInt {
                   trueWhereValues = append(trueWhereValues, rowMap["id"])
                 } else if woValueInInt < currIndexNameInInt {
                   trueWhereValues = append(trueWhereValues, rowMap["id"])
@@ -374,13 +374,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
                   return nil, errors.Wrap(err, "strconv to float failed.")
                 }
                 currIndexNameInFloat, err := strconv.ParseFloat(indexFI.Name(), 64)
-                if whereStruct.Relation == "gteq" && woValueInFloat == currIndexNameInFloat {
+                if whereStruct.Relation == ">=" && woValueInFloat == currIndexNameInFloat {
                   trueWhereValues = append(trueWhereValues, rowMap["id"])
                 } else if woValueInFloat < currIndexNameInFloat {
                   trueWhereValues = append(trueWhereValues, rowMap["id"])
                 }
               } else {
-                if whereStruct.Relation == "gteq" && indexFileName == indexFI.Name() {
+                if whereStruct.Relation == ">=" && indexFileName == indexFI.Name() {
                   trueWhereValues = append(trueWhereValues, rowMap["id"])
                 } else if indexFileName < indexFI.Name() {
                   trueWhereValues = append(trueWhereValues, rowMap["id"])
@@ -431,7 +431,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
                     return nil, errors.Wrap(err, "strconv failed.")
                   }
                   currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
-                  if whereStruct.Relation == "gteq" && woValueInInt == currIndexNameInInt {
+                  if whereStruct.Relation == ">=" && woValueInInt == currIndexNameInInt {
                     stringIds = append(stringIds, rowMap["id"])
                   } else if woValueInInt < currIndexNameInInt {
                     stringIds = append(stringIds, rowMap["id"])
@@ -442,7 +442,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
                   return nil, errors.Wrap(err, "strconv failed.")
                 }
                 currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
-                if whereStruct.Relation == "gteq" && woValueInInt == currIndexNameInInt {
+                if whereStruct.Relation == ">=" && woValueInInt == currIndexNameInInt {
                   stringIds = append(stringIds, rowMap["id"])
                 } else if woValueInInt < currIndexNameInInt {
                   stringIds = append(stringIds, rowMap["id"])
@@ -453,13 +453,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
                   return nil, errors.Wrap(err, "strconv to float failed.")
                 }
                 currIndexNameInFloat, err := strconv.ParseFloat(indexFI.Name(), 64)
-                if whereStruct.Relation == "gteq" && woValueInFloat == currIndexNameInFloat {
+                if whereStruct.Relation == ">=" && woValueInFloat == currIndexNameInFloat {
                   stringIds = append(stringIds, rowMap["id"])
                 } else if woValueInFloat < currIndexNameInFloat {
                   stringIds = append(stringIds, rowMap["id"])
                 }
               } else {
-                if whereStruct.Relation == "gteq" && indexFileName == indexFI.Name() {
+                if whereStruct.Relation == ">=" && indexFileName == indexFI.Name() {
                   stringIds = append(stringIds, rowMap["id"])
                 } else if indexFileName < indexFI.Name() {
                   stringIds = append(stringIds, rowMap["id"])
@@ -497,7 +497,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               return nil, errors.Wrap(err, "strconv failed.")
             }
 
-            if woValueUint == uintId && whereStruct.Relation == "lteq"{
+            if woValueUint == uintId && whereStruct.Relation == "<="{
               stringIds = append(stringIds, strconv.FormatUint(uintId, 10))
             } else if uintId < woValueUint {
               stringIds = append(stringIds, strconv.FormatUint(uintId, 10))
@@ -548,7 +548,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
                     return nil, errors.Wrap(err, "strconv failed.")
                   }
                   currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
-                  if whereStruct.Relation == "lteq" && woValueInInt == currIndexNameInInt {
+                  if whereStruct.Relation == "<=" && woValueInInt == currIndexNameInInt {
                     trueWhereValues = append(trueWhereValues, rowMap["id"])
                   } else if woValueInInt > currIndexNameInInt {
                     trueWhereValues = append(trueWhereValues, rowMap["id"])
@@ -559,7 +559,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
                   return nil, errors.Wrap(err, "strconv failed.")
                 }
                 currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
-                if whereStruct.Relation == "lteq" && woValueInInt == currIndexNameInInt {
+                if whereStruct.Relation == "<=" && woValueInInt == currIndexNameInInt {
                   trueWhereValues = append(trueWhereValues, rowMap["id"])
                 } else if woValueInInt > currIndexNameInInt {
                   trueWhereValues = append(trueWhereValues, rowMap["id"])
@@ -570,13 +570,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
                   return nil, errors.Wrap(err, "strconv to float failed.")
                 }
                 currIndexNameInFloat, err := strconv.ParseFloat(indexFI.Name(), 64)
-                if whereStruct.Relation == "lteq" && woValueInFloat == currIndexNameInFloat {
+                if whereStruct.Relation == "<=" && woValueInFloat == currIndexNameInFloat {
                   trueWhereValues = append(trueWhereValues, rowMap["id"])
                 } else if woValueInFloat > currIndexNameInFloat {
                   trueWhereValues = append(trueWhereValues, rowMap["id"])
                 }
               } else {
-                if whereStruct.Relation == "lteq" && indexFileName == indexFI.Name() {
+                if whereStruct.Relation == "<=" && indexFileName == indexFI.Name() {
                   trueWhereValues = append(trueWhereValues, rowMap["id"])
                 } else if indexFileName > indexFI.Name() {
                   trueWhereValues = append(trueWhereValues, rowMap["id"])
@@ -626,7 +626,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
                     return nil, errors.Wrap(err, "strconv failed.")
                   }
                   currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
-                  if whereStruct.Relation == "lteq" && woValueInInt == currIndexNameInInt {
+                  if whereStruct.Relation == "<=" && woValueInInt == currIndexNameInInt {
                     stringIds = append(stringIds, rowMap["id"])
                   } else if woValueInInt > currIndexNameInInt {
                     stringIds = append(stringIds, rowMap["id"])
@@ -637,7 +637,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
                   return nil, errors.Wrap(err, "strconv failed.")
                 }
                 currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
-                if whereStruct.Relation == "lteq" && woValueInInt == currIndexNameInInt {
+                if whereStruct.Relation == "<=" && woValueInInt == currIndexNameInInt {
                   stringIds = append(stringIds, rowMap["id"])
                 } else if woValueInInt > currIndexNameInInt {
                   stringIds = append(stringIds, rowMap["id"])
@@ -648,13 +648,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
                   return nil, errors.Wrap(err, "strconv to float failed.")
                 }
                 currIndexNameInFloat, err := strconv.ParseFloat(indexFI.Name(), 64)
-                if whereStruct.Relation == "lteq" && woValueInFloat == currIndexNameInFloat {
+                if whereStruct.Relation == "<=" && woValueInFloat == currIndexNameInFloat {
                   stringIds = append(stringIds, rowMap["id"])
                 } else if woValueInFloat > currIndexNameInFloat {
                   stringIds = append(stringIds, rowMap["id"])
                 }
               } else {
-                if whereStruct.Relation == "lteq" && indexFileName == indexFI.Name() {
+                if whereStruct.Relation == "<=" && indexFileName == indexFI.Name() {
                   stringIds = append(stringIds, rowMap["id"])
                 } else if indexFileName > indexFI.Name() {
                   stringIds = append(stringIds, rowMap["id"])
