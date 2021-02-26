@@ -35,7 +35,7 @@ Available Commands:
 
   out     Out command creates a backup of a flaarum project. It expects the flaarum project as its only argument.
 
-  in      In command restores a backup of a flaarum project. It expects the name of the flaarum project to be 
+  in      In command restores a backup of a flaarum project. It expects the name of the flaarum project to be
           restored into and a file containing the backup data. This file must reside in the directory gotten from
           "flaarum.cli pwd"
 
@@ -72,7 +72,7 @@ Available Commands:
 			if projName == "first_proj" && tblFI.Name() == "server_stats" {
 				continue
 			}
-			
+
 			err := copy.Copy(filepath.Join(projPath, tblFI.Name(), "structures"), filepath.Join(tmpFolder, "out", tblFI.Name(), "structures"))
 			if err != nil {
 				panic(err)
@@ -208,7 +208,7 @@ Available Commands:
 		    	os.MkdirAll(filepath.Join(dataPath, projName, tblFI.Name(), "data"), 0777)
 		    }
 		    _ = copy.Copy(filepath.Join(tmpFolder, "out", tblFI.Name(), "lastId"), filepath.Join(dataPath, projName, tblFI.Name(), "lastId"))
-		    
+
 		    toMakePath := filepath.Join(dataPath, projName, tblFI.Name(), "indexes")
 		    err = os.MkdirAll(toMakePath, 0777)
 		    if err != nil {
@@ -231,7 +231,7 @@ Available Commands:
 					if err != nil {
 						panic(err)
 					}
-					err = json.Unmarshal(rowBytes, &rowMap)	    	
+					err = json.Unmarshal(rowBytes, &rowMap)
 					if err != nil {
 						panic(err)
 					}
@@ -244,14 +244,15 @@ Available Commands:
 					  	}
 
 					    if isFieldExemptedFromIndexingVersioned(projName, tblFI.Name(), k, rowMap["_version"]) {
-					      
+
 					    	// create a .text file which is a message to the tindexer program.
 				        newTextFileName := rowFI.Name() + flaarum_shared.TEXT_INTR_DELIM + k + ".text"
 				        err = ioutil.WriteFile(filepath.Join(dataPath, projName, tblFI.Name(), "data", newTextFileName), []byte(v), 0777)
 				        if err != nil {
 				          fmt.Printf("%+v\n", errors.Wrap(err, "ioutil error."))
 				        }
-
+							} else if flaarum_shared.IsNotIndexedFieldVersioned(projName, tblFI.Name(), k, rowMap["_version"]) {
+								// don't create indexes
 					    } else {
 
 						    err := flaarum_shared.MakeIndex(projName, tblFI.Name(), k, v, rowFI.Name())
@@ -261,7 +262,7 @@ Available Commands:
 
 					    }
 
-					  }					
+					  }
 					} else {
 
 						for k, v := range rowMap {
@@ -269,12 +270,12 @@ Available Commands:
 				        err = flaarum_shared.MakeIndex(projName, tblFI.Name(), k, v, rowFI.Name())
 				        if err != nil {
 				          fmt.Printf("%+v\n", err)
-				        }        
-				      }						
+				        }
+				      }
 						}
 
 					}
-	
+
 		    }
 
 			}(tblFI, &wg)
@@ -288,7 +289,7 @@ Available Commands:
 		color.Red.Println("Unexpected command. Run this program 'inout' with --help to find out the supported commands.")
 		os.Exit(1)
 	}
-	
+
 }
 
 

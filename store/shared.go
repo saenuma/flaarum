@@ -143,12 +143,5 @@ func isNotIndexedField(projName, tableName, fieldName string) bool {
 
 
 func isNotIndexedFieldVersioned(projName, tableName, fieldName, version string) bool {
-	versionInt, _ := strconv.Atoi(version)
-	ts, _ := getTableStructureParsed(projName, tableName, versionInt)
-	for _, fd := range ts.Fields {
-		if fd.FieldName == fieldName && fd.NotIndexed == true {
-			return true
-		}
-	}
-	return false
+	return flaarum_shared.IsNotIndexedFieldVersioned(projName, tableName, fieldName, version)
 }

@@ -277,3 +277,14 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 
   return nil
 }
+
+func IsNotIndexedFieldVersioned(projName, tableName, fieldName, version string) bool {
+	versionInt, _ := strconv.Atoi(version)
+	ts, _ := GetTableStructureParsed(projName, tableName, versionInt)
+	for _, fd := range ts.Fields {
+		if fd.FieldName == fieldName && fd.NotIndexed == true {
+			return true
+		}
+	}
+	return false
+}
