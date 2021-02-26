@@ -1,0 +1,3 @@
+# astest
+
+Autoscaling Tests.

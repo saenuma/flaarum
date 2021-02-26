@@ -215,7 +215,7 @@ Available Commands:
 		    	panic(err)
 		    }
 
-				toMakePath := filepath.Join(dataPath, projName, tblFI.Name(), "txtinstrs")
+				toMakePath = filepath.Join(dataPath, projName, tblFI.Name(), "txtinstrs")
 				err = os.MkdirAll(toMakePath, 0777)
 				if err != nil {
 					panic(err)
