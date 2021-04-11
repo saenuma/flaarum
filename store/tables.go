@@ -47,13 +47,7 @@ func validateTableStruct(projName string, tableStruct flaarum_shared.TableStruct
     }
   }
 
-  for _, ug := range td.UniqueGroups {
-    for _, fn := range ug {
-      if fTypeMap[fn] == "text" {
-        return errors.New(fmt.Sprintf("The field '%s' is of type 'text' and cannot be in a unique group.", fn))
-      }
-    }
-  }
+
   return nil
 
 }
@@ -78,14 +72,6 @@ func formatTableStruct(tableStruct flaarum_shared.TableStruct) string {
 		stmt += "foreign_keys:\n"
 		for _, fks := range tableStruct.ForeignKeys {
 			stmt += "\t" + fks.FieldName + " " + fks.PointedTable + " " + fks.OnDelete + "\n"
-		}
-		stmt += "::\n"
-	}
-
-	if len(tableStruct.UniqueGroups) > 0 {
-		stmt += "unique_groups:\n"
-		for _, ug := range tableStruct.UniqueGroups {
-			stmt += "\t" + strings.Join(ug, " ") + "\n"
 		}
 		stmt += "::\n"
 	}
@@ -188,7 +174,7 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		printError(w, err)
 		return
-	}	
+	}
 
 	if tableStructOld.TableType != tableStruct.TableType {
 		printError(w, errors.New("An existing table's table type cannot be changed."))
@@ -202,7 +188,7 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			printError(w, errors.Wrap(err, "ioutil error."))
 			return
-		}		
+		}
 	}
 
 	fmt.Fprintf(w, "ok")
@@ -269,12 +255,12 @@ func getTableStructureHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	projName := vars["proj"]
 	tableName := vars["tbl"]
-	versionNum := vars["vnum"]	
+	versionNum := vars["vnum"]
 
 	dataPath, _ := GetDataPath()
 
 	projsMutex.Lock()
-	defer projsMutex.Unlock()	
+	defer projsMutex.Unlock()
 
 	tablePath := filepath.Join(dataPath, projName, tableName)
 	stmt, err := ioutil.ReadFile(filepath.Join(tablePath, "structures", versionNum))

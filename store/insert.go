@@ -134,50 +134,6 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
     }
   }
 
-  for _, ug := range tableStruct.UniqueGroups {
-    wherePartFragment := ""
-
-    for i, fieldName := range ug {
-
-      newValue, ok1 := dataMap[fieldName]
-      var value string
-      if ok1 {
-        value = newValue
-      }
-      if oldValues != nil {
-        oldValue, ok2 := oldValues[fieldName]
-        if ok2 && newValue == oldValue {
-          continue
-        }
-      }
-      var joiner string
-      if i >= 1 {
-      	joiner = "and"
-      }
-
-      wherePartFragment += fmt.Sprintf("%s %s = '%s' \n", joiner, fieldName, value)
-    }
-
-    if len(ug) > 1 {
-      innerStmt := fmt.Sprintf(`
-      	table: %s
-      	where:
-      		%s
-      	`, tableName, wherePartFragment)
-      toCheckRows, err := innerSearch(projName, innerStmt)
-      if err != nil {
-        return nil, err
-      }
-
-      if len(*toCheckRows) > 0 {
-        return nil, errors.New(
-          fmt.Sprintf("The fields '%s' form a unique group and their data taken together is not unique.",
-          strings.Join(ug, ", ")))
-      }
-    }
-
-  }
-
   return dataMap, nil
 }
 

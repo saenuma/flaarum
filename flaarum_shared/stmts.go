@@ -145,29 +145,6 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 		ts.ForeignKeys = fkeyStructs
 	}
 
-	uniqueGroupPartBegin := strings.Index(stmt, "unique_groups:")
-	if uniqueGroupPartBegin != -1 {
-		uniqueGroupPartBegin += len("unique_groups:")
-		uniqueGroupPartEnd := strings.Index(stmt[uniqueGroupPartBegin: ], "::")
-		if uniqueGroupPartEnd == -1 {
-			return ts, errors.New("Bad Statement: a 'unique_groups:' section must end with a '::'.")
-		}
-		uniqueGroupPart := stmt[uniqueGroupPartBegin: uniqueGroupPartBegin + uniqueGroupPartEnd]
-		uniqueGroups := make([][]string, 0)
-		for _, part := range strings.Split(uniqueGroupPart, "\n") {
-			part = strings.TrimSpace(part)
-			if part == "" {
-				continue
-			}
-			parts := strings.Fields(part)
-			if len(parts) == 1 {
-				return ts, errors.New("Bad Statement: a unique group definition must be two or more words.")
-			}
-			uniqueGroups = append(uniqueGroups, parts)
-		}
-		ts.UniqueGroups = uniqueGroups
-	}
-
 	return ts, nil
 }
 
