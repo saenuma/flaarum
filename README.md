@@ -33,7 +33,7 @@ A database that enforces structures and features its own query language.
 
 ## Documentation
 
-The tutorial pages is located at [pandolee.com](https://pandolee.com/flaarumtuts/intro).
+The tutorial pages is located at [saenuma.com](https://saenuma.com/flaarumtuts/intro).
 
 API documentation can be found on [godoc](https://godoc.org/github.com/bankole7782/flaarum)
 
@@ -55,7 +55,7 @@ API documentation can be found on [godoc](https://godoc.org/github.com/bankole77
 
 2.	Create a service account and store the downloaded json in your flaarum folder (gotten from `flaarum.cli pwd`)
 
-3.	If you have a project that you've not launched an instance in before. Enable compute api with this command 
+3.	If you have a project that you've not launched an instance in before. Enable compute api with this command
 		`gcloud services enable compute.googleapis.com --project {project}`.Remember to replace the project with you project name.
 
 4.	Launch the service with `flaarum.lgcp lb launchfile serviceaccountfile`
@@ -71,9 +71,9 @@ API documentation can be found on [godoc](https://godoc.org/github.com/bankole77
 
 2.	Create a service account and store the downloaded json in your flaarum folder (gotten from `flaarum.cli pwd`)
 
-3.	If you have a project that you've not launched an instance in before. Enable compute api with this command 
+3.	If you have a project that you've not launched an instance in before. Enable compute api with this command
 		`gcloud services enable compute.googleapis.com --project {project}`.Remember to replace the project with you project name.
-		
+
 4.	Launch the service with `flaarum.lgcp las launchfile serviceaccountfile`
     where launchfile is the name of the file created in step 1 excluding the path and serviceaccountfile is the json in step 2
     excluding the path.
@@ -83,7 +83,7 @@ API documentation can be found on [godoc](https://godoc.org/github.com/bankole77
 
 ## CLI
 
-You can use the cli `flaarum.cli` to administer the database from the terminal. 
+You can use the cli `flaarum.cli` to administer the database from the terminal.
 
 Run it with help `flaarum.cli help` to view available options.
 
