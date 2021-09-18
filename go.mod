@@ -1,6 +1,6 @@
 module github.com/bankole7782/flaarum
 
-go 1.14
+go 1.16
 
 require (
 	cloud.google.com/go v0.76.0 // indirect
@@ -14,7 +14,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/kljensen/snowball v0.6.0
 	github.com/mcnijman/go-emailaddress v1.1.0
-	github.com/microcosm-cc/bluemonday v1.0.4
+	github.com/microcosm-cc/bluemonday v1.0.15
 	github.com/otiai10/copy v1.4.2
 	github.com/pkg/errors v0.9.1
 	github.com/radovskyb/watcher v1.0.7
