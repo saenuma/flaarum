@@ -8,7 +8,7 @@ import (
   "github.com/bankole7782/flaarum/flaarum_shared"
   "github.com/pkg/errors"
   "path/filepath"
-  "io/ioutil"
+  "os"
 )
 
 
@@ -48,7 +48,7 @@ func allRowsCount(w http.ResponseWriter, r *http.Request) {
   tablesMutexes[fullTableName].RLock()
   defer tablesMutexes[fullTableName].RUnlock()
 
-  dataFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+  dataFIs, err := os.ReadDir(filepath.Join(tablePath, "data"))
   if err != nil {
     printError(w, errors.Wrap(err, "ioutil error."))
     return

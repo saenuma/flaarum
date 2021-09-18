@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"crypto/tls"
 	"github.com/pkg/errors"
-	"io/ioutil"
+	"io"
 	"github.com/bankole7782/flaarum/flaarum_shared"
 	"time"
 	"net/url"
@@ -41,7 +41,7 @@ func (cl *Client) Ping() error {
 		return errors.Wrap(err, "http error")
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 
 	if resp.StatusCode == 200 {
 		if string(body) == "yeah-flaarum" {

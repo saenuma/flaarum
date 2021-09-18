@@ -3,7 +3,6 @@ package main
 
 import (
   "github.com/bankole7782/flaarum/flaarum_shared"
-  "io/ioutil"
   "fmt"
   "os"
   "github.com/gookit/color"
@@ -39,7 +38,7 @@ Supported Commands:
 
   case "r":
     keyPath := flaarum_shared.GetKeyStrPath()
-    raw, err := ioutil.ReadFile(keyPath)
+    raw, err := os.ReadFile(keyPath)
     if err != nil {
       color.Red.Printf("Error reading key string path.\nError:%s\n", err)
       os.Exit(1)
@@ -50,7 +49,7 @@ Supported Commands:
     keyPath := flaarum_shared.GetKeyStrPath()
     randomString := flaarum_shared.UntestedRandomString(50)
 
-    err := ioutil.WriteFile(keyPath, []byte(randomString), 0777)
+    err := os.WriteFile(keyPath, []byte(randomString), 0777)
     if err != nil {
       color.Red.Printf("Error creating key string path.\nError:%s\n", err)
       os.Exit(1)
@@ -67,7 +66,7 @@ Supported Commands:
     if ! doesPathExists(keyPath) {
       randomString := flaarum_shared.UntestedRandomString(50)
 
-      err := ioutil.WriteFile(keyPath, []byte(randomString), 0777)
+      err := os.WriteFile(keyPath, []byte(randomString), 0777)
       if err != nil {
         color.Red.Printf("Error creating key string path.\nError:%s\n", err)
         os.Exit(1)

@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"fmt"
 	"encoding/json"
-	"io/ioutil"
 )
 
 
@@ -100,7 +99,7 @@ func listProjects(w http.ResponseWriter, r *http.Request) {
 	projsMutex.RLock()
 	defer projsMutex.RUnlock()	
 
-	fis, err := ioutil.ReadDir(dataPath)
+	fis, err := os.ReadDir(dataPath)
 	if err != nil {
 		printError(w, errors.Wrap(err, "ioutil error"))
 		return

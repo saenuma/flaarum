@@ -10,7 +10,7 @@ import (
 	"context"
 	"golang.org/x/oauth2/google"
   compute "google.golang.org/api/compute/v1"
-  "io/ioutil"
+  "io"
   "strings"
   "net/http"
 	"crypto/tls"
@@ -108,7 +108,7 @@ func resizeMachineType() {
 		panic(errors.Wrap(err, "http error"))
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		panic(errors.Wrap(err, "ioutil error"))
 	}

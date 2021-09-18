@@ -8,7 +8,6 @@ import (
   "os"
   "fmt"
   "github.com/bankole7782/flaarum/flaarum_shared"
-  "io/ioutil"
   "strings"
   "github.com/adam-hanna/arrayOperations"
   "time"
@@ -144,7 +143,7 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
       } else if isFieldOfTypeText(projName, tableName, f) {
         if ts.TableType != "logs" {
           newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + f + ".rtext"
-          err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName),
+          err := os.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName),
             []byte("ok"), 0777)
           if err != nil {
             return err
@@ -211,7 +210,7 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
   indexFileName := makeSafeIndexName(data)
   indexesPath := filepath.Join(getTablePath(projName, tableName), "indexes", fieldName, indexFileName)
   if doesPathExists(indexesPath) {
-    raw, err := ioutil.ReadFile(indexesPath)
+    raw, err := os.ReadFile(indexesPath)
     if err != nil {
       return errors.Wrap(err, "read file failed.")
     }
@@ -223,7 +222,7 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
         return errors.Wrap(err, "file delete failed.")
       }
     } else {
-      err = ioutil.WriteFile(indexesPath, []byte(strings.Join(toWriteIds, "\n")), 0777)
+      err = os.WriteFile(indexesPath, []byte(strings.Join(toWriteIds, "\n")), 0777)
       if err != nil {
         return errors.Wrap(err, "file write failed.")
       }
@@ -231,7 +230,7 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
   }
 
   indexesFieldsPath := filepath.Join(getTablePath(projName, tableName), "indexes", fieldName)
-  fileFIs, err := ioutil.ReadDir(indexesFieldsPath)
+  fileFIs, err := os.ReadDir(indexesFieldsPath)
   if err == nil && len(fileFIs) == 0 {
     err = os.Remove(indexesFieldsPath)
     if err != nil {
@@ -277,7 +276,7 @@ func innerDeleteField(projName, tableName, fieldName string, rows *[]map[string]
       } else {
         if ts.TableType != "logs" {
           newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + f + ".rtext"
-          err := ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName),
+          err := os.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName),
             []byte("ok"), 0777)
           if err != nil {
             return err

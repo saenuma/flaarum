@@ -2,7 +2,7 @@ package flaarum
 
 import (
 	"github.com/pkg/errors"
-	"io/ioutil"
+	"io"
 	"encoding/json"
 	"net/url"
 )
@@ -17,7 +17,7 @@ func (cl *Client) CreateProject(projName string) error {
 		return errors.Wrap(err, "http error")
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return errors.Wrap(err, "ioutil error)")
 	}
@@ -39,7 +39,7 @@ func (cl *Client) DeleteProject(projName string) error {
 		return errors.Wrap(err, "http error")
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return errors.Wrap(err, "ioutil error)")
 	}
@@ -61,7 +61,7 @@ func (cl *Client) ListProjects() ([]string, error) {
 		return []string{}, errors.Wrap(err, "http error")
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return []string{}, errors.Wrap(err, "ioutil error)")
 	}
@@ -89,7 +89,7 @@ func (cl *Client) RenameProject(projName, newProjName string) error {
     return errors.Wrap(err, "error contacting site")
   }
   defer resp.Body.Close()
-  body, err :=  ioutil.ReadAll(resp.Body)
+  body, err :=  io.ReadAll(resp.Body)
   if err != nil {
     return errors.Wrap(err, "ioutil error")
   }

@@ -4,7 +4,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"io/ioutil"
+	"io"
 	"time"
 	"path/filepath"
 	"compress/gzip"
@@ -17,6 +17,7 @@ import (
 	"strings"
 	"strconv"
 	"github.com/pkg/errors"
+	"io/fs"
 )
 
 
@@ -66,7 +67,7 @@ Available Commands:
 
 		projPath := filepath.Join(dataPath, projName)
 
-		tblFIs, err := ioutil.ReadDir(projPath)
+		tblFIs, err := os.ReadDir(projPath)
 		for _, tblFI := range tblFIs {
 
 			if projName == "first_proj" && tblFI.Name() == "server_stats" {
@@ -108,7 +109,7 @@ Available Commands:
 		zw.Comment = "backup output from flaarum"
 		zw.ModTime = time.Now()
 
-		mofBytes, err := ioutil.ReadFile(filepath.Join(tmpFolder, "out.mof"))
+		mofBytes, err := os.ReadFile(filepath.Join(tmpFolder, "out.mof"))
 		if err != nil {
 			panic(err)
 		}
@@ -172,12 +173,12 @@ Available Commands:
 			panic(err)
 		}
 
-		mofBytes, err := ioutil.ReadAll(zr)
+		mofBytes, err := io.ReadAll(zr)
 		if err != nil {
 			panic(err)
 		}
 
-		err = ioutil.WriteFile(filepath.Join(tmpFolder, "out.mof"), mofBytes, 0777)
+		err = os.WriteFile(filepath.Join(tmpFolder, "out.mof"), mofBytes, 0777)
 		if err != nil {
 			panic(err)
 		}
@@ -187,7 +188,7 @@ Available Commands:
 			panic(err)
 		}
 
-		tblFIs, err := ioutil.ReadDir(filepath.Join(tmpFolder, "out"))
+		tblFIs, err := os.ReadDir(filepath.Join(tmpFolder, "out"))
 		if err != nil {
 			panic(err)
 		}
@@ -196,7 +197,7 @@ Available Commands:
 		for _, tblFI := range tblFIs {
 			wg.Add(1)
 
-			go func(tblFI os.FileInfo, wg *sync.WaitGroup) {
+			go func(tblFI fs.DirEntry, wg *sync.WaitGroup) {
 				defer wg.Done()
 
 				err = copy.Copy(filepath.Join(tmpFolder, "out", tblFI.Name(), "structures"), filepath.Join(dataPath, projName, tblFI.Name(), "structures"))
@@ -221,7 +222,7 @@ Available Commands:
 					panic(err)
 				}
 
-		    rowFIs, err := ioutil.ReadDir(filepath.Join(dataPath, projName, tblFI.Name(), "data"))
+		    rowFIs, err := os.ReadDir(filepath.Join(dataPath, projName, tblFI.Name(), "data"))
 		    if err != nil {
 		    	panic(err)
 		    }
@@ -233,7 +234,7 @@ Available Commands:
 
 		    for _, rowFI := range rowFIs {
 					rowMap := make(map[string]string)
-					rowBytes, err := ioutil.ReadFile(filepath.Join(dataPath, projName, tblFI.Name(), "data", rowFI.Name()))
+					rowBytes, err := os.ReadFile(filepath.Join(dataPath, projName, tblFI.Name(), "data", rowFI.Name()))
 					if err != nil {
 						panic(err)
 					}
@@ -253,7 +254,7 @@ Available Commands:
 
 					    	// create a .text file which is a message to the tindexer program.
 				        newTextFileName := rowFI.Name() + flaarum_shared.TEXT_INTR_DELIM + k + ".text"
-				        err = ioutil.WriteFile(filepath.Join(dataPath, projName, tblFI.Name(), "txtinstrs", newTextFileName), []byte(v), 0777)
+				        err = os.WriteFile(filepath.Join(dataPath, projName, tblFI.Name(), "txtinstrs", newTextFileName), []byte(v), 0777)
 				        if err != nil {
 				          fmt.Printf("%+v\n", errors.Wrap(err, "ioutil error."))
 				        }

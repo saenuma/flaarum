@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"github.com/adam-hanna/arrayOperations"
 	"sort"
@@ -69,7 +68,7 @@ func findIdsContainingTrueWhereValues(projName, tableName, field string, trueWhe
     if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
 
     } else {
-      raw, err := ioutil.ReadFile(indexesPath)
+      raw, err := os.ReadFile(indexesPath)
       if err != nil {
         return nil, errors.Wrap(err, "read file failed.")
       }
@@ -116,7 +115,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
   textWeights := make(map[string]int64)
 
 	if len(stmtStruct.WhereOptions) == 0 {
-		dataFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+		dataFIs, err := os.ReadDir(filepath.Join(tablePath, "data"))
 		if err != nil {
 			return nil, errors.Wrap(err, "ioutil error.")
 		}
@@ -188,7 +187,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
             // do nothing
           } else {
-            raw, err := ioutil.ReadFile(indexesPath)
+            raw, err := os.ReadFile(indexesPath)
             if err != nil {
               return nil, errors.Wrap(err, "read file failed.")
             }
@@ -207,7 +206,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
             beforeFilter = append(beforeFilter, make([]string, 0))
           } else {
-            raw, err := ioutil.ReadFile(indexesPath)
+            raw, err := os.ReadFile(indexesPath)
             if err != nil {
               return nil, errors.Wrap(err, "read file failed.")
             }
@@ -217,7 +216,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
       } else if whereStruct.Relation == "!=" {
         if whereStruct.FieldName == "id" {
-          rows, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+          rows, err := os.ReadDir(filepath.Join(tablePath, "data"))
           if err != nil {
             return nil, errors.Wrap(err, "read file failed.")
           }
@@ -238,13 +237,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             continue
           }
 
-          allIndexes, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
+          allIndexes, err := os.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
           for _, indexFI := range allIndexes {
             if indexFI.Name() != indexFileName {
-              raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFI.Name()))
+              raw, err := os.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFI.Name()))
               if err != nil {
                 return nil, errors.Wrap(err, "read file failed.")
               }
@@ -260,14 +259,14 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
         } else {
           indexFileName := makeSafeIndexName(whereStruct.FieldValue)
-          allIndexes, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
+          allIndexes, err := os.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
           stringIds := make([]string, 0)
           for _, indPath := range allIndexes {
             if indPath.Name() != indexFileName {
-              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indPath.Name()))
+              raw, err := os.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indPath.Name()))
               if err != nil {
                 return nil, errors.Wrap(err, "read file failed.")
               }
@@ -281,7 +280,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
         if whereStruct.FieldName == "id" {
           stringIds := make([]string, 0)
-          rowFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+          rowFIs, err := os.ReadDir(filepath.Join(tablePath, "data"))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
@@ -320,7 +319,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             continue
           }
 
-          indexFIs, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
+          indexFIs, err := os.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
@@ -328,14 +327,14 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           indexFileName = makeSafeIndexName(whereStruct.FieldValue)
 
           for _, indexFI := range indexFIs {
-            raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", whereStruct.FieldName, indexFI.Name()))
+            raw, err := os.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", whereStruct.FieldName, indexFI.Name()))
             if err != nil {
               return nil, errors.Wrap(err, "read failed.")
             }
             idsInIndex := strings.Split(string(raw), "\n")
             for _, idInIndex := range idsInIndex {
               rowMap := make(map[string]string)
-              raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "data", idInIndex))
+              raw, err := os.ReadFile(filepath.Join(getTablePath(projName, pTbl), "data", idInIndex))
               if err != nil {
                 continue
               }
@@ -400,21 +399,21 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
         } else {
           stringIds := make([]string, 0)
 
-          indexFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
+          indexFIs, err := os.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
           indexFileName := makeSafeIndexName(whereStruct.FieldValue)
 
           for _, indexFI := range indexFIs {
-            raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
+            raw, err := os.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
             if err != nil {
               return nil, errors.Wrap(err, "read failed.")
             }
             idsInIndex := strings.Split(string(raw), "\n")
             for _, idInIndex := range idsInIndex {
               rowMap := make(map[string]string)
-              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "data", idInIndex))
+              raw, err := os.ReadFile(filepath.Join(tablePath, "data", idInIndex))
               if err != nil {
                 continue
               }
@@ -477,7 +476,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
         if whereStruct.FieldName == "id" {
           stringIds := make([]string, 0)
-          rowFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+          rowFIs, err := os.ReadDir(filepath.Join(tablePath, "data"))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
@@ -516,7 +515,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             continue
           }
 
-          indexFIs, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
+          indexFIs, err := os.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
@@ -524,14 +523,14 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           indexFileName = makeSafeIndexName(whereStruct.FieldValue)
 
           for _, indexFI := range indexFIs {
-            raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", whereStruct.FieldName, indexFI.Name()))
+            raw, err := os.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", whereStruct.FieldName, indexFI.Name()))
             if err != nil {
               return nil, errors.Wrap(err, "read failed.")
             }
             idsInIndex := strings.Split(string(raw), "\n")
             for _, idInIndex := range idsInIndex {
               rowMap := make(map[string]string)
-              raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "data", idInIndex))
+              raw, err := os.ReadFile(filepath.Join(getTablePath(projName, pTbl), "data", idInIndex))
               if err != nil {
                 continue
               }
@@ -595,21 +594,21 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
         } else {
           stringIds := make([]string, 0)
 
-          indexFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
+          indexFIs, err := os.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
           indexFileName := makeSafeIndexName(whereStruct.FieldValue)
 
           for _, indexFI := range indexFIs {
-            raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
+            raw, err := os.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
             if err != nil {
               return nil, errors.Wrap(err, "read failed.")
             }
             idsInIndex := strings.Split(string(raw), "\n")
             for _, idInIndex := range idsInIndex {
               rowMap := make(map[string]string)
-              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "data", idInIndex))
+              raw, err := os.ReadFile(filepath.Join(tablePath, "data", idInIndex))
               if err != nil {
                 continue
               }
@@ -689,7 +688,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
               // do nothing
             } else {
-              raw, err := ioutil.ReadFile(indexesPath)
+              raw, err := os.ReadFile(indexesPath)
               if err != nil {
                 return nil, errors.Wrap(err, "read file failed.")
               }
@@ -710,7 +709,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
               // do nothing
             } else {
-              raw, err := ioutil.ReadFile(indexesPath)
+              raw, err := os.ReadFile(indexesPath)
               if err != nil {
                 return nil, errors.Wrap(err, "read file failed.")
               }
@@ -725,7 +724,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
       } else if whereStruct.Relation == "nin" {
 
         if whereStruct.FieldName == "id" {
-          rows, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+          rows, err := os.ReadDir(filepath.Join(tablePath, "data"))
           if err != nil {
             return nil, errors.Wrap(err, "read file failed.")
           }
@@ -758,7 +757,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           }
 
           gottenIndexes := make([]string, 0)
-          allIndexesFIs, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
+          allIndexesFIs, err := os.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
           if err != nil {
             return nil, errors.Wrap(err, "ioutil error.")
           }
@@ -769,7 +768,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           }
 
           for _, indexedValue := range gottenIndexes {
-            raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexedValue))
+            raw, err := os.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexedValue))
             if err != nil {
               return nil, errors.Wrap(err, "ioutil error.")
             }
@@ -792,7 +791,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           }
 
           gottenIndexes := make([]string, 0)
-          allIndexesFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
+          allIndexesFIs, err := os.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
           if err != nil {
             return nil, errors.Wrap(err, "ioutil error.")
           }
@@ -803,7 +802,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           }
 
           for _, indexedValue := range gottenIndexes {
-            raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexedValue))
+            raw, err := os.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexedValue))
             if err != nil {
               return nil, errors.Wrap(err, "ioutil error.")
             }
@@ -826,7 +825,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           }
 
           allForeignIds := make([]string, 0)
-          allForeignRowFIs, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "data"))
+          allForeignRowFIs, err := os.ReadDir(filepath.Join(getTablePath(projName, pTbl), "data"))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
@@ -835,12 +834,12 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           }
 
           exemptedIds := make([]string, 0)
-          allIndexes, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
+          allIndexes, err := os.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
           for _, indexFI := range allIndexes {
-            raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFI.Name()))
+            raw, err := os.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFI.Name()))
             if err != nil {
               return nil, errors.Wrap(err, "read file failed.")
             }
@@ -856,7 +855,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           beforeFilter = append(beforeFilter, stringIds)
 
         } else {
-          rowFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+          rowFIs, err := os.ReadDir(filepath.Join(tablePath, "data"))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
@@ -865,14 +864,14 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             allIds = append(allIds, rowFi.Name())
           }
 
-          allIndexes, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
+          allIndexes, err := os.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
 
           exemptedIds := make([]string, 0)
           for _, indexFI := range allIndexes {
-            raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
+            raw, err := os.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
             if err != nil {
               return nil, errors.Wrap(err, "read file failed.")
             }
@@ -888,7 +887,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
         stringIds := make([]string, 0)
 
         if whereStruct.FieldName == "id" {
-          rowFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "data"))
+          rowFIs, err := os.ReadDir(filepath.Join(tablePath, "data"))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
@@ -903,12 +902,12 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             continue
           }
 
-          allIndexes, err := ioutil.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
+          allIndexes, err := os.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
           if err != nil {
             return nil, errors.Wrap(err, "read file failed.")
           }
           for _, indexFI := range allIndexes {
-            raw, err := ioutil.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFI.Name()))
+            raw, err := os.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFI.Name()))
             if err != nil {
               return nil, errors.Wrap(err, "read file failed.")
             }
@@ -923,13 +922,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 
         } else {
-          allIndexes, err := ioutil.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
+          allIndexes, err := os.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
           if err != nil {
             return nil, errors.Wrap(err, "read dir failed.")
           }
 
           for _, indexFI := range allIndexes {
-            raw, err := ioutil.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
+            raw, err := os.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
             if err != nil {
               return nil, errors.Wrap(err, "read file failed.")
             }
@@ -968,7 +967,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               continue
             }
 
-            dirFIs, err := ioutil.ReadDir(filepath.Join(otherTablePath, "tindexes", otherFieldName, word))
+            dirFIs, err := os.ReadDir(filepath.Join(otherTablePath, "tindexes", otherFieldName, word))
             if err != nil {
               tmpIds = make([]string, 0) // reset the compulsoryIds if one word fails.
               aCompulsoryWordNotFound = true
@@ -976,7 +975,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             }
 
             for _, dirFI := range dirFIs {
-              raw, err := ioutil.ReadFile(filepath.Join(otherTablePath, "tindexes", otherFieldName, word, dirFI.Name()))
+              raw, err := os.ReadFile(filepath.Join(otherTablePath, "tindexes", otherFieldName, word, dirFI.Name()))
               if err != nil {
                 aCompulsoryWordNotFound = true
                 break
@@ -1011,13 +1010,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if flaarum_shared.FindIn(STOP_WORDS, word) != -1 {
               continue
             }
-            dirFIs, err := ioutil.ReadDir(filepath.Join(otherTablePath, "tindexes", otherFieldName, word))
+            dirFIs, err := os.ReadDir(filepath.Join(otherTablePath, "tindexes", otherFieldName, word))
             if err != nil {
               continue
             }
 
             for _, dirFI := range dirFIs {
-              raw, err := ioutil.ReadFile(filepath.Join(otherTablePath, "tindexes", otherFieldName, word, dirFI.Name()))
+              raw, err := os.ReadFile(filepath.Join(otherTablePath, "tindexes", otherFieldName, word, dirFI.Name()))
               if err != nil {
                 return nil, errors.Wrap(err, "ioutil error.")
               }
@@ -1048,13 +1047,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if flaarum_shared.FindIn(STOP_WORDS, word) != -1 {
               continue
             }
-            dirFIs, err := ioutil.ReadDir(filepath.Join(otherTablePath, "tindexes", otherFieldName, word))
+            dirFIs, err := os.ReadDir(filepath.Join(otherTablePath, "tindexes", otherFieldName, word))
             if err != nil {
               continue
             }
 
             for _, dirFI := range dirFIs {
-              _, err := ioutil.ReadFile(filepath.Join(otherTablePath, "tindexes", otherFieldName, word, dirFI.Name()))
+              _, err := os.ReadFile(filepath.Join(otherTablePath, "tindexes", otherFieldName, word, dirFI.Name()))
               if err != nil {
                 return nil, errors.Wrap(err, "ioutil error.")
               }
@@ -1099,7 +1098,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               continue
             }
 
-            dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word))
+            dirFIs, err := os.ReadDir(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word))
             if err != nil {
               tmpIds = make([]string, 0) // reset the compulsoryIds if one word fails.
               aCompulsoryWordNotFound = true
@@ -1107,7 +1106,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             }
 
             for _, dirFI := range dirFIs {
-              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word, dirFI.Name()))
+              raw, err := os.ReadFile(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word, dirFI.Name()))
               if err != nil {
                 aCompulsoryWordNotFound = true
                 break
@@ -1142,13 +1141,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if flaarum_shared.FindIn(STOP_WORDS, word) != -1 {
               continue
             }
-            dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word))
+            dirFIs, err := os.ReadDir(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word))
             if err != nil {
               continue
             }
 
             for _, dirFI := range dirFIs {
-              raw, err := ioutil.ReadFile(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word, dirFI.Name()))
+              raw, err := os.ReadFile(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word, dirFI.Name()))
               if err != nil {
                 return nil, errors.Wrap(err, "ioutil error.")
               }
@@ -1179,13 +1178,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if flaarum_shared.FindIn(STOP_WORDS, word) != -1 {
               continue
             }
-            dirFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word))
+            dirFIs, err := os.ReadDir(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word))
             if err != nil {
               continue
             }
 
             for _, dirFI := range dirFIs {
-              _, err := ioutil.ReadFile(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word, dirFI.Name()))
+              _, err := os.ReadFile(filepath.Join(tablePath, "tindexes", whereStruct.FieldName, word, dirFI.Name()))
               if err != nil {
                 return nil, errors.Wrap(err, "ioutil error.")
               }
@@ -1275,7 +1274,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 	tmpRet := make([]map[string]string, 0)
   for _, retId := range retIds {
     rowMap := make(map[string]string)
-    raw, err := ioutil.ReadFile(filepath.Join(tablePath, "data", retId))
+    raw, err := os.ReadFile(filepath.Join(tablePath, "data", retId))
     if err != nil {
       continue
     }
@@ -1289,7 +1288,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
       pTbl, ok := expDetails[field]
       if ok {
         rowMap2 := make(map[string]string)
-        raw2, err := ioutil.ReadFile(filepath.Join(dataPath, projName, pTbl, "data", data))
+        raw2, err := os.ReadFile(filepath.Join(dataPath, projName, pTbl, "data", data))
         if err != nil {
           continue
         }

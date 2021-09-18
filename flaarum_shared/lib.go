@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
-	"io/ioutil"
 	"math/rand"
 	"time"
   "github.com/kljensen/snowball"
@@ -235,7 +234,7 @@ func CleanWord(word string) string {
 
 func GetTableStructureParsed(projName, tableName string, versionNum int) (TableStruct, error) {
   dataPath, _ := GetDataPath()
-  raw, err := ioutil.ReadFile(filepath.Join(dataPath, projName, tableName, "structures", strconv.Itoa(versionNum)))
+  raw, err := os.ReadFile(filepath.Join(dataPath, projName, tableName, "structures", strconv.Itoa(versionNum)))
   if err != nil {
     return TableStruct{}, errors.Wrap(err, "ioutil error")
   }
@@ -258,18 +257,18 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
   }
   indexPath := filepath.Join(indexFolder, MakeSafeIndexName(newData))
   if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-    err = ioutil.WriteFile(indexPath, []byte(rowId), 0777)
+    err = os.WriteFile(indexPath, []byte(rowId), 0777)
     if err != nil {
       return errors.Wrap(err, "file write failed.")
     }
   } else {
-    raw, err := ioutil.ReadFile(indexPath)
+    raw, err := os.ReadFile(indexPath)
     if err != nil {
       return errors.Wrap(err, "read failed.")
     }
     previousEntries := strings.Split(string(raw), "\n")
     newEntries := arrayOperations.UnionString(previousEntries, []string{rowId})
-    err = ioutil.WriteFile(indexPath, []byte(strings.Join(newEntries, "\n")), 0777)
+    err = os.WriteFile(indexPath, []byte(strings.Join(newEntries, "\n")), 0777)
     if err != nil {
       return errors.Wrap(err, "write failed.")
     }

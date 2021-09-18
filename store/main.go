@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"io/ioutil"
 	"github.com/bankole7782/flaarum/flaarum_shared"
   "github.com/bankole7782/zazabul"
   "encoding/json"
@@ -50,7 +49,7 @@ func init() {
 
   // load stop words once
   stopWordsJsonPath := flaarum_shared.G("english-stopwords.json")
-  jsonBytes, err := ioutil.ReadFile(stopWordsJsonPath)
+  jsonBytes, err := os.ReadFile(stopWordsJsonPath)
   if err != nil {
     panic(err)
   }
@@ -122,7 +121,7 @@ func keyEnforcementMiddleware(next http.Handler) http.Handler {
       } else if inProd == "true" {
         keyStr := r.FormValue("key-str")
         keyPath := flaarum_shared.GetKeyStrPath()
-        raw, err := ioutil.ReadFile(keyPath)
+        raw, err := os.ReadFile(keyPath)
         if err != nil {
           http.Error(w, "Improperly Configured Server", http.StatusInternalServerError)
         }

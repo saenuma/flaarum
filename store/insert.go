@@ -7,15 +7,14 @@ import (
 	"strconv"
 	"encoding/json"
 	"path/filepath"
-	"io/ioutil"
 	"fmt"
-	// "os"
 	"strings"
 	"time"
 	"github.com/bankole7782/flaarum/flaarum_shared"
   "github.com/mcnijman/go-emailaddress"
   "net"
   "net/url"
+  "os"
 )
 
 
@@ -194,7 +193,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
     if ! doesPathExists(filepath.Join(tablePath, "lastId")) {
       nextId = 1
     } else {
-      raw, err := ioutil.ReadFile(filepath.Join(tablePath, "lastId"))
+      raw, err := os.ReadFile(filepath.Join(tablePath, "lastId"))
       if err != nil {
         printError(w, errors.Wrap(err, "ioutil error"))
         return
@@ -221,7 +220,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
       if isFieldOfTypeText(projName, tableName, k) {
         // create a .text file which is a message to the tindexer program.
         newTextFileName := nextIdStr + flaarum_shared.TEXT_INTR_DELIM + k + ".text"
-        err = ioutil.WriteFile(filepath.Join(tablePath, "txtinstrs", newTextFileName), []byte(v), 0777)
+        err = os.WriteFile(filepath.Join(tablePath, "txtinstrs", newTextFileName), []byte(v), 0777)
         if err != nil {
           printError(w, errors.Wrap(err, "ioutil error"))
           return
@@ -240,7 +239,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
 
     // store last id
-    err = ioutil.WriteFile(filepath.Join(tablePath, "lastId"), []byte(nextIdStr), 0777)
+    err = os.WriteFile(filepath.Join(tablePath, "lastId"), []byte(nextIdStr), 0777)
     if err != nil {
       printError(w, errors.Wrap(err, "ioutil error"))
       return
@@ -288,7 +287,7 @@ func saveRowData(projName, tableName, rowId string, toWrite map[string]string) e
   if err != nil {
     return errors.Wrap(err, "json error")
   }
-  err = ioutil.WriteFile(filepath.Join(tablePath, "data", rowId), jsonBytes, 0777)
+  err = os.WriteFile(filepath.Join(tablePath, "data", rowId), jsonBytes, 0777)
   if err != nil {
     return errors.Wrap(err, "write file failed.")
   }

@@ -1,7 +1,7 @@
 package flaarum
 
 import (
-	"io/ioutil"
+	"io"
 	"github.com/pkg/errors"
 	"net/url"
 	"fmt"
@@ -21,7 +21,7 @@ func (cl *Client) CreateTable(stmt string) error {
 		return errors.Wrap(err, "http error")
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return errors.Wrap(err, "ioutil error)")
 	}
@@ -44,7 +44,7 @@ func (cl *Client) UpdateTableStructure(stmt string) error {
 		return errors.Wrap(err, "http error")
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return errors.Wrap(err, "ioutil error)")
 	}
@@ -66,7 +66,7 @@ func (cl *Client) GetCurrentTableVersionNum(tableName string) (int64, error) {
 		return -1, errors.Wrap(err, "http error")
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return -1, errors.Wrap(err, "ioutil error")
 	}
@@ -93,7 +93,7 @@ func (cl *Client) GetTableStructure(tableName string, versionNum int64) (string,
 		return "", errors.Wrap(err, "http error")
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", errors.Wrap(err, "ioutil error")
 	}
@@ -138,7 +138,7 @@ func (cl *Client) EmptyTable(tableName string) error {
     return errors.Wrap(err, "error contacting site")
   }
   defer resp.Body.Close()
-  body, err :=  ioutil.ReadAll(resp.Body)
+  body, err :=  io.ReadAll(resp.Body)
   if err != nil {
     return errors.Wrap(err, "ioutil error")
   }
@@ -160,7 +160,7 @@ func (cl Client) ListTables() ([]string, error) {
     return nil, errors.Wrap(err, "error contacting site")
   }
   defer resp.Body.Close()
-  body, err :=  ioutil.ReadAll(resp.Body)
+  body, err :=  io.ReadAll(resp.Body)
   if err != nil {
     return nil, errors.Wrap(err, "ioutil error")
   }
@@ -189,7 +189,7 @@ func (cl *Client) RenameTable(tableName, newTableName string) error {
     return errors.Wrap(err, "error contacting site")
   }
   defer resp.Body.Close()
-  body, err :=  ioutil.ReadAll(resp.Body)
+  body, err :=  io.ReadAll(resp.Body)
   if err != nil {
     return errors.Wrap(err, "ioutil error")
   }
@@ -211,7 +211,7 @@ func (cl *Client) DeleteTable(tableName string) error {
     return errors.Wrap(err, "error contacting site")
   }
   defer resp.Body.Close()
-  body, err :=  ioutil.ReadAll(resp.Body)
+  body, err :=  io.ReadAll(resp.Body)
   if err != nil {
     return errors.Wrap(err, "ioutil error")
   }

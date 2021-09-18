@@ -5,7 +5,6 @@ import (
 	"github.com/bankole7782/flaarum/flaarum_shared"
 	"fmt"
 	"github.com/pkg/errors"
-	"io/ioutil"
 	"path/filepath"
 	"github.com/gorilla/mux"
 	"strings"
@@ -118,7 +117,7 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 	}
 
 	formattedStmt := formatTableStruct(tableStruct)
-	err = ioutil.WriteFile(filepath.Join(dataPath, projName, tableStruct.TableName, "structures", "1"),
+	err = os.WriteFile(filepath.Join(dataPath, projName, tableStruct.TableName, "structures", "1"),
 		[]byte(formattedStmt), 0777)
 	if err != nil {
 		printError(w, errors.Wrap(err, "ioutil error."))
@@ -164,7 +163,7 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	oldFormattedStmt, err := ioutil.ReadFile(filepath.Join(tablePath, "structures", strconv.Itoa(currentVersionNum)))
+	oldFormattedStmt, err := os.ReadFile(filepath.Join(tablePath, "structures", strconv.Itoa(currentVersionNum)))
 	if err != nil {
 		printError(w, errors.Wrap(err, "ioutil error"))
 		return
@@ -184,7 +183,7 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 	formattedStmt := formatTableStruct(tableStruct)
 	if formattedStmt != string(oldFormattedStmt) {
 		nextVersionNumber := currentVersionNum + 1
-		err = ioutil.WriteFile(filepath.Join(tablePath, "structures", strconv.Itoa(nextVersionNumber)), []byte(formattedStmt), 0777)
+		err = os.WriteFile(filepath.Join(tablePath, "structures", strconv.Itoa(nextVersionNumber)), []byte(formattedStmt), 0777)
 		if err != nil {
 			printError(w, errors.Wrap(err, "ioutil error."))
 			return
@@ -199,7 +198,7 @@ func getCurrentVersionNum(projName, tableName string) (int, error) {
 	dataPath, _ := GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 
-	tableStructsFIs, err := ioutil.ReadDir(filepath.Join(tablePath, "structures"))
+	tableStructsFIs, err := os.ReadDir(filepath.Join(tablePath, "structures"))
 	if err != nil {
 		return -1, errors.Wrap(err, "ioutil error")
 	}
@@ -263,7 +262,7 @@ func getTableStructureHTTP(w http.ResponseWriter, r *http.Request) {
 	defer projsMutex.Unlock()
 
 	tablePath := filepath.Join(dataPath, projName, tableName)
-	stmt, err := ioutil.ReadFile(filepath.Join(tablePath, "structures", versionNum))
+	stmt, err := os.ReadFile(filepath.Join(tablePath, "structures", versionNum))
 	if err != nil {
 		printError(w, errors.Wrap(err, "ioutil error"))
 		return
@@ -277,7 +276,7 @@ func getExistingTables(projName string) ([]string, error) {
   dataPath, _ := GetDataPath()
   tablesPath := filepath.Join(dataPath, projName)
 
-  tablesFIs, err := ioutil.ReadDir(tablesPath)
+  tablesFIs, err := os.ReadDir(tablesPath)
   if err != nil {
     return nil, errors.Wrap(err, "read directory failed.")
   }
@@ -383,7 +382,7 @@ func renameTable(w http.ResponseWriter, r *http.Request) {
   }
 
   structuresFolder := filepath.Join(dataPath, projName, tableName, "structures")
-  structuresFIs, err := ioutil.ReadDir(structuresFolder)
+  structuresFIs, err := os.ReadDir(structuresFolder)
   if err != nil {
     printError(w, errors.Wrap(err, "read directory failed."))
     return
@@ -391,7 +390,7 @@ func renameTable(w http.ResponseWriter, r *http.Request) {
 
   for _, vfi := range structuresFIs {
     structurePath := filepath.Join(structuresFolder, vfi.Name())
-    raw, err := ioutil.ReadFile(structurePath)
+    raw, err := os.ReadFile(structurePath)
     if err != nil {
       printError(w, errors.Wrap(err, "read failed."))
       return
@@ -400,7 +399,7 @@ func renameTable(w http.ResponseWriter, r *http.Request) {
     structurePathContents := string(raw)
     out := strings.ReplaceAll(structurePathContents, tableName, newTableName)
 
-    err = ioutil.WriteFile(structurePath, []byte(out), 0777)
+    err = os.WriteFile(structurePath, []byte(out), 0777)
     if err != nil {
       printError(w, errors.Wrap(err, "write failed."))
       return

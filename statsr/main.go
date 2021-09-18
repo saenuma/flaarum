@@ -11,7 +11,6 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"time"
-	"io/ioutil"
 	"github.com/pkg/errors"
 )
 
@@ -32,7 +31,7 @@ func storeStats() {
 	}
 	if inProd == "true" {
 		keyStrPath := flaarum_shared.GetKeyStrPath()
-		raw, err := ioutil.ReadFile(keyStrPath)
+		raw, err := os.ReadFile(keyStrPath)
 		if err != nil {
 			color.Red.Println(err)
 			os.Exit(1)

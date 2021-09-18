@@ -9,7 +9,6 @@ import (
 	compute "google.golang.org/api/compute/v1"
 	"os"
 	"github.com/gookit/color"
-	"io/ioutil"
 	"github.com/bankole7782/flaarum/flaarum_shared"
 	"time"
 	"strings"
@@ -214,7 +213,7 @@ sudo snap stop --disable flaarum.statsr
 
   	ctx := context.Background()
 
-  	data, err := ioutil.ReadFile(credentialsFilePath)
+  	data, err := os.ReadFile(credentialsFilePath)
 		if err != nil {
 			panic(err)
 		}
@@ -467,7 +466,7 @@ sudo snap restart flaarum.statsr
 
   	ctx := context.Background()
 
-  	data, err := ioutil.ReadFile(credentialsFilePath)
+  	data, err := os.ReadFile(credentialsFilePath)
 		if err != nil {
 			panic(err)
 		}

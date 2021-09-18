@@ -8,7 +8,6 @@ import (
 	"time"
 	"github.com/radovskyb/watcher"
 	"strings"
-	"io/ioutil"
 	"github.com/pkg/errors"
 	"path/filepath"
 	"os"
@@ -34,7 +33,7 @@ func init() {
 
   // load stop words once
   stopWordsJsonPath := flaarum_shared.G("english-stopwords.json")
-  jsonBytes, err := ioutil.ReadFile(stopWordsJsonPath)
+  jsonBytes, err := os.ReadFile(stopWordsJsonPath)
   if err != nil {
     panic(err)
   }
@@ -143,7 +142,7 @@ func main() {
 
 
 func doIndex(textPath string) {
-	raw, err := ioutil.ReadFile(textPath)
+	raw, err := os.ReadFile(textPath)
 	if err != nil {
 		return
 	}
@@ -208,7 +207,7 @@ func doIndex(textPath string) {
 			P(errors.Wrap(err, "os error."))
 			return
 		}
-		err = ioutil.WriteFile(filepath.Join(dirToMake, textIndex), []byte(fmt.Sprintf("%d", wordCount)), 0777)
+		err = os.WriteFile(filepath.Join(dirToMake, textIndex), []byte(fmt.Sprintf("%d", wordCount)), 0777)
 		if err != nil {
 			fmt.Printf("word is : '%s'\n", word)
 			P(errors.Wrap(err, "ioutil error"))
@@ -241,7 +240,7 @@ func removeIndexInner(projName, tableName, fieldName, textIndex string) {
 		return
 	}
 
-	dirsFIs, err := ioutil.ReadDir(filepath.Join(dataPath, projName, tableName, "tindexes", fieldName))
+	dirsFIs, err := os.ReadDir(filepath.Join(dataPath, projName, tableName, "tindexes", fieldName))
 	if err != nil {
 		P(errors.Wrap(err, "ioutil error."))
 		return
@@ -259,7 +258,7 @@ func removeIndexInner(projName, tableName, fieldName, textIndex string) {
 	}
 
 	for _, dirFI := range dirsFIs {
-		filesFIs, err := ioutil.ReadDir(filepath.Join(dataPath, projName, tableName, "tindexes", fieldName, dirFI.Name()))
+		filesFIs, err := os.ReadDir(filepath.Join(dataPath, projName, tableName, "tindexes", fieldName, dirFI.Name()))
 		if err == nil && len(filesFIs) == 0 {
 			err = os.RemoveAll(filepath.Join(dataPath, projName, tableName, "tindexes", fieldName, dirFI.Name()))
 			if err != nil {

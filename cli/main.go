@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/bankole7782/flaarum"
 	"github.com/bankole7782/flaarum/flaarum_shared"
-	"io/ioutil"
 	"strings"
 	"strconv"
 	"encoding/json"
@@ -29,7 +28,7 @@ func main() {
 	}
 	if inProd == "true"{
 		keyStrPath := flaarum_shared.GetKeyStrPath()
-		raw, err := ioutil.ReadFile(keyStrPath)
+		raw, err := os.ReadFile(keyStrPath)
 		if err != nil {
 			color.Red.Println(err)
 			os.Exit(1)
@@ -274,7 +273,7 @@ Table Search Commands:
 			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
 			os.Exit(1)
 		}
-		raw, err := ioutil.ReadFile(inputPath)
+		raw, err := os.ReadFile(inputPath)
 		if err != nil {
 			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
@@ -298,7 +297,7 @@ Table Search Commands:
 			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
 			os.Exit(1)
 		}
-		raw, err := ioutil.ReadFile(inputPath)
+		raw, err := os.ReadFile(inputPath)
 		if err != nil {
 			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
@@ -323,7 +322,7 @@ Table Search Commands:
 			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
 			os.Exit(1)
 		}
-		raw, err := ioutil.ReadFile(inputPath)
+		raw, err := os.ReadFile(inputPath)
 		if err != nil {
 			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
@@ -359,7 +358,7 @@ Table Search Commands:
 			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
 			os.Exit(1)
 		}
-		raw, err := ioutil.ReadFile(inputPath)
+		raw, err := os.ReadFile(inputPath)
 		if err != nil {
 			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
@@ -441,7 +440,7 @@ Table Search Commands:
 			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
 			os.Exit(1)
 		}
-		raw, err := ioutil.ReadFile(inputPath)
+		raw, err := os.ReadFile(inputPath)
 		if err != nil {
 			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
@@ -483,7 +482,7 @@ Table Search Commands:
 			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
 			os.Exit(1)
 		}
-		raw, err := ioutil.ReadFile(inputPath)
+		raw, err := os.ReadFile(inputPath)
 		if err != nil {
 			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)

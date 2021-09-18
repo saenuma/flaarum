@@ -7,7 +7,7 @@ import (
   "fmt"
   "github.com/bankole7782/flaarum/flaarum_shared"
   "strconv"
-  "io/ioutil"
+  "os"
   "path/filepath"
 )
 
@@ -121,7 +121,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
       if isFieldOfTypeText(projName, tableName, fieldName) {
         // create a .text file which is a message to the tindexer program.
         newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + fieldName + ".text"
-        err = ioutil.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName),
+        err = os.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName),
           []byte(newData), 0777)
         if err != nil {
           printError(w, errors.Wrap(err, "ioutil error"))

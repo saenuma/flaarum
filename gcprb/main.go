@@ -10,7 +10,6 @@ import (
 	"context"
 	"github.com/gookit/color"
 	"cloud.google.com/go/storage"
-	"io/ioutil"
 	"io"
 	"github.com/bankole7782/flaarum/flaarum_shared"
 	"github.com/bankole7782/flaarum"
@@ -25,10 +24,10 @@ func createBackupAndSaveToGCloudStorage() {
 
 	tmp, _ := flaarum_shared.GetConfigPath()
 	bkupFilePath := strings.Replace(tmp, "flaarum.zconf", "last-bkup-dt.txt", 1)
-	raw, err := ioutil.ReadFile(bkupFilePath)
+	raw, err := os.ReadFile(bkupFilePath)
 	if err != nil {
 		contents := flaarum.RightDateTimeFormat(time.Now())
-		ioutil.WriteFile(bkupFilePath, []byte(contents), 0777)
+		os.WriteFile(bkupFilePath, []byte(contents), 0777)
 	}
 
 	backupFrequency, err := strconv.ParseUint(flaarum_shared.GetSetting("backup_frequency"), 10, 64)
@@ -41,7 +40,7 @@ func createBackupAndSaveToGCloudStorage() {
 	if uint64(daysSinceLastBackup) >= backupFrequency {
 
 		keyStrPath := flaarum_shared.GetKeyStrPath()
-		raw, err := ioutil.ReadFile(keyStrPath)
+		raw, err := os.ReadFile(keyStrPath)
 		if err != nil {
 			color.Red.Println(err)
 			os.Exit(1)
@@ -94,7 +93,7 @@ func createBackupAndSaveToGCloudStorage() {
 	  fmt.Println("Successfully ran backup at " + time.Now().String())
 
 	  contents := flaarum.RightDateTimeFormat(time.Now())
-		ioutil.WriteFile(bkupFilePath, []byte(contents), 0777)
+		os.WriteFile(bkupFilePath, []byte(contents), 0777)
 	}
 
 }

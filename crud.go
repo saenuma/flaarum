@@ -1,7 +1,7 @@
 package flaarum
 
 import (
-	"io/ioutil"
+	"io"
 	"github.com/pkg/errors"
 	"net/url"
 	"strconv"
@@ -28,7 +28,7 @@ func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (st
 		return "", errors.Wrap(err, "http error")
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", errors.Wrap(err, "ioutil error")
 	}
@@ -216,7 +216,7 @@ func (cl *Client) Search (stmt string) (*[]map[string]interface{}, error) {
   }
   defer resp.Body.Close()
 
-  body, err := ioutil.ReadAll(resp.Body)
+  body, err := io.ReadAll(resp.Body)
   if err != nil {
     return nil, errors.Wrap(err, "ioutil read failed.")
   }
@@ -269,7 +269,7 @@ func (cl Client) SearchForOne(stmt string) (*map[string]interface{}, error) {
   }
   defer resp.Body.Close()
 
-  body, err := ioutil.ReadAll(resp.Body)
+  body, err := io.ReadAll(resp.Body)
   if err != nil {
     return nil, errors.Wrap(err, "ioutil read failed.")
   }
@@ -317,7 +317,7 @@ func (cl Client) DeleteRows(stmt string) error {
   }
   defer resp.Body.Close()
 
-  body, err := ioutil.ReadAll(resp.Body)
+  body, err := io.ReadAll(resp.Body)
   if err != nil {
     return errors.Wrap(err, "ioutil read failed.")
   }
@@ -344,7 +344,7 @@ func (cl Client) DeleteFields(stmt string, toDeleteFields []string) error {
   }
   defer resp.Body.Close()
 
-  body, err := ioutil.ReadAll(resp.Body)
+  body, err := io.ReadAll(resp.Body)
   if err != nil {
     return errors.Wrap(err, "ioutil read failed.")
   }
@@ -368,7 +368,7 @@ func (cl Client) CountRows(stmt string) (int64, error) {
   }
   defer resp.Body.Close()
 
-  body, err := ioutil.ReadAll(resp.Body)
+  body, err := io.ReadAll(resp.Body)
   if err != nil {
     return 0, errors.Wrap(err, "ioutil read failed.")
   }
@@ -396,7 +396,7 @@ func (cl Client) AllRowsCount(tableName string) (int64, error) {
   }
   defer resp.Body.Close()
 
-  body, err := ioutil.ReadAll(resp.Body)
+  body, err := io.ReadAll(resp.Body)
   if err != nil {
     return 0, errors.Wrap(err, "ioutil read failed.")
   }
@@ -427,7 +427,7 @@ func (cl Client) SumRows(stmt, toSumField string) (interface{}, error) {
   }
   defer resp.Body.Close()
 
-  body, err := ioutil.ReadAll(resp.Body)
+  body, err := io.ReadAll(resp.Body)
   if err != nil {
     return 0, errors.Wrap(err, "ioutil read failed.")
   }
@@ -490,7 +490,7 @@ func (cl Client) UpdateRowsStr(stmt string, updateDataStr map[string]string) err
   }
   defer resp.Body.Close()
 
-  body, err := ioutil.ReadAll(resp.Body)
+  body, err := io.ReadAll(resp.Body)
   if err != nil {
     return errors.Wrap(err, "ioutil read failed.")
   }
