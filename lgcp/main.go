@@ -197,7 +197,7 @@ sudo snap start flaarum.store
 		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup_bucket") + " " + conf.Get("backup_frequency")+ " \n"
 		startupScript += `
 
-DATA_BTRFS=/var/snap/flaarum/current/data_btrfs
+DATA_BTRFS=/var/snap/flaarum/common/data_btrfs
 if  [ ! -d "$DATA_BTRFS" ]; then
 	sudo mkfs.btrfs /dev/sdb
 	sudo mkdir -p $DATA_BTRFS
@@ -451,7 +451,7 @@ sudo snap start flaarum.store
 `
 		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup_bucket") + " " + conf.Get("backup_frequency")+ " \n"
 		startupScript += `
-DATA_BTRFS=/var/snap/flaarum/current/data_btrfs
+DATA_BTRFS=/var/snap/flaarum/common/data_btrfs
 if  [ ! -d "$DATA_BTRFS" ]; then
 	sudo mkfs.btrfs /dev/sdb
 	sudo mkdir -p $DATA_BTRFS

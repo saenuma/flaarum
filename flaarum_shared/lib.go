@@ -78,7 +78,7 @@ func G(objectName string) string {
 
 
 func GetConfigPath() (string, error) {
-	dd := os.Getenv("SNAP_DATA")
+	dd := os.Getenv("SNAP_COMMON")
 	if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
 		hd, err := os.UserHomeDir()
 		if err != nil {
@@ -106,7 +106,7 @@ func GetDataPath() (string, error) {
   if inProd == "true" {
     return "/var/snap/flaarum/current/data_btrfs", nil
   } else {
-    dd := os.Getenv("SNAP_DATA")
+    dd := os.Getenv("SNAP_COMMON")
     if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
       hd, err := os.UserHomeDir()
       if err != nil {
@@ -140,7 +140,7 @@ func GetSetting(settingName string) string {
 
 func GetKeyStrPath() string {
 	var keyPath string
-  dd := os.Getenv("SNAP_DATA")
+  dd := os.Getenv("SNAP_COMMON")
   if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
     hd, err := os.UserHomeDir()
     if err != nil {
@@ -159,7 +159,7 @@ func GetFlaarumPath(fileName string) (string, error) {
   if err != nil {
     return "", errors.Wrap(err, "os error")
   }
-  dd := os.Getenv("SNAP_USER_DATA")
+  dd := os.Getenv("SNAP_USER_COMMON")
 
   if strings.HasPrefix(dd, filepath.Join(hd, "snap", "go")) || dd == "" {
     dd = filepath.Join(hd, fileName)
