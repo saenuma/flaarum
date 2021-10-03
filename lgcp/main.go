@@ -608,7 +608,7 @@ sudo snap restart flaarum.gcpasr
 		ctlInstance := &compute.Instance{
 			Name: ctlInstanceName,
 			Description: "flaarum control instance",
-			MachineType: prefix + "/zones/" + conf.Get("zone") + "/machineTypes/e2-small",
+			MachineType: prefix + "/zones/" + conf.Get("zone") + "/machineTypes/f1-micro",
 			Disks: []*compute.AttachedDisk{
 				{
 					AutoDelete: true,

@@ -24,6 +24,7 @@ var confObject zazabul.Config
 var MTs []string
 
 var E2MTs = []string {
+	"e2-small",
 	"e2-highcpu-2",
 	"e2-highcpu-4",
 	"e2-highcpu-8",
@@ -32,6 +33,7 @@ var E2MTs = []string {
 }
 
 var N2DMTs = []string {
+	"e2-small",
 	"n2d-highcpu-2",
 	"n2d-highcpu-4",
 	"n2d-highcpu-8",
