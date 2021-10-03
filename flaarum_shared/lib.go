@@ -104,7 +104,7 @@ func GetCtlConfigPath() (string, error) {
 func GetDataPath() (string, error) {
   inProd := GetSetting("in_production")
   if inProd == "true" {
-    return "/var/snap/flaarum/current/data_btrfs", nil
+    return "/var/snap/flaarum/common/data_btrfs", nil
   } else {
     dd := os.Getenv("SNAP_COMMON")
     if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
