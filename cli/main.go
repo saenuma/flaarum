@@ -425,7 +425,7 @@ Table Search Commands:
 		}
 
 		for k, v := range *arow {
-			fmt.Printf("\"%s\": %v\n", k, v)
+			fmt.Printf("%s: %v\n", k, v)
 		}
 		fmt.Println()
 
