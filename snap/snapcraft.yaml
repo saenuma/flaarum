@@ -27,7 +27,6 @@ parts:
       go build -o $SNAPCRAFT_PART_INSTALL/bin/astest ./astest
       go build -o $SNAPCRAFT_PART_INSTALL/bin/cli ./cli
       go build -o $SNAPCRAFT_PART_INSTALL/bin/gcpasr ./gcpasr
-      go build -o $SNAPCRAFT_PART_INSTALL/bin/gcprb ./gcprb
       go build -o $SNAPCRAFT_PART_INSTALL/bin/inout ./inout
       go build -o $SNAPCRAFT_PART_INSTALL/bin/lgcp ./lgcp
       go build -o $SNAPCRAFT_PART_INSTALL/bin/prod ./prod
@@ -57,14 +56,6 @@ apps:
     restart-condition: on-abnormal
     plugs:
       - network
-
-  gcprb:
-    command: bin/gcprb
-    daemon: simple
-    restart-condition: on-abnormal
-    plugs:
-      - network
-
 
   inout:
     command: bin/inout

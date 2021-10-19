@@ -4,7 +4,6 @@ build:
 	go build -o artifacts/astest ./astest
 	go build -o artifacts/cli ./cli
 	go build -o artifacts/gcpasr ./gcpasr
-	go build -o artifacts/gcprb ./gcprb
 	go build -o artifacts/inout ./inout
 	go build -o artifacts/lgcp ./lgcp
 	go build -o artifacts/prod ./prod
