@@ -166,6 +166,8 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
 
 
 func deleteIndex(projName, tableName, fieldName, data, rowId, version string) error {
+  dataPath, _ := GetDataPath()
+  
   if confirmFieldType(projName, tableName, fieldName, "date", version) {
     valueInTimeType, err := time.Parse(flaarum_shared.DATE_FORMAT, data)
     if err != nil {
@@ -205,7 +207,58 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
         return err
       }
     }
+  } else if confirmFieldType(projName, tableName, fieldName, "int", version) {
+    intIndexesFile := filepath.Join(dataPath, projName, tableName, "intindexes", fieldName)
+    if flaarum_shared.DoesPathExists(intIndexesFile) {
+      intIndexes, err := flaarum_shared.ReadIntIndexesFromFile(intIndexesFile)
+      if err != nil {
+        return err
+      }
+
+      intIndex, err := strconv.ParseInt(data, 10, 64)
+      if err != nil {
+        return errors.Wrap(err, "strconv error")
+      }
+      rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
+      if err != nil {
+        return errors.Wrap(err, "strconv error")
+      }
+
+      newIntIndexes := flaarum_shared.RemoveFromIntIndexes(intIndexes, intIndex, rowIdInt)
+      if len(newIntIndexes) > 0 {
+        err = flaarum_shared.WriteIntIndexesToFile(newIntIndexes, intIndexesFile)
+  			if err != nil {
+  				return err
+  			}
+      }
+    }
+  } else if confirmFieldType(projName, tableName, fieldName, "float", version) {
+    intIndexesFile := filepath.Join(dataPath, projName, tableName, "intindexes", fieldName)
+    if flaarum_shared.DoesPathExists(intIndexesFile) {
+      intIndexes, err := flaarum_shared.ReadIntIndexesFromFile(intIndexesFile)
+      if err != nil {
+        return err
+      }
+
+      intIndexFloat, err := strconv.ParseFloat(data, 64)
+      if err != nil {
+        return errors.Wrap(err, "strconv error")
+      }
+      rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
+      if err != nil {
+        return errors.Wrap(err, "strconv error")
+      }
+
+      newIntIndexes := flaarum_shared.RemoveFromIntIndexes(intIndexes, int64(intIndexFloat), rowIdInt)
+      if len(newIntIndexes) > 0 {
+        err = flaarum_shared.WriteIntIndexesToFile(newIntIndexes, intIndexesFile)
+  			if err != nil {
+  				return err
+  			}
+      }
+    }
   }
+
 
   indexFileName := makeSafeIndexName(data)
   indexesPath := filepath.Join(getTablePath(projName, tableName), "indexes", fieldName, indexFileName)

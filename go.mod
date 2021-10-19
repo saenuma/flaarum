@@ -7,6 +7,7 @@ require (
 	github.com/adam-hanna/arrayOperations v0.2.6
 	github.com/bankole7782/mof v1.0.0
 	github.com/bankole7782/zazabul v1.1.3
+	github.com/barkimedes/go-deepcopy v0.0.0-20200817023428-a044a1957ca4
 	github.com/go-co-op/gocron v1.9.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/gookit/color v1.4.2

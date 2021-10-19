@@ -10,7 +10,6 @@ import (
 	"strings"
 	"os"
 	"strconv"
-	"sort"
 	"encoding/json"
 )
 
@@ -107,7 +106,7 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	toMake := []string{"data", "indexes", "tindexes", "structures", "txtinstrs"}
+	toMake := []string{"data", "indexes", "tindexes", "structures", "txtinstrs", "intindexes"}
 	for _, tm := range toMake {
 		err := os.MkdirAll(filepath.Join(dataPath, projName, tableStruct.TableName, tm), 0777)
 		if err != nil {
@@ -195,26 +194,7 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 
 
 func getCurrentVersionNum(projName, tableName string) (int, error) {
-	dataPath, _ := GetDataPath()
-	tablePath := filepath.Join(dataPath, projName, tableName)
-
-	tableStructsFIs, err := os.ReadDir(filepath.Join(tablePath, "structures"))
-	if err != nil {
-		return -1, errors.Wrap(err, "ioutil error")
-	}
-
-	versionNumbers := make([]int, 0)
-	for _, tsfi := range tableStructsFIs {
-		num, err := strconv.Atoi(tsfi.Name())
-		if err != nil {
-			return -1, errors.Wrap(err, "strconv error.")
-		}
-		versionNumbers = append(versionNumbers, num)
-	}
-
-	sort.Ints(versionNumbers)
-	currentVersionNum := versionNumbers[len(versionNumbers) - 1]
-	return currentVersionNum, nil
+	return flaarum_shared.GetCurrentVersionNum(projName, tableName)
 }
 
 
@@ -309,7 +289,7 @@ func emptyTable(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  toDelete := []string{"data", "indexes", "tindexes", "txtinstrs", "lastId"}
+  toDelete := []string{"data", "indexes", "tindexes", "txtinstrs", "intindexes", "lastId"}
   for _, todo := range toDelete {
     err := os.RemoveAll(filepath.Join(dataPath, projName, tableName, todo))
     if err != nil {
