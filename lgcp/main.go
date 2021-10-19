@@ -125,17 +125,6 @@ disk_size: 10
 // It is not necessary it must be an e2 instance.
 machine_type: e2-highcpu-2
 
-// You are to create a bucket in Google cloud storage and set it to this value.
-// This is where the backups for your flaarum installation would be saved to.
-backup_bucket:
-
-
-// backup_frequency is the number of days before conducting a backup.
-// It must be a number not a float. The default is 14 which is two weeks.
-// You can set it to a lower value to test if the backup works perfectly.
-// The minimum value is 1
-backup_frequency: 14
-
 `
 
     conf, err := zazabul.ParseConfig(tmpl)
@@ -194,7 +183,7 @@ backup_frequency: 14
 sudo snap install flaarum
 sudo snap start flaarum.store
 `
-		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup_bucket") + " " + conf.Get("backup_frequency")+ " \n"
+		startupScript += "\nsudo flaarum.prod mpr \n"
 		startupScript += `
 
 DATA_BTRFS=/var/snap/flaarum/common/data_btrfs
@@ -364,18 +353,6 @@ machine_class: e2
 // 10 is the minimum.
 disk_size: 10
 
-
-// You are to create a bucket in Google cloud storage and set it to this value.
-// This is where the backups for your flaarum installation would be saved to.
-backup_bucket:
-
-// backup_frequency is the number of days before conducting a backup.
-// It must be a number not a float. The default is 14 which is two weeks.
-// You can set it to a lower value to test if the backup works perfectly.
-// The minimum value is 1
-backup_frequency: 14
-
-
 // The resize_frequency is the number of hours before the flaarum control server resizes the flaarum data
 // server. You can set it to a lower value to test if the autoscaling works perfectly.
 resize_frequency: 6
@@ -449,7 +426,7 @@ resize_frequency: 6
 sudo snap install flaarum
 sudo snap start flaarum.store
 `
-		startupScript += "\nsudo flaarum.prod mpr " + conf.Get("backup_bucket") + " " + conf.Get("backup_frequency")+ " \n"
+		startupScript += "\nsudo flaarum.prod mpr \n"
 		startupScript += `
 DATA_BTRFS=/var/snap/flaarum/common/data_btrfs
 if  [ ! -d "$DATA_BTRFS" ]; then
