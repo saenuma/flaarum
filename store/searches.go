@@ -138,9 +138,20 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 		for i, whereStruct := range stmtStruct.WhereOptions {
 			if i != 0 {
 				if whereStruct.Joiner != "and" && whereStruct.Joiner != "or" {
-					return nil, errors.New("Invalid statment: joiner must be one of 'and', 'or'.")
+					return nil, errors.New("Invalid statement: joiner must be one of 'and', 'or'.")
 				}
 			}
+
+			if fieldNamesToFieldTypes[whereStruct.FieldName] == "string" || fieldNamesToFieldTypes[whereStruct.FieldName] == "text" ||
+				fieldNamesToFieldTypes[whereStruct.FieldName] == "bool" || fieldNamesToFieldTypes[whereStruct.FieldName] == "ipaddr" ||
+				fieldNamesToFieldTypes[whereStruct.FieldName] == "email" || fieldNamesToFieldTypes[whereStruct.FieldName] == "url" {
+
+					if whereStruct.Relation == ">" || whereStruct.Relation == ">=" || whereStruct.Relation == "<" || whereStruct.Relation == "<=" {
+						return nil, errors.New(fmt.Sprintf("Invalid statement: The type '%s' does not support the query relation '%s'",
+							fieldNamesToFieldTypes[whereStruct.FieldName], whereStruct.Relation))
+					}
+
+				}
 
 			if fieldNamesToFieldTypes[whereStruct.FieldName] == "text" && whereStruct.Relation != "fts" {
 				return nil, errors.New(fmt.Sprintf("The field '%s' is not searchable with '%s' since it is of type 'text'",
