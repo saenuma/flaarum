@@ -298,7 +298,7 @@ func emptyTable(w http.ResponseWriter, r *http.Request) {
     }
   }
 
-  for _, tm := range toDelete[:4] {
+  for _, tm := range toDelete[:5] {
     toMakePath := filepath.Join(dataPath, projName, tableName, tm)
     err := os.MkdirAll(toMakePath, 0777)
     if err != nil {

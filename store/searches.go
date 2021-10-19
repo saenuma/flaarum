@@ -80,6 +80,21 @@ func findIdsContainingTrueWhereValues(projName, tableName, field string, trueWhe
 }
 
 
+func getNeededIdsFromIntIndexes(container []flaarum_shared.IntIndexes) []string {
+	retInts := make([]int64, 0)
+	for _, item := range container {
+		retInts = append(retInts, item.Ids...)
+	}
+
+	ret := make([]string, 0)
+	for _, intYeah := range retInts {
+		ret = append(ret, strconv.FormatInt(intYeah, 10))
+	}
+
+	return ret
+}
+
+
 func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 	stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
 	if err != nil {
@@ -153,6 +168,12 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 				}
 
+			if whereStruct.FieldName == "id" {
+				if whereStruct.Relation == ">" || whereStruct.Relation == ">=" || whereStruct.Relation == "<" || whereStruct.Relation == "<=" {
+					return nil, errors.New(fmt.Sprintf("Invalid statement: The 'id' field does not support the query relation '%s'",
+						whereStruct.Relation))
+				}
+			}
 			if fieldNamesToFieldTypes[whereStruct.FieldName] == "text" && whereStruct.Relation != "fts" {
 				return nil, errors.New(fmt.Sprintf("The field '%s' is not searchable with '%s' since it is of type 'text'",
 					whereStruct.FieldName, whereStruct.Relation))
@@ -289,116 +310,69 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
       } else if whereStruct.Relation == ">" || whereStruct.Relation == ">=" {
 
-        if whereStruct.FieldName == "id" {
-          stringIds := make([]string, 0)
-          rowFIs, err := os.ReadDir(filepath.Join(tablePath, "data"))
-          if err != nil {
-            return nil, errors.Wrap(err, "read dir failed.")
-          }
-          allIds := make([]uint64, 0)
-          for _, rowFI := range rowFIs {
-            idUint, _ := strconv.ParseUint(rowFI.Name(), 10, 64)
-            allIds = append(allIds, idUint)
-          }
-
-          sort.SliceStable(allIds, func(i, j int) bool {
-            return allIds[i] < allIds[j]
-          })
-
-          for _, uintId := range allIds {
-            woValueUint, err := strconv.ParseUint(whereStruct.FieldValue, 10, 64)
-            if err != nil {
-              return nil, errors.Wrap(err, "strconv failed.")
-            }
-
-            if woValueUint == uintId && whereStruct.Relation == ">="{
-              stringIds = append(stringIds, strconv.FormatUint(uintId, 10))
-            } else if uintId > woValueUint {
-              stringIds = append(stringIds, strconv.FormatUint(uintId, 10))
-            }
-          }
-
-          beforeFilter = append(beforeFilter, stringIds)
-
-        } else if strings.Contains(whereStruct.FieldName, ".") {
+        if strings.Contains(whereStruct.FieldName, ".") {
           trueWhereValues := make([]string, 0)
           parts := strings.Split(whereStruct.FieldName, ".")
 
-          indexFileName := makeSafeIndexName(whereStruct.FieldValue)
           pTbl, ok := expDetails[parts[0]]
           if ! ok {
             continue
           }
 
-          indexFIs, err := os.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
-          if err != nil {
-            return nil, errors.Wrap(err, "read dir failed.")
-          }
+					resolvedFieldName := parts[1]
+					intIndexesFile := filepath.Join(getTablePath(projName, pTbl), "intindexes", resolvedFieldName)
+					intIndexes, err := flaarum_shared.ReadIntIndexesFromFile(intIndexesFile)
+					if err != nil {
+						return nil, err
+					}
 
-          indexFileName = makeSafeIndexName(whereStruct.FieldValue)
+					var whereStructFieldValueInt int64
+					if flaarum_shared.GetFieldType(projName, tableName, whereStruct.FieldName) == "float" {
+						tmp, err := strconv.ParseFloat(whereStruct.FieldValue, 64)
+						if err != nil {
+							return nil, errors.Wrap(err, "strconv error")
+						}
+						whereStructFieldValueInt = int64(tmp)
+					} else {
+						whereStructFieldValueInt, err = strconv.ParseInt(whereStruct.FieldValue, 10, 64)
+						if err != nil {
+							return nil, errors.Wrap(err, "strconv error")
+						}
+					}
 
-          for _, indexFI := range indexFIs {
-            raw, err := os.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", whereStruct.FieldName, indexFI.Name()))
-            if err != nil {
-              return nil, errors.Wrap(err, "read failed.")
-            }
-            idsInIndex := strings.Split(string(raw), "\n")
-            for _, idInIndex := range idsInIndex {
-              rowMap := make(map[string]string)
-              raw, err := os.ReadFile(filepath.Join(getTablePath(projName, pTbl), "data", idInIndex))
-              if err != nil {
-                continue
-              }
-              err = json.Unmarshal(raw, &rowMap)
-              if err != nil {
-                return nil, errors.Wrap(err, "json error.")
-              }
-              rowMap["id"] = idInIndex
+					exactMatch := false
+					brokeLoop := false
+					index := 0
+					for i, elem := range intIndexes {
+						if elem.IntIndex == whereStructFieldValueInt {
+							exactMatch = true
+							brokeLoop = true
+							index = i
+							break
+						}
+						if elem.IntIndex > whereStructFieldValueInt {
+							index = i
+							brokeLoop = true
+							break
+						}
+					}
 
-              if strings.HasSuffix(whereStruct.FieldName, "_year") || strings.HasSuffix(whereStruct.FieldName, "_month") ||
-                strings.HasSuffix(whereStruct.FieldName, "_day") || strings.HasSuffix(whereStruct.FieldName, "_hour") {
-                  woValueInInt, err := strconv.ParseInt(indexFileName, 10, 64)
-                  if err != nil {
-                    return nil, errors.Wrap(err, "strconv failed.")
-                  }
-                  currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
-                  if whereStruct.Relation == ">=" && woValueInInt == currIndexNameInInt {
-                    trueWhereValues = append(trueWhereValues, rowMap["id"])
-                  } else if woValueInInt < currIndexNameInInt {
-                    trueWhereValues = append(trueWhereValues, rowMap["id"])
-                  }
-              } else if confirmFieldType(projName, tableName, whereStruct.FieldName, "int", rowMap["_version"]) {
-                woValueInInt, err := strconv.ParseInt(indexFileName, 10, 64)
-                if err != nil {
-                  return nil, errors.Wrap(err, "strconv failed.")
-                }
-                currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
-                if whereStruct.Relation == ">=" && woValueInInt == currIndexNameInInt {
-                  trueWhereValues = append(trueWhereValues, rowMap["id"])
-                } else if woValueInInt < currIndexNameInInt {
-                  trueWhereValues = append(trueWhereValues, rowMap["id"])
-                }
-              } else if confirmFieldType(projName, tableName, whereStruct.FieldName, "float", rowMap["_version"]) {
-                woValueInFloat, err := strconv.ParseFloat(whereStruct.FieldValue, 64)
-                if err != nil {
-                  return nil, errors.Wrap(err, "strconv to float failed.")
-                }
-                currIndexNameInFloat, err := strconv.ParseFloat(indexFI.Name(), 64)
-                if whereStruct.Relation == ">=" && woValueInFloat == currIndexNameInFloat {
-                  trueWhereValues = append(trueWhereValues, rowMap["id"])
-                } else if woValueInFloat < currIndexNameInFloat {
-                  trueWhereValues = append(trueWhereValues, rowMap["id"])
-                }
-              } else {
-                if whereStruct.Relation == ">=" && indexFileName == indexFI.Name() {
-                  trueWhereValues = append(trueWhereValues, rowMap["id"])
-                } else if indexFileName < indexFI.Name() {
-                  trueWhereValues = append(trueWhereValues, rowMap["id"])
-                }
-              }
-            }
 
-          }
+					if brokeLoop && exactMatch {
+						if whereStruct.Relation == ">" {
+							newIndex := index + 1
+							if len(intIndexes) != newIndex {
+								elems := getNeededIdsFromIntIndexes(intIndexes[newIndex: ])
+								trueWhereValues = append(trueWhereValues, elems...)
+							}
+						} else if whereStruct.Relation == ">=" {
+							elems := getNeededIdsFromIntIndexes(intIndexes[index: ])
+							trueWhereValues = append(trueWhereValues, elems...)
+						}
+					} else if brokeLoop {
+						elems := getNeededIdsFromIntIndexes(intIndexes[index: ])
+						trueWhereValues = append(trueWhereValues, elems...)
+					}
 
           stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
           if err != nil {
@@ -408,78 +382,62 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           beforeFilter = append(beforeFilter, stringIds)
 
         } else {
-          stringIds := make([]string, 0)
+					stringIds := make([]string, 0)
+					intIndexesFile := filepath.Join(dataPath, projName, tableName, "intindexes", whereStruct.FieldName)
+					intIndexes, err := flaarum_shared.ReadIntIndexesFromFile(intIndexesFile)
+					if err != nil {
+						return nil, err
+					}
 
-          indexFIs, err := os.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
-          if err != nil {
-            return nil, errors.Wrap(err, "read dir failed.")
-          }
-          indexFileName := makeSafeIndexName(whereStruct.FieldValue)
+					var whereStructFieldValueInt int64
+					if flaarum_shared.GetFieldType(projName, tableName, whereStruct.FieldName) == "float" {
+						tmp, err := strconv.ParseFloat(whereStruct.FieldValue, 64)
+						if err != nil {
+							return nil, errors.Wrap(err, "strconv error")
+						}
+						whereStructFieldValueInt = int64(tmp)
+					} else {
+						whereStructFieldValueInt, err = strconv.ParseInt(whereStruct.FieldValue, 10, 64)
+						if err != nil {
+							return nil, errors.Wrap(err, "strconv error")
+						}
+					}
 
-          for _, indexFI := range indexFIs {
-            raw, err := os.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFI.Name()))
-            if err != nil {
-              return nil, errors.Wrap(err, "read failed.")
-            }
-            idsInIndex := strings.Split(string(raw), "\n")
-            for _, idInIndex := range idsInIndex {
-              rowMap := make(map[string]string)
-              raw, err := os.ReadFile(filepath.Join(tablePath, "data", idInIndex))
-              if err != nil {
-                continue
-              }
-              err = json.Unmarshal(raw, &rowMap)
-              if err != nil {
-                return nil, errors.Wrap(err, "json error.")
-              }
-              rowMap["id"] = idInIndex
+					exactMatch := false
+					brokeLoop := false
+					index := 0
+					for i, elem := range intIndexes {
+						if elem.IntIndex == whereStructFieldValueInt {
+							exactMatch = true
+							brokeLoop = true
+							index = i
+							break
+						}
+						if elem.IntIndex > whereStructFieldValueInt {
+							index = i
+							brokeLoop = true
+							break
+						}
+					}
 
-              if strings.HasSuffix(whereStruct.FieldName, "_year") || strings.HasSuffix(whereStruct.FieldName, "_month") ||
-                strings.HasSuffix(whereStruct.FieldName, "_day") || strings.HasSuffix(whereStruct.FieldName, "_hour") {
-                  woValueInInt, err := strconv.ParseInt(indexFileName, 10, 64)
-                  if err != nil {
-                    return nil, errors.Wrap(err, "strconv failed.")
-                  }
-                  currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
-                  if whereStruct.Relation == ">=" && woValueInInt == currIndexNameInInt {
-                    stringIds = append(stringIds, rowMap["id"])
-                  } else if woValueInInt < currIndexNameInInt {
-                    stringIds = append(stringIds, rowMap["id"])
-                  }
-              } else if confirmFieldType(projName, tableName, whereStruct.FieldName, "int", rowMap["_version"]) {
-                woValueInInt, err := strconv.ParseInt(indexFileName, 10, 64)
-                if err != nil {
-                  return nil, errors.Wrap(err, "strconv failed.")
-                }
-                currIndexNameInInt, err := strconv.ParseInt(indexFI.Name(), 10, 64)
-                if whereStruct.Relation == ">=" && woValueInInt == currIndexNameInInt {
-                  stringIds = append(stringIds, rowMap["id"])
-                } else if woValueInInt < currIndexNameInInt {
-                  stringIds = append(stringIds, rowMap["id"])
-                }
-              } else if confirmFieldType(projName, tableName, whereStruct.FieldName, "float", rowMap["_version"]) {
-                woValueInFloat, err := strconv.ParseFloat(whereStruct.FieldValue, 64)
-                if err != nil {
-                  return nil, errors.Wrap(err, "strconv to float failed.")
-                }
-                currIndexNameInFloat, err := strconv.ParseFloat(indexFI.Name(), 64)
-                if whereStruct.Relation == ">=" && woValueInFloat == currIndexNameInFloat {
-                  stringIds = append(stringIds, rowMap["id"])
-                } else if woValueInFloat < currIndexNameInFloat {
-                  stringIds = append(stringIds, rowMap["id"])
-                }
-              } else {
-                if whereStruct.Relation == ">=" && indexFileName == indexFI.Name() {
-                  stringIds = append(stringIds, rowMap["id"])
-                } else if indexFileName < indexFI.Name() {
-                  stringIds = append(stringIds, rowMap["id"])
-                }
-              }
-            }
-          }
 
-          beforeFilter = append(beforeFilter, stringIds)
+					if brokeLoop && exactMatch {
+						if whereStruct.Relation == ">" {
+							newIndex := index + 1
+							if len(intIndexes) != newIndex {
+								elems := getNeededIdsFromIntIndexes(intIndexes[newIndex: ])
+								stringIds = append(stringIds, elems...)
+							}
+						} else if whereStruct.Relation == ">=" {
+							elems := getNeededIdsFromIntIndexes(intIndexes[index: ])
+							stringIds = append(stringIds, elems...)
+						}
+					} else if brokeLoop {
+						elems := getNeededIdsFromIntIndexes(intIndexes[index: ])
+						stringIds = append(stringIds, elems...)
+					}
 
+					beforeFilter = append(beforeFilter, stringIds)
         }
 
 
