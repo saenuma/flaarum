@@ -222,6 +222,18 @@ Available Commands:
 					panic(err)
 				}
 
+				toMakePath = filepath.Join(dataPath, projName, tblFI.Name(), "intindexes")
+				err = os.MkdirAll(toMakePath, 0777)
+				if err != nil {
+					panic(err)
+				}
+
+				toMakePath = filepath.Join(dataPath, projName, tblFI.Name(), "timeindexes")
+				err = os.MkdirAll(toMakePath, 0777)
+				if err != nil {
+					panic(err)
+				}
+
 		    rowFIs, err := os.ReadDir(filepath.Join(dataPath, projName, tblFI.Name(), "data"))
 		    if err != nil {
 		    	panic(err)
