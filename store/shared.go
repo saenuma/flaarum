@@ -31,6 +31,7 @@ func nameValidate(name string) error {
 
 
 func printError(w http.ResponseWriter, err error) {
+  fmt.Printf("%+v\n", err)
   debug := flaarum_shared.GetSetting("debug")
   if debug == "true" {
     http.Error(w, fmt.Sprintf("%+v", err), http.StatusBadRequest)
