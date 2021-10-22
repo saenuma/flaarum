@@ -167,7 +167,7 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
 
 func deleteIndex(projName, tableName, fieldName, data, rowId, version string) error {
   dataPath, _ := GetDataPath()
-  
+
   if confirmFieldType(projName, tableName, fieldName, "date", version) {
     valueInTimeType, err := time.Parse(flaarum_shared.DATE_FORMAT, data)
     if err != nil {
@@ -186,6 +186,33 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
         return err
       }
     }
+
+    timeIndexesFile := filepath.Join(dataPath, projName, tableName, "timeindexes", fieldName)
+    if flaarum_shared.DoesPathExists(timeIndexesFile) {
+      timeIndexes, err := flaarum_shared.ReadTimeIndexesFromFile(timeIndexesFile, "date")
+      if err != nil {
+        return err
+      }
+
+      timeValueToDelete, err := time.Parse(flaarum_shared.DATE_FORMAT, data)
+      if err != nil {
+        return errors.Wrap(err, "time convert error")
+      }
+
+      rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
+      if err != nil {
+        return errors.Wrap(err, "strconv error")
+      }
+
+      newTimeIndexes := flaarum_shared.RemoveFromTimeIndexes(timeIndexes, timeValueToDelete, rowIdInt)
+      if len(newTimeIndexes) > 0 {
+        err = flaarum_shared.WriteTimeIndexesToFile(newTimeIndexes, timeIndexesFile, "date")
+  			if err != nil {
+  				return err
+  			}
+      }
+    }
+
   } else if confirmFieldType(projName, tableName, fieldName, "datetime", version) {
     valueInTimeType, err := time.Parse(flaarum_shared.DATETIME_FORMAT, data)
     if err != nil {
@@ -207,6 +234,33 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
         return err
       }
     }
+
+    timeIndexesFile := filepath.Join(dataPath, projName, tableName, "timeindexes", fieldName)
+    if flaarum_shared.DoesPathExists(timeIndexesFile) {
+      timeIndexes, err := flaarum_shared.ReadTimeIndexesFromFile(timeIndexesFile, "datetime")
+      if err != nil {
+        return err
+      }
+
+      timeValueToDelete, err := time.Parse(flaarum_shared.DATETIME_FORMAT, data)
+      if err != nil {
+        return errors.Wrap(err, "time convert error")
+      }
+
+      rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
+      if err != nil {
+        return errors.Wrap(err, "strconv error")
+      }
+
+      newTimeIndexes := flaarum_shared.RemoveFromTimeIndexes(timeIndexes, timeValueToDelete, rowIdInt)
+      if len(newTimeIndexes) > 0 {
+        err = flaarum_shared.WriteTimeIndexesToFile(newTimeIndexes, timeIndexesFile, "datetime")
+        if err != nil {
+          return err
+        }
+      }
+    }
+
   } else if confirmFieldType(projName, tableName, fieldName, "int", version) {
     intIndexesFile := filepath.Join(dataPath, projName, tableName, "intindexes", fieldName)
     if flaarum_shared.DoesPathExists(intIndexesFile) {
