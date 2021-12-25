@@ -56,12 +56,15 @@ func formatTableStruct(tableStruct flaarum_shared.TableStruct) string {
 	stmt += "table_type: " + tableStruct.TableType + "\n"
 	stmt += "fields:\n"
 	for _, fieldStruct := range tableStruct.Fields {
-		stmt += "\t" + fieldStruct.FieldName + " " + fieldStruct.FieldType
+		stmt += "  " + fieldStruct.FieldName + " " + fieldStruct.FieldType
 		if fieldStruct.Required {
 			stmt += " required"
 		}
 		if fieldStruct.Unique {
 			stmt += " unique"
+		}
+		if fieldStruct.NotIndexed {
+			stmt += " nindex"
 		}
 		stmt += "\n"
 	}
@@ -69,7 +72,15 @@ func formatTableStruct(tableStruct flaarum_shared.TableStruct) string {
 	if len(tableStruct.ForeignKeys) > 0 {
 		stmt += "foreign_keys:\n"
 		for _, fks := range tableStruct.ForeignKeys {
-			stmt += "\t" + fks.FieldName + " " + fks.PointedTable + " " + fks.OnDelete + "\n"
+			stmt += "  " + fks.FieldName + " " + fks.PointedTable + " " + fks.OnDelete + "\n"
+		}
+		stmt += "::\n"
+	}
+
+	if len(tableStruct.UniqueGroups) > 0 {
+		stmt += "unique_groups:\n"
+		for _, ug := range tableStruct.UniqueGroups {
+			stmt += "  " + strings.Join(ug, " ") + "\n"
 		}
 		stmt += "::\n"
 	}
