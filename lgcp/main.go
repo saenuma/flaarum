@@ -353,9 +353,9 @@ machine_class: e2
 // 10 is the minimum.
 disk_size: 10
 
-// The resize_frequency is the number of hours before the flaarum control server resizes the flaarum data
+// The resize_frequency is the number of minutes before the flaarum control server resizes the flaarum data
 // server. You can set it to a lower value to test if the autoscaling works perfectly.
-resize_frequency: 6
+resize_frequency: 30
 
 `
     configFileName := "las" + time.Now().Format("20060102T150405") + ".zconf"

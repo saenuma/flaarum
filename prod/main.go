@@ -32,7 +32,7 @@ Supported Commands:
     masr  Make autoscaling ready. This is for the control instance. It expects in the following order projectId,
           zone, flaarum_data_instance_name, flaarum_data_instance_ip, resize_frequency, machine_class.
 
-          Example: sudo flaarum.prod masr project1 us-central1-a flaarum-2sb 192.168.1.31 6 n2d
+          Example: sudo flaarum.prod masr project1 us-central1-a flaarum-2sb 192.168.1.31 30 n2d
       `)
 
   case "r":
@@ -126,9 +126,9 @@ machine_type: e2-highcpu-2
 // in Google Cloud Console. Please consider the documentation for more details.
 machine_class: e2
 
-// The resize_frequency is the number of hours before the flaarum control server resizes the flaarum data
+// The resize_frequency is the number of minutes before the flaarum control server resizes the flaarum data
 // server. You can set it to a lower value to test if the autoscaling works perfectly.
-resize_frequency: 6
+resize_frequency: 30
 
 `
     conf, err := zazabul.ParseConfig(tmpl)

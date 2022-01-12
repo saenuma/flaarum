@@ -3,7 +3,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-co-op/gocron"
 	"time"
 	"github.com/bankole7782/flaarum/flaarum_shared"
 	"encoding/json"
@@ -17,6 +16,7 @@ import (
 	"github.com/pkg/errors"
   "github.com/bankole7782/zazabul"
   "strconv"
+	"log"
 )
 
 
@@ -65,13 +65,16 @@ func main() {
 	}
 
 	confObject = conf
-	resizeFrequency, err := strconv.ParseUint(conf.Get("resize_frequency"), 10, 64)
+	resizeFrequency, err := strconv.Atoi(conf.Get("resize_frequency"))
 	if err != nil {
 		panic(err)
 	}
-	scheduler := gocron.NewScheduler(time.UTC)
-	scheduler.Every(resizeFrequency).Hours().Do(resizeMachineType)
-	scheduler.StartBlocking()
+
+	for {
+		time.Sleep(time.Duration(resizeFrequency) * time.Minute)
+
+		resizeMachineType()
+	}
 }
 
 
@@ -132,7 +135,7 @@ func resizeMachineType() {
   if nextActionCPU == "incr" || nextActionRAM == "incr" {
   	// do increase
   	if confObject.Get("machine_type") == MTs[len(MTs) - 1] {
-  		fmt.Println("No resizing. You've gotten to the max server.")
+  		log.Println("No resizing. You've gotten to the max server.")
   		return
   	}
   	index := flaarum_shared.FindIn(MTs, confObject.Get("machine_type"))
@@ -142,15 +145,15 @@ func resizeMachineType() {
   } else if nextActionCPU == "dcr" || nextActionRAM == "dcr" {
   	// do decrease
 		if confObject.Get("machine_type") == MTs[0] {
-  		fmt.Println("No resizing. You've gotten to the smallest server.")
+  		log.Println("No resizing. You've gotten to the smallest server.")
   		return
   	}
   	index := flaarum_shared.FindIn(MTs, confObject.Get("machine_type"))
   	innerResizeMachine(MTs[index - 1])
 
-  	fmt.Println("Successfully resized the flaarum server")
+  	log.Println("Successfully resized the flaarum server")
   } else {
-  	fmt.Println("No need for resize.")
+  	log.Println("No need for resize.")
   }
 }
 
