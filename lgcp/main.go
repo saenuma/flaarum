@@ -4,8 +4,7 @@ package main
 import (
 	"fmt"
 	"context"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
+	"google.golang.org/api/option"
 	compute "google.golang.org/api/compute/v1"
 	"os"
 	"github.com/gookit/color"
@@ -202,18 +201,19 @@ sudo snap stop --disable flaarum.statsr
 
   	ctx := context.Background()
 
-  	data, err := os.ReadFile(credentialsFilePath)
-		if err != nil {
-			panic(err)
-		}
-		creds, err := google.CredentialsFromJSON(ctx, data, compute.ComputeScope)
-		if err != nil {
-			panic(err)
-		}
+  	// data, err := os.ReadFile(credentialsFilePath)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// creds, err := google.CredentialsFromJSON(ctx, data, compute.ComputeScope)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		//
+		// client := oauth2.NewClient(ctx, creds.TokenSource)
 
-		client := oauth2.NewClient(ctx, creds.TokenSource)
-
-		computeService, err := compute.New(client)
+		computeService, err := compute.NewService(ctx, option.WithCredentialsFile(credentialsFilePath),
+			option.WithScopes(compute.ComputeScope))
 		if err != nil {
 			panic(err)
 		}
@@ -443,18 +443,19 @@ sudo snap restart flaarum.statsr
 
   	ctx := context.Background()
 
-  	data, err := os.ReadFile(credentialsFilePath)
-		if err != nil {
-			panic(err)
-		}
-		creds, err := google.CredentialsFromJSON(ctx, data, compute.ComputeScope)
-		if err != nil {
-			panic(err)
-		}
+  	// data, err := os.ReadFile(credentialsFilePath)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// creds, err := google.CredentialsFromJSON(ctx, data, compute.ComputeScope)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		//
+		// client := oauth2.NewClient(ctx, creds.TokenSource)
 
-		client := oauth2.NewClient(ctx, creds.TokenSource)
-
-		computeService, err := compute.New(client)
+		computeService, err := compute.NewService(ctx, option.WithCredentialsFile(credentialsFilePath),
+			option.WithScopes(compute.ComputeScope))
 		if err != nil {
 			panic(err)
 		}
@@ -640,6 +641,10 @@ sudo snap restart flaarum.gcpasr
 
 		fmt.Println("Flaarum Server Name: " + instanceName)
 		fmt.Println("Flaarum Control Server Name: ", ctlInstanceName)
+
+	default:
+		color.Red.Println("Unexpected command. Run the lgcp with --help to find out the supported commands.")
+		os.Exit(1)
   }
 
 }

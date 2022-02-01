@@ -37,17 +37,6 @@ debug: false
 // this key can be gotten from 'flaarum.prod r' if it has been created with 'flaarum.prod c'
 in_production: false
 
-// backup_bucket is only required during production.
-// You are to create a bucket in Google cloud storage and set it to this value.
-// This is where the backups for your flaarum installation would be saved to.
-backup_bucket:
-
-// backup_frequency is the number of days before conducting a backup.
-// It must be a number not a float. The default is 14 which is two weeks.
-// You can set it to a lower value to test if the backup works perfectly.
-// The minimum value is 1
-backup_frequency: 14
-
 `
 
 func DoesPathExists(p string) bool {
@@ -86,7 +75,7 @@ func GetConfigPath() (string, error) {
 		if err != nil {
 			return "", errors.Wrap(err, "os error")
 		}
-		dd = filepath.Join(hd, ".flaarum.zconf")
+		dd = filepath.Join(hd, "flaarum_data", "flaarum.zconf")
 	} else {
 		dd = filepath.Join(dd, "flaarum.zconf")
 	}
@@ -114,7 +103,8 @@ func GetDataPath() (string, error) {
       if err != nil {
         return "", errors.Wrap(err, "os error")
       }
-      dd = filepath.Join(hd, ".flaarum_data")
+      dd = filepath.Join(hd, "flaarum_data")
+			os.MkdirAll(dd, 0777)
     } else {
       dd = filepath.Join(dd, "data")
     }
@@ -148,7 +138,7 @@ func GetKeyStrPath() string {
     if err != nil {
       panic(errors.Wrap(err, "os error"))
     }
-    keyPath = filepath.Join(hd, "flaarum.keyfile")
+    keyPath = filepath.Join(hd, "flaarum_data", "flaarum.keyfile")
   } else {
     keyPath = filepath.Join(dd, "flaarum.keyfile")
   }
@@ -164,7 +154,7 @@ func GetFlaarumPath(fileName string) (string, error) {
   dd := os.Getenv("SNAP_USER_COMMON")
 
   if strings.HasPrefix(dd, filepath.Join(hd, "snap", "go")) || dd == "" {
-    dd = filepath.Join(hd, fileName)
+    dd = filepath.Join(hd, "flaarum_data", fileName)
   } else {
     dd = filepath.Join(dd, fileName)
   }
@@ -418,7 +408,7 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 				return err
 			}
 
-		} 
+		}
 
 	} else if fieldType == "date" || fieldType == "datetime" {
 		// make time indexes
