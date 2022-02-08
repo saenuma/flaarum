@@ -4,13 +4,38 @@ package flaarum
 import (
 	"net/http"
 	"crypto/tls"
-	"github.com/pkg/errors"
 	"io"
 	"github.com/bankole7782/flaarum/flaarum_shared"
 	"time"
 	"net/url"
 )
 
+
+type ConnError struct {
+  msg string // description of error
+}
+
+func (e ConnError) Error() string {
+	return e.msg
+}
+
+
+type ValidationError struct {
+  msg string // description of error
+}
+
+func (e ValidationError) Error() string {
+	return e.msg
+}
+
+
+type ServerError struct {
+  msg string // description of error
+}
+
+func (e ServerError) Error() string {
+	return e.msg
+}
 
 var httpCl *http.Client
 
@@ -38,7 +63,7 @@ func (cl *Client) Ping() error {
 
 	resp, err := httpCl.PostForm(cl.Addr + "is-flaarum", urlValues)
 	if err != nil {
-		return errors.Wrap(err, "http error")
+		return ConnError{err.Error()}
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
@@ -47,10 +72,10 @@ func (cl *Client) Ping() error {
 		if string(body) == "yeah-flaarum" {
 			return nil
 		} else {
-			return errors.New("Unexpected Error in confirming that the server is a flaarum store.")
+			return ConnError{"Unexpected Error in confirming that the server is a flaarum store."}
 		}
 	} else {
-		return errors.New(string(body))
+		return ConnError{string(body)}
 	}
 }
 

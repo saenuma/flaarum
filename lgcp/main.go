@@ -201,17 +201,6 @@ sudo snap stop --disable flaarum.statsr
 
   	ctx := context.Background()
 
-  	// data, err := os.ReadFile(credentialsFilePath)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// creds, err := google.CredentialsFromJSON(ctx, data, compute.ComputeScope)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		//
-		// client := oauth2.NewClient(ctx, creds.TokenSource)
-
 		computeService, err := compute.NewService(ctx, option.WithCredentialsFile(credentialsFilePath),
 			option.WithScopes(compute.ComputeScope))
 		if err != nil {
@@ -442,17 +431,6 @@ sudo snap restart flaarum.statsr
 `
 
   	ctx := context.Background()
-
-  	// data, err := os.ReadFile(credentialsFilePath)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// creds, err := google.CredentialsFromJSON(ctx, data, compute.ComputeScope)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		//
-		// client := oauth2.NewClient(ctx, creds.TokenSource)
 
 		computeService, err := compute.NewService(ctx, option.WithCredentialsFile(credentialsFilePath),
 			option.WithScopes(compute.ComputeScope))

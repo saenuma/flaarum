@@ -25,7 +25,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 
   tableName := stmtStruct.TableName
   if ! doesTableExists(projName, tableName) {
-    printError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
+    printValError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
     return
   }
 
@@ -99,7 +99,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
   for i, row := range patchedRows {
     validatedRow, err := validateAndMutateDataMap(projName, tableName, row, (*rows)[i])
     if err != nil {
-      printError(w, err)
+      printValError(w, err)
       return
     }
     patchedRows[i] = validatedRow
@@ -133,7 +133,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
       if isNotIndexedField(projName, tableName, fieldName) {
         continue
       }
-      
+
       allOldRows := *rows
       oldRow := allOldRows[i]
 

@@ -2,7 +2,6 @@ package flaarum
 
 import (
 	"io"
-	"github.com/pkg/errors"
 	"net/url"
 	"fmt"
 	"strconv"
@@ -18,18 +17,18 @@ func (cl *Client) CreateTable(stmt string) error {
 
 	resp, err := httpCl.PostForm( cl.Addr + "create-table/" + cl.ProjName, urlValues)
 	if err != nil {
-		return errors.Wrap(err, "http error")
+		return ConnError{err.Error()}
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrap(err, "ioutil error)")
+		return ConnError{"ioutil error\n" + err.Error()}
 	}
 
 	if resp.StatusCode == 200 {
 		return nil
 	} else {
-		return errors.New(string(body))
+		return ServerError{string(body)}
 	}
 }
 
@@ -41,18 +40,18 @@ func (cl *Client) UpdateTableStructure(stmt string) error {
 
 	resp, err := httpCl.PostForm( cl.Addr + "update-table-structure/" + cl.ProjName, urlValues)
 	if err != nil {
-		return errors.Wrap(err, "http error")
+		return ConnError{err.Error()}
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrap(err, "ioutil error)")
+		return ConnError{"ioutil error\n" + err.Error()}
 	}
 
 	if resp.StatusCode == 200 {
 		return nil
 	} else {
-		return errors.New(string(body))
+		return ServerError{string(body)}
 	}
 }
 
@@ -63,22 +62,22 @@ func (cl *Client) GetCurrentTableVersionNum(tableName string) (int64, error) {
 
 	resp, err := httpCl.PostForm(fmt.Sprintf("%sget-current-version-num/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
 	if err != nil {
-		return -1, errors.Wrap(err, "http error")
+		return -1, ConnError{err.Error()}
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return -1, errors.Wrap(err, "ioutil error")
+		return -1, ConnError{err.Error()}
 	}
 
 	if resp.StatusCode == 200 {
 		retId, err := strconv.ParseInt(string(body), 10, 64)
 		if err != nil {
-			return -1, errors.Wrap(err, "strconv error")
+			return -1, ConnError{"strconv error\n" + err.Error()}
 		}
 		return retId, nil
 	} else {
-		return -1, errors.New(string(body))
+		return -1, ServerError{string(body)}
 	}
 }
 
@@ -90,18 +89,18 @@ func (cl *Client) GetTableStructure(tableName string, versionNum int64) (string,
 	resp, err := httpCl.PostForm(fmt.Sprintf("%sget-table-structure/%s/%s/%d", cl.Addr, cl.ProjName, tableName, versionNum),
 		urlValues)
 	if err != nil {
-		return "", errors.Wrap(err, "http error")
+		return "", ConnError{err.Error()}
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", errors.Wrap(err, "ioutil error")
+		return "", ConnError{err.Error()}
 	}
 
 	if resp.StatusCode == 200 {
 		return string(body), nil
 	} else {
-		return "", errors.New(string(body))
+		return "", ServerError{string(body)}
 	}
 }
 
@@ -135,18 +134,18 @@ func (cl *Client) EmptyTable(tableName string) error {
   resp, err := httpCl.PostForm(cl.Addr + "empty-table/" + cl.ProjName + "/" + tableName,
     urlValues)
   if err != nil {
-    return errors.Wrap(err, "error contacting site")
+    return ConnError{err.Error()}
   }
   defer resp.Body.Close()
   body, err :=  io.ReadAll(resp.Body)
   if err != nil {
-    return errors.Wrap(err, "ioutil error")
+    return ConnError{err.Error()}
   }
 
   if resp.StatusCode == 200 {
     return nil
   } else {
-    return errors.New(string(body))
+    return ServerError{string(body)}
   }
 }
 
@@ -157,23 +156,23 @@ func (cl Client) ListTables() ([]string, error) {
 
   resp, err := httpCl.PostForm(fmt.Sprintf("%slist-tables/%s", cl.Addr, cl.ProjName), urlValues)
   if err != nil {
-    return nil, errors.Wrap(err, "error contacting site")
+    return nil, ConnError{err.Error()}
   }
   defer resp.Body.Close()
   body, err :=  io.ReadAll(resp.Body)
   if err != nil {
-    return nil, errors.Wrap(err, "ioutil error")
+    return nil, ConnError{err.Error()}
   }
 
   if resp.StatusCode == 200 {
     tables := make([]string, 0)
     err = json.Unmarshal(body, &tables)
     if err != nil {
-      return nil, errors.Wrap(err, "json error.")
+      return nil, ConnError{"json error\n" + err.Error()}
     }
     return tables, nil
   } else {
-    return nil, errors.New(string(body))
+    return nil, ServerError{string(body)}
   }
 
 }
@@ -186,18 +185,18 @@ func (cl *Client) RenameTable(tableName, newTableName string) error {
   resp, err := httpCl.PostForm(cl.Addr + "rename-table/" + cl.ProjName + "/" + tableName + "/" + newTableName,
     urlValues)
   if err != nil {
-    return errors.Wrap(err, "error contacting site")
+    return ConnError{err.Error()}
   }
   defer resp.Body.Close()
   body, err :=  io.ReadAll(resp.Body)
   if err != nil {
-    return errors.Wrap(err, "ioutil error")
+    return ConnError{err.Error()}
   }
 
   if resp.StatusCode == 200 {
     return nil
   } else {
-    return errors.New(string(body))
+    return ServerError{string(body)}
   }
 }
 
@@ -208,17 +207,17 @@ func (cl *Client) DeleteTable(tableName string) error {
 
   resp, err := httpCl.PostForm(cl.Addr + "delete-table/" + cl.ProjName + "/" + tableName , urlValues)
   if err != nil {
-    return errors.Wrap(err, "error contacting site")
+    return ConnError{err.Error()}
   }
   defer resp.Body.Close()
   body, err :=  io.ReadAll(resp.Body)
   if err != nil {
-    return errors.Wrap(err, "ioutil error")
+    return ConnError{err.Error()}
   }
 
   if resp.StatusCode == 200 {
     return nil
   } else {
-    return errors.New(string(body))
+    return ServerError{string(body)}
   }
 }

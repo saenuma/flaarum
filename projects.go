@@ -1,7 +1,6 @@
 package flaarum
 
 import (
-	"github.com/pkg/errors"
 	"io"
 	"encoding/json"
 	"net/url"
@@ -14,18 +13,18 @@ func (cl *Client) CreateProject(projName string) error {
 
 	resp, err := httpCl.PostForm( cl.Addr + "create-project/" + projName, urlValues)
 	if err != nil {
-		return errors.Wrap(err, "http error")
+		return ConnError{err.Error()}
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrap(err, "ioutil error)")
+		return ConnError{"ioutil error\n" + err.Error()}
 	}
 
 	if resp.StatusCode == 200 {
 		return nil
 	} else {
-		return errors.New(string(body))
+		return ServerError{string(body)}
 	}
 }
 
@@ -36,18 +35,18 @@ func (cl *Client) DeleteProject(projName string) error {
 
 	resp, err := httpCl.PostForm( cl.Addr + "delete-project/" + projName, urlValues)
 	if err != nil {
-		return errors.Wrap(err, "http error")
+		return ConnError{err.Error()}
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrap(err, "ioutil error)")
+		return ConnError{"ioutil error\n" + err.Error()}
 	}
 
 	if resp.StatusCode == 200 {
 		return nil
 	} else {
-		return errors.New(string(body))
+		return ServerError{string(body)}
 	}
 }
 
@@ -58,23 +57,23 @@ func (cl *Client) ListProjects() ([]string, error) {
 
 	resp, err := httpCl.PostForm( cl.Addr + "list-projects", urlValues)
 	if err != nil {
-		return []string{}, errors.Wrap(err, "http error")
+		return []string{}, ConnError{err.Error()}
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return []string{}, errors.Wrap(err, "ioutil error)")
+		return []string{}, ConnError{"ioutil error\n" + err.Error()}
 	}
 
 	if resp.StatusCode == 200 {
 		ret := make([]string, 0)
 		err := json.Unmarshal(body, &ret)
 		if err != nil {
-			return []string{}, errors.Wrap(err, "json error")
+			return []string{}, ConnError{"json error\n" + err.Error()}
 		}
 		return ret, nil
 	} else {
-		return []string{}, errors.New(string(body))
+		return []string{}, ServerError{string(body)}
 	}
 }
 
@@ -86,17 +85,17 @@ func (cl *Client) RenameProject(projName, newProjName string) error {
   resp, err := httpCl.PostForm(cl.Addr + "rename-project/" + projName + "/" + newProjName,
     urlValues)
   if err != nil {
-    return errors.Wrap(err, "error contacting site")
+    return ConnError{err.Error()}
   }
   defer resp.Body.Close()
   body, err :=  io.ReadAll(resp.Body)
   if err != nil {
-    return errors.Wrap(err, "ioutil error")
+    return ConnError{err.Error()}
   }
 
   if resp.StatusCode == 200 {
     return nil
   } else {
-    return errors.New(string(body))
+    return ServerError{string(body)}
   }
 }

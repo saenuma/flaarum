@@ -245,7 +245,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 	// check if data conforms with table structure
   toInsert, err = validateAndMutateDataMap(projName, tableName, toInsert, nil)
   if err != nil {
-  	printError(w, err)
+  	printValError(w, err)
     return
   }
 

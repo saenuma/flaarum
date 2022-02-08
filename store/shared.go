@@ -34,6 +34,17 @@ func printError(w http.ResponseWriter, err error) {
   fmt.Printf("%+v\n", err)
   debug := flaarum_shared.GetSetting("debug")
   if debug == "true" {
+    http.Error(w, fmt.Sprintf("%+v", err), http.StatusInternalServerError)
+  } else {
+    http.Error(w, fmt.Sprintf("%s", err), http.StatusInternalServerError)
+  }
+}
+
+
+func printValError(w http.ResponseWriter, err error) {
+  fmt.Printf("%+v\n", err)
+  debug := flaarum_shared.GetSetting("debug")
+  if debug == "true" {
     http.Error(w, fmt.Sprintf("%+v", err), http.StatusBadRequest)
   } else {
     http.Error(w, fmt.Sprintf("%s", err), http.StatusBadRequest)

@@ -2,7 +2,6 @@ package flaarum
 
 import (
 	"io"
-	"github.com/pkg/errors"
 	"net/url"
 	"strconv"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/bankole7782/flaarum/flaarum_shared"
 	"encoding/json"
   "strings"
+	"errors"
 )
 
 
@@ -25,18 +25,20 @@ func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (st
 
 	resp, err := httpCl.PostForm(fmt.Sprintf("%sinsert-row/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
 	if err != nil {
-		return "", errors.Wrap(err, "http error")
+		return "", ConnError{err.Error()}
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", errors.Wrap(err, "ioutil error")
+		return "", ConnError{err.Error()}
 	}
 
 	if resp.StatusCode == 200 {
 		return string(body), nil
+	} else if resp.StatusCode == 400 {
+		return "", ValidationError{string(body)}
 	} else {
-		return "", errors.New(string(body))
+		return "", ServerError{string(body)}
 	}
 }
 
@@ -105,7 +107,7 @@ func (cl *Client) convertInterfaceMapToStringMap(tableName string, oldMap map[st
 func (cl *Client) InsertRowAny(tableName string, toInsert map[string]interface{}) (string, error) {
 	toInsertStr, err := cl.convertInterfaceMapToStringMap(tableName, toInsert)
   if err != nil {
-    return "", err
+    return "", ValidationError{err.Error()}
   }
 
 	return cl.InsertRowStr(tableName, toInsertStr)
@@ -126,7 +128,7 @@ func (cl *Client) ParseRow (rowStr map[string]string, tableStruct flaarum_shared
 
     versionInt, err := strconv.ParseInt(rowStr[fkd.FieldName + "._version"], 10, 64)
   	if err != nil {
-  		return nil, errors.Wrap(err, "strconv error")
+  		return nil, err
   	}
 
     otherTableStruct, err := cl.GetTableStructureParsed(fkd.PointedTable, versionInt)
@@ -187,7 +189,7 @@ func (cl *Client) ParseRow (rowStr map[string]string, tableStruct flaarum_shared
   if _, ok := rowStr["_version"]; ok {
     versionInt, err := strconv.ParseInt(rowStr["_version"], 10, 64)
     if err != nil {
-      return nil, errors.Wrap(err, "strconv error")
+      return nil, err
     }
     tmpRow["_version"] = versionInt
   }
@@ -195,7 +197,7 @@ func (cl *Client) ParseRow (rowStr map[string]string, tableStruct flaarum_shared
     if _, ok := rowStr[fkd.FieldName + "._version"]; ok {
       versionInt, err := strconv.ParseInt(rowStr[fkd.FieldName + "._version"], 10, 64)
       if err != nil {
-        return nil, errors.Wrap(err, "strconv error")
+        return nil, err
       }
       tmpRow[fkd.FieldName + "._version"] = versionInt
     }
@@ -212,20 +214,20 @@ func (cl *Client) Search (stmt string) (*[]map[string]interface{}, error) {
 
   resp, err := httpCl.PostForm(cl.Addr + "search-table/" + cl.ProjName, urlValues)
   if err != nil {
-    return nil, errors.Wrap(err, "server read failed.")
+    return nil, ConnError{err.Error()}
   }
   defer resp.Body.Close()
 
   body, err := io.ReadAll(resp.Body)
   if err != nil {
-    return nil, errors.Wrap(err, "ioutil read failed.")
+    return nil, ConnError{err.Error()}
   }
 
   if resp.StatusCode == 200 {
     rowsStr := make([]map[string]string, 0)
     err = json.Unmarshal(body, &rowsStr)
     if err != nil {
-      return nil, errors.Wrap(err, "json error.")
+      return nil, ConnError{"json error\n" + err.Error()}
     }
 
     ret := make([]map[string]interface{}, 0)
@@ -237,22 +239,22 @@ func (cl *Client) Search (stmt string) (*[]map[string]interface{}, error) {
     for _, rowStr := range rowsStr {
     	versionInt, err := strconv.ParseInt(rowStr["_version"], 10, 64)
     	if err != nil {
-    		return nil, errors.Wrap(err, "strconv error")
+    		return nil, ConnError{"strconv error\n" + err.Error()}
     	}
       versionedTableStruct, err := cl.GetTableStructureParsed(stmtStruct.TableName, versionInt)
       if err != nil {
-        return nil, err
+        return nil, ConnError{err.Error()}
       }
       row, err := cl.ParseRow(rowStr, versionedTableStruct)
       if err != nil {
-        return nil, err
+        return nil, ConnError{err.Error()}
       }
       ret = append(ret, row)
     }
 
     return &ret, nil
   } else {
-    return nil, errors.New(string(body))
+    return nil, ServerError{string(body)}
   }
 }
 
@@ -265,20 +267,20 @@ func (cl Client) SearchForOne(stmt string) (*map[string]interface{}, error) {
 
   resp, err := httpCl.PostForm(cl.Addr + "search-table/" + cl.ProjName, urlValues)
   if err != nil {
-    return nil, errors.Wrap(err, "server read failed.")
+    return nil, ConnError{err.Error()}
   }
   defer resp.Body.Close()
 
   body, err := io.ReadAll(resp.Body)
   if err != nil {
-    return nil, errors.Wrap(err, "ioutil read failed.")
+    return nil, ConnError{err.Error()}
   }
 
   if resp.StatusCode == 200 {
     rowStr := make(map[string]string)
     err = json.Unmarshal(body, &rowStr)
     if err != nil {
-      return nil, errors.Wrap(err, "json error")
+      return nil, ConnError{"json error\n" + err.Error()}
     }
 
     stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
@@ -288,20 +290,20 @@ func (cl Client) SearchForOne(stmt string) (*map[string]interface{}, error) {
 
   	versionInt, err := strconv.ParseInt(rowStr["_version"], 10, 64)
   	if err != nil {
-  		return nil, errors.Wrap(err, "strconv error")
+  		return nil, ConnError{"strconv error\n" + err.Error()}
   	}
     versionedTableStruct, err := cl.GetTableStructureParsed(stmtStruct.TableName, versionInt)
     if err != nil {
-      return nil, err
+      return nil, ConnError{err.Error()}
     }
 
     row, err := cl.ParseRow(rowStr, versionedTableStruct)
     if err != nil {
-      return nil, err
+      return nil, ConnError{err.Error()}
     }
     return &row, nil
   } else {
-    return nil, errors.New(string(body))
+    return nil, ServerError{string(body)}
   }
 }
 
@@ -313,19 +315,19 @@ func (cl Client) DeleteRows(stmt string) error {
 
   resp, err := httpCl.PostForm(fmt.Sprintf("%sdelete-rows/%s", cl.Addr, cl.ProjName), urlValues)
   if err != nil {
-    return errors.Wrap(err, "server read failed.")
+    return ConnError{err.Error()}
   }
   defer resp.Body.Close()
 
   body, err := io.ReadAll(resp.Body)
   if err != nil {
-    return errors.Wrap(err, "ioutil read failed.")
+    return ConnError{err.Error()}
   }
 
   if resp.StatusCode == 200 {
     return nil
   } else {
-    return errors.New(string(body))
+    return ServerError{string(body)}
   }
 }
 
@@ -340,19 +342,19 @@ func (cl Client) DeleteFields(stmt string, toDeleteFields []string) error {
 
   resp, err := httpCl.PostForm(fmt.Sprintf("%sdelete-fields/%s", cl.Addr, cl.ProjName), urlValues)
   if err != nil {
-    return errors.Wrap(err, "server read failed.")
+    return ConnError{err.Error()}
   }
   defer resp.Body.Close()
 
   body, err := io.ReadAll(resp.Body)
   if err != nil {
-    return errors.Wrap(err, "ioutil read failed.")
+    return ConnError{err.Error()}
   }
 
   if resp.StatusCode == 200 {
     return nil
   } else {
-    return errors.New(string(body))
+    return ServerError{string(body)}
   }
 }
 
@@ -364,24 +366,24 @@ func (cl Client) CountRows(stmt string) (int64, error) {
 
   resp, err := httpCl.PostForm(fmt.Sprintf("%scount-rows/%s", cl.Addr, cl.ProjName), urlValues)
   if err != nil {
-    return 0, errors.Wrap(err, "server read failed.")
+    return 0, ConnError{err.Error()}
   }
   defer resp.Body.Close()
 
   body, err := io.ReadAll(resp.Body)
   if err != nil {
-    return 0, errors.Wrap(err, "ioutil read failed.")
+    return 0, ConnError{err.Error()}
   }
 
   if resp.StatusCode == 200 {
     r := string(body)
     trueR, err := strconv.ParseInt(r, 10, 64)
     if err != nil {
-      return 0, errors.Wrap(err, "strconv failed.")
+      return 0, ConnError{"strconv error\n" + err.Error()}
     }
     return trueR, nil
   } else {
-    return 0, errors.New(string(body))
+    return 0, ServerError{string(body)}
   }
 }
 
@@ -392,24 +394,24 @@ func (cl Client) AllRowsCount(tableName string) (int64, error) {
 
   resp, err := httpCl.PostForm(fmt.Sprintf("%sall-rows-count/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
   if err != nil {
-    return 0, errors.Wrap(err, "server read failed.")
+    return 0, ConnError{err.Error()}
   }
   defer resp.Body.Close()
 
   body, err := io.ReadAll(resp.Body)
   if err != nil {
-    return 0, errors.Wrap(err, "ioutil read failed.")
+    return 0, ConnError{err.Error()}
   }
 
   if resp.StatusCode == 200 {
     r := string(body)
     trueR, err := strconv.ParseInt(r, 10, 64)
     if err != nil {
-      return 0, errors.Wrap(err, "strconv failed.")
+      return 0, ConnError{"strconv error\n" + err.Error()}
     }
     return trueR, nil
   } else {
-    return 0, errors.New(string(body))
+    return 0, ServerError{string(body)}
   }
 }
 
@@ -423,19 +425,19 @@ func (cl Client) SumRows(stmt, toSumField string) (interface{}, error) {
 
   resp, err := httpCl.PostForm(fmt.Sprintf("%ssum-rows/%s", cl.Addr, cl.ProjName), urlValues)
   if err != nil {
-    return 0, errors.Wrap(err, "server read failed.")
+    return 0, ConnError{err.Error()}
   }
   defer resp.Body.Close()
 
   body, err := io.ReadAll(resp.Body)
   if err != nil {
-    return 0, errors.Wrap(err, "ioutil read failed.")
+    return 0, ConnError{err.Error()}
   }
 
   if resp.StatusCode == 200 {
     stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
     if err != nil {
-      return nil, err
+      return nil, ValidationError{err.Error()}
     }
 
     tableStruct, err := cl.GetCurrentTableStructureParsed(stmtStruct.TableName)
@@ -453,18 +455,18 @@ func (cl Client) SumRows(stmt, toSumField string) (interface{}, error) {
     if toSumFieldType == "int" {
       trueR, err := strconv.ParseInt(r, 10, 64)
       if err != nil {
-        return 0, errors.Wrap(err, "strconv failed.")
+        return 0, ConnError{"strconv error\n" + err.Error()}
       }
       return trueR, nil
     } else {
       trueR, err := strconv.ParseFloat(r, 64)
       if err != nil {
-        return 0, errors.Wrap(err, "strconv failed.")
+        return 0, ConnError{"strconv error\n" + err.Error()}
       }
       return trueR, nil
     }
   } else {
-    return 0, errors.New(string(body))
+    return 0, ServerError{string(body)}
   }
 }
 
@@ -486,19 +488,19 @@ func (cl Client) UpdateRowsStr(stmt string, updateDataStr map[string]string) err
 
   resp, err := httpCl.PostForm(fmt.Sprintf("%supdate-rows/%s", cl.Addr, cl.ProjName), urlValues)
   if err != nil {
-    return errors.Wrap(err, "server read failed.")
+    return ConnError{err.Error()}
   }
   defer resp.Body.Close()
 
   body, err := io.ReadAll(resp.Body)
   if err != nil {
-    return errors.Wrap(err, "ioutil read failed.")
+    return ConnError{err.Error()}
   }
 
   if resp.StatusCode == 200 {
     return nil
   } else {
-    return errors.New(string(body))
+    return ServerError{string(body)}
   }
 }
 
@@ -506,11 +508,11 @@ func (cl Client) UpdateRowsStr(stmt string, updateDataStr map[string]string) err
 func (cl Client) UpdateRowsAny(stmt string, updateData map[string]interface{}) error {
   stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
   if err != nil {
-    return err
+    return ValidationError{err.Error()}
   }
   updateDataStr, err := cl.convertInterfaceMapToStringMap(stmtStruct.TableName, updateData)
   if err != nil {
-    return err
+    return ValidationError{err.Error()}
   }
 
   return cl.UpdateRowsStr(stmt, updateDataStr)
