@@ -1402,6 +1402,37 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 				charsOfData := strings.Split(whereStruct.FieldValue, "")
 
 				if strings.Contains(whereStruct.FieldName, ".") {
+          parts := strings.Split(whereStruct.FieldName, ".")
+
+          pTbl, ok := expDetails[parts[0]]
+          if ! ok {
+            continue
+          }
+          indexesPath := filepath.Join(getTablePath(projName, pTbl), "likeindexes", parts[1])
+
+					tmpIds := make([][]string, 0)
+					for _, char := range charsOfData {
+						if char == "/" {
+							continue
+						}
+
+						indexesForAChar := filepath.Join(indexesPath, char)
+						if flaarum_shared.DoesPathExists(indexesForAChar) {
+							raw, err := os.ReadFile(indexesForAChar)
+							if err != nil {
+								return nil, errors.Wrap(err, "read file failed.")
+							}
+							tmpIds = append(tmpIds, strings.Split(string(raw), "\n"))
+						}
+					}
+
+					trueWhereValues := arrayOperations.IntersectString(tmpIds...)
+
+					stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+          if err != nil {
+            return nil, err
+          }
+          beforeFilter = append(beforeFilter, stringIds)
 
 				} else {
 					tmpIds := make([][]string, 0)
