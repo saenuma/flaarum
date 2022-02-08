@@ -137,6 +137,12 @@ func inCommand() {
         log.Println(err)
       }
 
+			toMakePath = filepath.Join(dataPath, projName, tblFI.Name(), "likeindexes")
+      err = os.MkdirAll(toMakePath, 0777)
+      if err != nil {
+        log.Println(err)
+      }
+
       rowFIs, err := os.ReadDir(filepath.Join(dataPath, projName, tblFI.Name(), "data"))
       if err != nil {
         log.Println(err)

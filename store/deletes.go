@@ -311,6 +311,31 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
   			}
       }
     }
+  } else if confirmFieldType(projName, tableName, fieldName, "string", version) {
+    likeIndexesPath := filepath.Join(dataPath, projName, tableName, "likeindexes", fieldName)
+    if flaarum_shared.DoesPathExists(likeIndexesPath) {
+      charsOfData := strings.Split(data, "")
+      for _, char := range charsOfData {
+        indexesForAChar := filepath.Join(likeIndexesPath, char)
+        raw, err := os.ReadFile(indexesForAChar)
+        if err != nil {
+          return errors.Wrap(err, "read file failed.")
+        }
+        writtenIds := strings.Split(string(raw), "\n")
+        toWriteIds := arrayOperations.DifferenceString([]string{rowId}, writtenIds)
+        if len(toWriteIds) == 0 {
+          err = os.Remove(indexesForAChar)
+          if err != nil {
+            return errors.Wrap(err, "file delete failed.")
+          }
+        } else {
+          err = os.WriteFile(indexesForAChar, []byte(strings.Join(toWriteIds, "\n")), 0777)
+          if err != nil {
+            return errors.Wrap(err, "file write failed.")
+          }
+        }
+      }
+    }
   }
 
 

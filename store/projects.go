@@ -97,7 +97,7 @@ func listProjects(w http.ResponseWriter, r *http.Request) {
 	dataPath, _ := GetDataPath()
 
 	projsMutex.RLock()
-	defer projsMutex.RUnlock()	
+	defer projsMutex.RUnlock()
 
 	fis, err := os.ReadDir(dataPath)
 	if err != nil {
@@ -107,13 +107,15 @@ func listProjects(w http.ResponseWriter, r *http.Request) {
 
 	projs := make([]string, 0)
 	for _, fi := range fis {
-		projs = append(projs, fi.Name())
+		if fi.IsDir() {
+			projs = append(projs, fi.Name())
+		}
 	}
 
 	jsonBytes, err := json.Marshal(projs)
 	if err != nil {
 		printError(w, errors.Wrap(err, "json error"))
-		return 
+		return
 	}
 
 	w.Write(jsonBytes)

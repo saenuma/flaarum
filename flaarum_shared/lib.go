@@ -444,6 +444,30 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 			err = WriteTimeIndexesToFile(newTimeIndexes, timeIndexesFile, fieldType)
 		}
 
+	} else if fieldType == "string" {
+		likeIndexesPath := filepath.Join(dataPath, projName, tableName, "likeindexes", fieldName)
+		os.MkdirAll(likeIndexesPath, 0777)
+		charsOfData := strings.Split(newData, "")
+		for _, char := range charsOfData {
+			indexesForAChar := filepath.Join(likeIndexesPath, char)
+			if ! DoesPathExists(indexesForAChar) {
+				err = os.WriteFile(indexesForAChar, []byte(rowId), 0777)
+				if err != nil {
+					return errors.Wrap(err, "file write failed.")
+				}
+			} else {
+				raw, err := os.ReadFile(indexesForAChar)
+		    if err != nil {
+		      return errors.Wrap(err, "read failed.")
+		    }
+		    previousEntries := strings.Split(string(raw), "\n")
+		    newEntries := arrayOperations.UnionString(previousEntries, []string{rowId})
+		    err = os.WriteFile(indexesForAChar, []byte(strings.Join(newEntries, "\n")), 0777)
+		    if err != nil {
+		      return errors.Wrap(err, "write failed.")
+		    }
+			}
+		}
 	}
 
   return nil

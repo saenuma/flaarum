@@ -117,7 +117,7 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	toMake := []string{"data", "indexes", "tindexes", "structures", "txtinstrs", "intindexes", "timeindexes",}
+	toMake := []string{"data", "indexes", "tindexes", "structures", "txtinstrs", "intindexes", "timeindexes", "likeindexes",}
 	for _, tm := range toMake {
 		err := os.MkdirAll(filepath.Join(dataPath, projName, tableStruct.TableName, tm), 0777)
 		if err != nil {
@@ -300,16 +300,22 @@ func emptyTable(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  toDelete := []string{"data", "indexes", "tindexes", "txtinstrs", "intindexes", "timeindexes", "lastId"}
+  toDelete := []string{"data", "indexes", "tindexes", "txtinstrs", "intindexes", "timeindexes", "likeindexes",}
   for _, todo := range toDelete {
     err := os.RemoveAll(filepath.Join(dataPath, projName, tableName, todo))
     if err != nil {
       printError(w, errors.Wrap(err, "delete directory failed."))
       return
     }
+
+		err = os.Remove(filepath.Join(dataPath, projName, tableName, "lastId"))
+		if err != nil {
+			printError(w, errors.Wrap(err, "delete file failed."))
+			return
+		}
   }
 
-  for _, tm := range toDelete[:6] {
+  for _, tm := range toDelete {
     toMakePath := filepath.Join(dataPath, projName, tableName, tm)
     err := os.MkdirAll(toMakePath, 0777)
     if err != nil {
