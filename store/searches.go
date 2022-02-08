@@ -184,10 +184,17 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 				}
 
+			if fieldNamesToFieldTypes[whereStruct.FieldName] != "string" && whereStruct.Relation == "like" {
+				return nil, errors.New(fmt.Sprintf("The field type '%s' does not support the query relation 'like'", fieldNamesToFieldTypes[whereStruct.FieldName]))
+			}
+
 			if whereStruct.FieldName == "id" {
 				if whereStruct.Relation == ">" || whereStruct.Relation == ">=" || whereStruct.Relation == "<" || whereStruct.Relation == "<=" {
 					return nil, errors.New(fmt.Sprintf("Invalid statement: The 'id' field does not support the query relation '%s'",
 						whereStruct.Relation))
+				}
+				if whereStruct.Relation == "like" {
+					return nil, errors.New("Invalid statment: the 'id' field does not support the query relation 'like'")
 				}
 			}
 			if fieldNamesToFieldTypes[whereStruct.FieldName] == "text" && whereStruct.Relation != "fts" {
@@ -1391,7 +1398,34 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           beforeFilter = append(beforeFilter, stringIds)
         }
 
-      }
+      } else if whereStruct.Relation == "like" {
+				charsOfData := strings.Split(whereStruct.FieldValue, "")
+
+				if strings.Contains(whereStruct.FieldName, ".") {
+
+				} else {
+					tmpIds := make([][]string, 0)
+					for _, char := range charsOfData {
+						if char == "/" {
+							continue
+						}
+
+						indexesForAChar := filepath.Join(dataPath, projName, tableName, "likeindexes", whereStruct.FieldName, char)
+						if flaarum_shared.DoesPathExists(indexesForAChar) {
+							raw, err := os.ReadFile(indexesForAChar)
+							if err != nil {
+								return nil, errors.Wrap(err, "read file failed.")
+							}
+							tmpIds = append(tmpIds, strings.Split(string(raw), "\n"))
+						}
+					}
+
+					stringIds := arrayOperations.IntersectString(tmpIds...)
+
+					beforeFilter = append(beforeFilter, stringIds)
+				}
+
+			} // end of like search
 
 		}
 

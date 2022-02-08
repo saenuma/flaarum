@@ -449,7 +449,10 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 		os.MkdirAll(likeIndexesPath, 0777)
 		charsOfData := strings.Split(newData, "")
 		for _, char := range charsOfData {
-			indexesForAChar := filepath.Join(likeIndexesPath, char)
+			if char == "/" {
+				continue
+			}
+			indexesForAChar := filepath.Join(likeIndexesPath, strings.ToLower(char))
 			if ! DoesPathExists(indexesForAChar) {
 				err = os.WriteFile(indexesForAChar, []byte(rowId), 0777)
 				if err != nil {
