@@ -27,7 +27,6 @@ parts:
       go build -o $SNAPCRAFT_PART_INSTALL/bin/cli ./cli
       go build -o $SNAPCRAFT_PART_INSTALL/bin/daemon ./daemon
       go build -o $SNAPCRAFT_PART_INSTALL/bin/gcpasr ./gcpasr
-      go build -o $SNAPCRAFT_PART_INSTALL/bin/inout ./inout
       go build -o $SNAPCRAFT_PART_INSTALL/bin/lgcp ./lgcp
       go build -o $SNAPCRAFT_PART_INSTALL/bin/prod ./prod
       go build -o $SNAPCRAFT_PART_INSTALL/bin/progs ./progs
