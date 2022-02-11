@@ -447,7 +447,7 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 	} else if fieldType == "string" {
 		likeIndexesPath := filepath.Join(dataPath, projName, tableName, "likeindexes", fieldName)
 		os.MkdirAll(likeIndexesPath, 0777)
-		charsOfData := strings.Split(newData, "")
+		charsOfData := strings.Split(strings.ToLower(newData), "")
 		for _, char := range charsOfData {
 			if char == "/" {
 				continue

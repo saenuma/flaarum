@@ -1399,7 +1399,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
         }
 
       } else if whereStruct.Relation == "like" {
-				charsOfData := strings.Split(whereStruct.FieldValue, "")
+				charsOfData := strings.Split(strings.ToLower(whereStruct.FieldValue), "")
 
 				if strings.Contains(whereStruct.FieldName, ".") {
           parts := strings.Split(whereStruct.FieldName, ".")
