@@ -85,6 +85,8 @@ func main() {
 					go outCommand()
 				} else if strings.HasSuffix(event.Path, ".in_instr") {
 					go inCommand()
+				} else if strings.HasSuffix(event.Path, ".ast_instr") {
+					go astCommand()
 				}
 			case err := <-w.Error:
 				log.Fatalln(err)

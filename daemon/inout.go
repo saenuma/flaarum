@@ -53,11 +53,10 @@ func inCommand() {
   projName := partsOfFile[0]
   inputPath := partsOfFile[1]
 
+	log.Printf("Received instruction to import into  Project '%s' from file %s\n", projName, inputPath)
+
   tmpFolderName := fmt.Sprintf(".flaarumin-%s", flaarum_shared.UntestedRandomString(10))
-  tmpFolder, err := flaarum_shared.GetFlaarumPath(tmpFolderName)
-  if err != nil {
-    log.Println(err)
-  }
+  tmpFolder := filepath.Join(dataPath, tmpFolderName)
 
   err = os.MkdirAll(tmpFolder, 0777)
   if err != nil {
@@ -233,11 +232,10 @@ func outCommand() {
   }
   projName := strings.TrimSpace(string(projNameRaw))
 
+	log.Println("Received instruction to export Project " + projName)
+
   tmpFolderName := fmt.Sprintf(".flaarumout-%s", flaarum_shared.UntestedRandomString(10))
-  tmpFolder, err := flaarum_shared.GetFlaarumPath(tmpFolderName)
-  if err != nil {
-    log.Println(err)
-  }
+  tmpFolder := filepath.Join(dataPath, tmpFolderName)
 
   err = os.MkdirAll(tmpFolder, 0777)
   if err != nil {
@@ -274,14 +272,12 @@ func outCommand() {
 
   outFileName := fmt.Sprintf("flaarumout-%s.%s", time.Now().Format("20060102T1504"), flaarum_shared.BACKUP_EXT)
 
-  outFilePath, err := flaarum_shared.GetFlaarumPath(outFileName)
-  if err != nil {
-    log.Println(err)
-  }
+  outFilePath := filepath.Join(dataPath, outFileName)
 
   outFile, err := os.Create(outFilePath)
   if err != nil {
     log.Println(err)
+		return
   }
   defer outFile.Close()
   zw := gzip.NewWriter(outFile)
@@ -302,6 +298,6 @@ func outCommand() {
     log.Println(err)
   }
 
-  log.Printf("Done exporting project '%s'\n", projName)
+  log.Printf("Done exporting project '%s' to file '%s'.\n", projName, outFilePath)
   os.Remove(outCommandInstrPath)
 }

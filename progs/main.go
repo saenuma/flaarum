@@ -24,7 +24,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "help", "h", "--help":
-		fmt.Println(`flaarum's progs launches long running programs needed in flaarum.
+		fmt.Printf(`flaarum's progs launches long running programs needed in flaarum.
 
 Available Commands:
 
@@ -39,18 +39,20 @@ Available Commands:
           It expects three inputs: the address, the keystring and the number of threads.
           The number of threads should start from twenty.
 
-          Example: flaarum.progs astest 127.0.0.1 not-yet-set 50
+          Example: flaarum.progs ast 127.0.0.1 not-yet-set 50
 
   in      In command restores a backup of a flaarum project. It expects the name of the flaarum project to be
-          restored into and a file containing the backup data. This file must reside in the directory gotten from
-          "flaarum.cli pwd"
+          restored into and a file containing the backup data. This file must reside in this part '%s'.
+          This program must be ran with 'sudo'.
 
   ipa    Is programs active: This checks if a long running task is running.
 
   out     Out command creates a backup of a flaarum project. It expects the flaarum project as its only argument.
+          Run this command with sudo.
 
 
-			`)
+			`, dataPath)
+
 	case "out":
     if len(os.Args) < 3 {
       color.Red.Println("Expecting the name of the project as the last argument.")
@@ -64,7 +66,10 @@ Available Commands:
       os.Exit(1)
     }
 
-    os.WriteFile(outCommandInstr, []byte(os.Args[2]), 0777)
+    err := os.WriteFile(outCommandInstr, []byte(os.Args[2]), 0777)
+    if err != nil {
+      panic(err)
+    }
 
     fmt.Println("The export would be located at ", dataPath)
     fmt.Println("Wait for operation to finish before using the database.")
@@ -99,7 +104,10 @@ Available Commands:
 
     inCommandInstrPath := filepath.Join(dataPath, "in.in_instr")
     out := projName + "\n" + inputPath
-    os.WriteFile(inCommandInstrPath, []byte(out), 0777)
+    err = os.WriteFile(inCommandInstrPath, []byte(out), 0777)
+    if err != nil {
+      panic(err)
+    }
     fmt.Println("Wait for operation to finish before using the database.")
 
   case "ipa":
@@ -133,7 +141,10 @@ Available Commands:
     astCommandInstrPath := filepath.Join(dataPath, "ast.ast_instr")
 
     out := addr + "\n" + fks + "\n" + os.Args[4]
-    os.WriteFile(astCommandInstrPath, []byte(out), 0777)
+    err = os.WriteFile(astCommandInstrPath, []byte(out), 0777)
+    if err != nil {
+      panic(err)
+    }
 
     fmt.Println("Wait for operation to finish before using the database.")
 
