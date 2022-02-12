@@ -64,7 +64,7 @@ Available Commands:
       os.Exit(1)
     }
 
-    os.WriteFile(outCommandInstr, []byte(os.Args[3]), 0777)
+    os.WriteFile(outCommandInstr, []byte(os.Args[2]), 0777)
 
     fmt.Println("The export would be located at ", dataPath)
     fmt.Println("Wait for operation to finish before using the database.")
