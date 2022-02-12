@@ -45,7 +45,7 @@ func inCommand() {
 
   rawCommandOpts, err := os.ReadFile(inCommandInstrPath)
   if err != nil {
-    log.Println("invalid calling of the inCommand")
+		return
   }
 
   partsOfFile := strings.Split(strings.TrimSpace(string(rawCommandOpts)), "\n")
@@ -227,7 +227,6 @@ func outCommand() {
 
   projNameRaw, err := os.ReadFile(outCommandInstrPath)
   if err != nil {
-    log.Println(err)
     return
   }
   projName := strings.TrimSpace(string(projNameRaw))
