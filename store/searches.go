@@ -1437,7 +1437,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 				} else {
 					tmpIds := make([][]string, 0)
 					for _, char := range charsOfData {
-						if char == "/" {
+						if char == "/" || char == " " || char == "\t" {
 							continue
 						}
 

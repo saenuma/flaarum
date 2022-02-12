@@ -316,7 +316,7 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
     if flaarum_shared.DoesPathExists(likeIndexesPath) {
       charsOfData := strings.Split(strings.ToLower(data), "")
       for _, char := range charsOfData {
-        if char == "/" {
+        if char == "/" || char == " " || char == "\t" {
           continue
         }
         indexesForAChar := filepath.Join(likeIndexesPath, char)
