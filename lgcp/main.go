@@ -8,11 +8,11 @@ import (
 	compute "google.golang.org/api/compute/v1"
 	"os"
 	"github.com/gookit/color"
-	"github.com/bankole7782/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/flaarum_shared"
 	"time"
 	"strings"
 	"strconv"
-	"github.com/bankole7782/zazabul"
+	"github.com/saenuma/zazabul"
 	// "google.golang.org/api/option"
 )
 

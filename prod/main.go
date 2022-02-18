@@ -2,11 +2,11 @@
 package main
 
 import (
-  "github.com/bankole7782/flaarum/flaarum_shared"
+  "github.com/saenuma/flaarum/flaarum_shared"
   "fmt"
   "os"
   "github.com/gookit/color"
-  "github.com/bankole7782/zazabul"
+  "github.com/saenuma/zazabul"
   "time"
 )
 

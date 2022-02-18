@@ -2,7 +2,7 @@ package main
 
 import (
 	"net/http"
-	"github.com/bankole7782/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/flaarum_shared"
 	"fmt"
 	"github.com/pkg/errors"
 	"path/filepath"

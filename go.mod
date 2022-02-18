@@ -1,11 +1,9 @@
-module github.com/bankole7782/flaarum
+module github.com/saenuma/flaarum
 
 go 1.16
 
 require (
 	github.com/adam-hanna/arrayOperations v0.2.6
-	github.com/bankole7782/mof v1.0.0
-	github.com/bankole7782/zazabul v1.1.3
 	github.com/barkimedes/go-deepcopy v0.0.0-20200817023428-a044a1957ca4
 	github.com/go-co-op/gocron v1.9.0
 	github.com/go-ole/go-ole v1.2.6 // indirect
@@ -18,6 +16,8 @@ require (
 	github.com/otiai10/copy v1.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/radovskyb/watcher v1.0.7
+	github.com/saenuma/mof v1.0.1
+	github.com/saenuma/zazabul v1.1.4
 	github.com/shirou/gopsutil/v3 v3.21.9
 	github.com/tidwall/pretty v1.2.0
 	golang.org/x/net v0.0.0-20211020060615-d418f374d309 // indirect

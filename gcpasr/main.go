@@ -4,7 +4,7 @@ package main
 import (
 	"fmt"
 	"time"
-	"github.com/bankole7782/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/flaarum_shared"
 	"encoding/json"
 	"context"
 	"golang.org/x/oauth2/google"
@@ -14,7 +14,7 @@ import (
   "net/http"
 	"crypto/tls"
 	"github.com/pkg/errors"
-  "github.com/bankole7782/zazabul"
+  "github.com/saenuma/zazabul"
   "strconv"
 	"log"
 )

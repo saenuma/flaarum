@@ -1,7 +1,7 @@
 package main
 
 import (
-  "github.com/bankole7782/flaarum"
+  "github.com/saenuma/flaarum"
   "os"
   "time"
   "math/rand"
@@ -12,7 +12,7 @@ import (
   "log"
   "strings"
   "path/filepath"
-  "github.com/bankole7782/flaarum/flaarum_shared"
+  "github.com/saenuma/flaarum/flaarum_shared"
 )
 
 func astCommand() {

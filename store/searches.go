@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/bankole7782/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/flaarum_shared"
 	"path/filepath"
 	"encoding/json"
 	"fmt"

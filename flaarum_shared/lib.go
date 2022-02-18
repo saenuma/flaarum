@@ -13,7 +13,7 @@ import (
   "fmt"
   "strconv"
   "github.com/adam-hanna/arrayOperations"
-  "github.com/bankole7782/zazabul"
+  "github.com/saenuma/zazabul"
 	"math"
 	"sort"
 )

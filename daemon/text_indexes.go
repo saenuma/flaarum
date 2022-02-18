@@ -3,7 +3,7 @@ package main
 import (
   "github.com/microcosm-cc/bluemonday"
   "github.com/pkg/errors"
-  "github.com/bankole7782/flaarum/flaarum_shared"
+  "github.com/saenuma/flaarum/flaarum_shared"
   "os"
   "strings"
   "log"
@@ -44,7 +44,7 @@ func init() {
   STOP_WORDS = stopWordsList
 
   // create daemon_instrs path
-  
+
 }
 
 

@@ -2,7 +2,7 @@
 package main
 
 import (
-	"github.com/bankole7782/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/flaarum_shared"
 	"fmt"
 	"log"
 	"time"

@@ -5,7 +5,7 @@ import (
   "github.com/gorilla/mux"
   "fmt"
   "strconv"
-  "github.com/bankole7782/flaarum/flaarum_shared"
+  "github.com/saenuma/flaarum/flaarum_shared"
   "github.com/pkg/errors"
   "path/filepath"
   "os"

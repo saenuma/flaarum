@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"github.com/bankole7782/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/flaarum_shared"
   "github.com/mcnijman/go-emailaddress"
   "net"
   "net/url"

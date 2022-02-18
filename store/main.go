@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"github.com/bankole7782/flaarum/flaarum_shared"
-  "github.com/bankole7782/zazabul"
+	"github.com/saenuma/flaarum/flaarum_shared"
+  "github.com/saenuma/zazabul"
   "encoding/json"
   "github.com/pkg/errors"
 )

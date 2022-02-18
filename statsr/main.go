@@ -4,8 +4,8 @@ package main
 import (
 	"os"
 	"fmt"
-	"github.com/bankole7782/flaarum"
-	"github.com/bankole7782/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum"
+	"github.com/saenuma/flaarum/flaarum_shared"
 	"github.com/go-co-op/gocron"
 	"github.com/gookit/color"
 	"github.com/shirou/gopsutil/v3/mem"

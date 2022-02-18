@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"crypto/tls"
 	"io"
-	"github.com/bankole7782/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/flaarum_shared"
 	"time"
 	"net/url"
 )

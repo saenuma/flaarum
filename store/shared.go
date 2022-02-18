@@ -10,7 +10,7 @@ import (
 	"sync"
 	"crypto/sha512"
 	"strconv"
-	"github.com/bankole7782/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/flaarum_shared"
 )
 
 
