@@ -116,29 +116,6 @@ func getTablePath(projName, tableName string) string {
 }
 
 
-func isFieldOfTypeText(projName, tableName, fieldName string) bool {
-  ts, _ := getCurrentTableStructureParsed(projName, tableName)
-  for _, fd := range ts.Fields {
-    if fd.FieldName == fieldName && fd.FieldType == "text" {
-      return true
-    }
-  }
-  return false
-}
-
-
-func isFieldOfTypeTextVersioned(projName, tableName, fieldName, version string) bool {
-  versionInt, _ := strconv.Atoi(version)
-  ts, _ := getTableStructureParsed(projName, tableName, versionInt)
-  for _, fd := range ts.Fields {
-    if fd.FieldName == fieldName && fd.FieldType == "text" {
-      return true
-    }
-  }
-  return false
-}
-
-
 func makeSafeIndexName(v string) string {
   return flaarum_shared.MakeSafeIndexName(v)
 }

@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"math/rand"
 	"time"
-  "github.com/kljensen/snowball"
   "fmt"
   "strconv"
   "github.com/adam-hanna/arrayOperations"
@@ -23,9 +22,9 @@ const (
   DATE_FORMAT = "2006-01-02"
   DATETIME_FORMAT = "2006-01-02T15:04 MST"
   STRING_MAX_LENGTH = 100
-  TEXT_INTR_DELIM = "~~~"
   BACKUP_EXT = "flaa1"
   PORT = 22318
+	TEXT_INTR_DELIM = "~~~"
 )
 
 var RootConfigTemplate = `// debug can be set to either false or true
@@ -191,36 +190,6 @@ func UntestedRandomString(length int) string {
     b[i] = charset[seededRand.Intn(len(charset))]
   }
   return string(b)
-}
-
-
-var ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789"
-
-func CleanWord(word string) string {
-  word = strings.ToLower(word)
-
-  allowedCharsList := strings.Split(ALLOWED_CHARS, "")
-
-  if strings.HasSuffix(word, "'s") {
-    word = word[: len(word) - len("'s")]
-  }
-
-  newWord := ""
-  for _, ch := range strings.Split(word, "") {
-    if FindIn(allowedCharsList, ch) != -1 {
-      newWord += ch
-    }
-  }
-
-  var toWriteWord string
-  stemmed, err := snowball.Stem(newWord, "english", true)
-  if err != nil {
-    toWriteWord = newWord
-    fmt.Println(errors.Wrap(err, "stemmer error."))
-  }
-  toWriteWord = stemmed
-
-  return toWriteWord
 }
 
 

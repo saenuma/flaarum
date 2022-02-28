@@ -124,13 +124,6 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 
 
 func innerDelete(projName, tableName string, rows *[]map[string]string) error {
-  dataPath, _ := GetDataPath()
-
-  ts, err := getCurrentTableStructureParsed(projName, tableName)
-  if err != nil {
-    return err
-  }
-
   for _, row := range *rows {
     // delete index
     for f, d := range row {
@@ -140,15 +133,6 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
 
       if isNotIndexedField(projName, tableName, f) {
         // do nothing
-      } else if isFieldOfTypeText(projName, tableName, f) {
-        if ts.TableType != "logs" {
-          newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + f + ".rtext"
-          err := os.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName),
-            []byte("ok"), 0777)
-          if err != nil {
-            return err
-          }
-        }
       } else {
         deleteIndex(projName, tableName, f, d, row["id"], row["_version"])
       }
@@ -383,9 +367,6 @@ func innerDeleteField(projName, tableName, fieldName string, rows *[]map[string]
     return errors.New(fmt.Sprintf("table '%s' of database '%s' does not exists.", tableName, projName))
   }
 
-  dataPath, _ := GetDataPath()
-
-
   for _, row := range *rows {
     versionNum, _ := strconv.Atoi(row["_version"])
     ts, err := getTableStructureParsed(projName, tableName, versionNum)
@@ -402,22 +383,9 @@ func innerDeleteField(projName, tableName, fieldName string, rows *[]map[string]
     f := fieldName
     data, ok := row[f]
     if ok {
-      isFieldExempted := isFieldOfTypeTextVersioned(projName, tableName, f, row["_version"])
-      if isFieldExempted == false {
-        err := deleteIndex(projName, tableName, f, data, row["id"], row["_version"])
-        if err != nil {
-          return err
-        }
-      } else {
-        if ts.TableType != "logs" {
-          newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + f + ".rtext"
-          err := os.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName),
-            []byte("ok"), 0777)
-          if err != nil {
-            return err
-          }
-        }
-
+      err := deleteIndex(projName, tableName, f, data, row["id"], row["_version"])
+      if err != nil {
+        return err
       }
 
       delete(row, f)

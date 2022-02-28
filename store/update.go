@@ -7,8 +7,6 @@ import (
   "fmt"
   "github.com/saenuma/flaarum/flaarum_shared"
   "strconv"
-  "os"
-  "path/filepath"
 )
 
 
@@ -105,8 +103,6 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
     patchedRows[i] = validatedRow
   }
 
-  dataPath, _ := GetDataPath()
-
   createTableMutexIfNecessary(projName, tableName)
   fullTableName := projName + ":" + tableName
   tablesMutexes[fullTableName].Lock()
@@ -116,17 +112,6 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
   for i, row := range patchedRows {
     for fieldName, newData := range row {
       if fieldName == "id" {
-        continue
-      }
-      if isFieldOfTypeText(projName, tableName, fieldName) {
-        // create a .text file which is a message to the tindexer program.
-        newTextFileName := row["id"] + flaarum_shared.TEXT_INTR_DELIM + fieldName + ".text"
-        err = os.WriteFile(filepath.Join(dataPath, projName, tableName, "txtinstrs", newTextFileName),
-          []byte(newData), 0777)
-        if err != nil {
-          printError(w, errors.Wrap(err, "ioutil error"))
-          return
-        }
         continue
       }
 
