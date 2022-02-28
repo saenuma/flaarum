@@ -42,11 +42,7 @@ API documentation can be found on [godoc](https://godoc.org/github.com/bankole77
 
 1.	Install from snapstore using `sudo snap install flaarum`
 
-2.	Start the project with the command `sudo snap start flaarum.store`
-
-3.	Start the text indexer with the command `sudo snap start flaarum.tindexer`
-
-4.	You don't need a key to connect with the database when not in production.
+1.	You don't need a key to connect with the database when not in production.
 
 
 ### Basic Production Setup (Google Cloud)
