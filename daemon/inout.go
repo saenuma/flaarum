@@ -147,11 +147,6 @@ func inCommand() {
         log.Println(err)
       }
 
-      ts, err := flaarum_shared.GetTableStructureParsed(projName, tblFI.Name(), 1)
-      if err != nil {
-        log.Println(err)
-      }
-
       for _, rowFI := range rowFIs {
         rowMap := make(map[string]string)
         rowBytes, err := os.ReadFile(filepath.Join(dataPath, projName, tblFI.Name(), "data", rowFI.Name()))
@@ -163,45 +158,33 @@ func inCommand() {
           log.Println(err)
         }
 
-        if ts.TableType == "proper" {
-          // create indexes
-          for k, v := range rowMap {
-            if k == "id" {
-              continue
-            }
-
-            if isFieldExemptedFromIndexingVersioned(projName, tblFI.Name(), k, rowMap["_version"]) {
-
-              // create a .text file which is a message to the tindexer program.
-              newTextFileName := rowFI.Name() + flaarum_shared.TEXT_INTR_DELIM + k + ".text"
-              err = os.WriteFile(filepath.Join(dataPath, projName, tblFI.Name(), "txtinstrs", newTextFileName), []byte(v), 0777)
-              if err != nil {
-                fmt.Printf("%+v\n", errors.Wrap(err, "ioutil error."))
-              }
-            } else if flaarum_shared.IsNotIndexedFieldVersioned(projName, tblFI.Name(), k, rowMap["_version"]) {
-              // don't create indexes
-            } else {
-
-              err := flaarum_shared.MakeIndex(projName, tblFI.Name(), k, v, rowFI.Name())
-              if err != nil {
-                log.Println(err)
-              }
-
-            }
-
+        // create indexes
+        for k, v := range rowMap {
+          if k == "id" {
+            continue
           }
-        } else {
 
-          for k, v := range rowMap {
-            if k == "created" || strings.HasPrefix(k, "created_") || k == "_version" {
-              err = flaarum_shared.MakeIndex(projName, tblFI.Name(), k, v, rowFI.Name())
-              if err != nil {
-                fmt.Printf("%+v\n", err)
-              }
+          if isFieldExemptedFromIndexingVersioned(projName, tblFI.Name(), k, rowMap["_version"]) {
+
+            // create a .text file which is a message to the tindexer program.
+            newTextFileName := rowFI.Name() + flaarum_shared.TEXT_INTR_DELIM + k + ".text"
+            err = os.WriteFile(filepath.Join(dataPath, projName, tblFI.Name(), "txtinstrs", newTextFileName), []byte(v), 0777)
+            if err != nil {
+              fmt.Printf("%+v\n", errors.Wrap(err, "ioutil error."))
             }
+          } else if flaarum_shared.IsNotIndexedFieldVersioned(projName, tblFI.Name(), k, rowMap["_version"]) {
+            // don't create indexes
+          } else {
+
+            err := flaarum_shared.MakeIndex(projName, tblFI.Name(), k, v, rowFI.Name())
+            if err != nil {
+              log.Println(err)
+            }
+
           }
 
         }
+
 
       }
 

@@ -14,9 +14,8 @@ import (
 
 
 // InsertRowStr inserts a row into a table. It expects the input to be of type map[string]string.
-// It returns a string which is parsable to an int64 for proper tables. For 'logs' tables it
-// returns a string which is not parsable to int64
-func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (string, error) {
+// It returns the id of the newly created row
+func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (int64, error) {
 	urlValues := url.Values{}
 	urlValues.Add("key-str", cl.KeyStr)
 	for k, v := range toInsert {
@@ -25,20 +24,24 @@ func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (st
 
 	resp, err := httpCl.PostForm(fmt.Sprintf("%sinsert-row/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
 	if err != nil {
-		return "", ConnError{err.Error()}
+		return 0, ConnError{err.Error()}
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", ConnError{err.Error()}
+		return 0, ConnError{err.Error()}
 	}
 
 	if resp.StatusCode == 200 {
-		return string(body), nil
+		retId, err := strconv.ParseInt(strings.TrimSpace(string(body)), 10, 64)
+		if err != nil {
+			return 0, ServerError{err.Error()}
+		}
+		return retId, nil
 	} else if resp.StatusCode == 400 {
-		return "", ValidationError{string(body)}
+		return 0, ValidationError{string(body)}
 	} else {
-		return "", ServerError{string(body)}
+		return 0, ServerError{string(body)}
 	}
 }
 
@@ -104,10 +107,10 @@ func (cl *Client) convertInterfaceMapToStringMap(tableName string, oldMap map[st
 
 
 // InsertRowStr inserts a row into a table. It expects the toInsert to be of type map[string]interface{}.
-func (cl *Client) InsertRowAny(tableName string, toInsert map[string]interface{}) (string, error) {
+func (cl *Client) InsertRowAny(tableName string, toInsert map[string]interface{}) (int64, error) {
 	toInsertStr, err := cl.convertInterfaceMapToStringMap(tableName, toInsert)
   if err != nil {
-    return "", ValidationError{err.Error()}
+    return 0, ValidationError{err.Error()}
   }
 
 	return cl.InsertRowStr(tableName, toInsertStr)

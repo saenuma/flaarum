@@ -81,16 +81,8 @@ func confirmFieldType(projName, tableName, fieldName, fieldType, version string)
     return false
   }
 
-  if fieldName == "id" {
-    if tableStruct.TableType == "proper" && fieldType == "int" {
-      return true
-    } else if tableStruct.TableType == "proper" && fieldType != "int" {
-      return false
-    } else if tableStruct.TableType == "logs" && fieldType == "string" {
-      return true
-    } else if tableStruct.TableType == "logs" && fieldType != "string" {
-      return false
-    }
+  if fieldName == "id" && fieldType == "int" {
+		return true
   }
 
   for _, fd := range tableStruct.Fields {

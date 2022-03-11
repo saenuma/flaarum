@@ -35,7 +35,6 @@ type FKeyStruct struct {
 
 type TableStruct struct {
 	TableName string
-	TableType string // one or "proper" or "logs"
 	Fields []FieldStruct
 	ForeignKeys []FKeyStruct
 	UniqueGroups [][]string
@@ -56,20 +55,6 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 
 	if err := NameValidate(tableName); err != nil {
 		return ts, err
-	}
-
-	ts.TableType = "proper"
-
-	tableTypeBeginIndex := strings.Index(stmt, "table_type:")
-	if tableTypeBeginIndex != -1 {
-		tableTypeBeginIndex += len("table_type:")
-		tableTypeEndIndex := strings.Index(stmt[tableTypeBeginIndex: ], "\n")
-
-		tableType := strings.TrimSpace(stmt[tableTypeBeginIndex: tableTypeBeginIndex + tableTypeEndIndex ])
-		if tableType != "proper" && tableType != "logs" {
-			return ts, errors.New("Bad Statement: unsupported table type: expecting either 'proper' or 'logs'.")
-		}
-		ts.TableType = tableType
 	}
 
 	fieldsBeginPart := strings.Index(stmt, "fields:")
