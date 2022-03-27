@@ -46,6 +46,12 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
     v, ok := dataMap[k]
 
     if ok && v != "" {
+			if fd.FieldType == "string" || fd.FieldType == "email" || fd.FieldType == "url" || fd.FieldType == "ipaddr" {
+				if len(v) > 220 {
+					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s is longer than 200 characters'", v, k))
+				}
+			}
+
       if fd.FieldType == "int" {
         _, err := strconv.ParseInt(v, 10, 64)
         if err != nil {
