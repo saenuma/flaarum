@@ -76,13 +76,20 @@ Table(s) Commands:
 
 Table Data Commands:
 
+	bir   Begin Insert Row: This command creates a file that would be edited and passed into the 'ir' command.
+        It expects a project and table combo eg. 'first_proj/users'
+
   ir    Insert a row: Expects a project and table combo eg. 'first_proj/users' and a path containing a
-        json representation of the data to be inserted into the mentioned table.
+        file generated from the 'bir' command.
+
+  bur   Begin Update Row: This command creates a file that would be edited and passed into the 'ur' command.
+        It expects a project, table and id combo eg. 'first_proj/users/31'
 
   ur    Update Row: Expects a project, table and id combo eg. 'first_proj/users/31' and a path containing a
-        json representation of the data to be inserted into the mentioned table.
+				file generated from the 'bur' command.
 
   dr    Delete Row: Expects one or more project, table and id combo eg. 'first_proj/users/31'
+
   vr    View Row: Expects a project, table and id combo eg. 'first_proj/users/31'
 
 
@@ -376,12 +383,48 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
+		os.Remove(inputPath)
 		fmt.Println(retId)
+
+	case "bur":
+		if len(os.Args) != 3 {
+			color.Red.Println("'bur' command expects a project, table and id combo eg. 'first_proj/users/31'")
+			os.Exit(1)
+		}
+
+		parts := strings.Split(os.Args[2], "/")
+		cl.ProjName = parts[0]
+
+		arow, err := cl.SearchForOne(fmt.Sprintf(`
+			table: %s expand
+			where:
+				id = %s
+			`, parts[1], parts[2]))
+		if err != nil {
+			color.Red.Printf("Error viewing row '%s'.\nError: %s\n", os.Args[2], err)
+			os.Exit(1)
+		}
+
+		out := ""
+		for k, v := range *arow {
+			out += fmt.Sprintf("%s: %v\n", k, v)
+		}
+
+		outName := "bur-" + strings.ToLower(flaarum_shared.UntestedRandomString(10)) + ".txt"
+		outPath, err := flaarum_shared.GetFlaarumPath(outName)
+		if err != nil {
+			color.Red.Println("The supplied path '%s' does not exits.\n", outPath)
+			os.Exit(1)
+		}
+
+		os.WriteFile(outPath, []byte(out), 0777)
+
+		fmt.Println("Edit the file at ", outPath, " and input it with the 'ir' command.")
 
 	case "ur":
 		if len(os.Args) != 4 {
 			color.Red.Println(`'ur' command expects a project, table and id combo eg. 'first_proj/users/31' and a path containing a
-        json representation of the data to be inserted into the mentioned table.`)
+        a file generated from the 'bur' command..`)
 			os.Exit(1)
 		}
 
@@ -390,16 +433,10 @@ Table Search Commands:
 			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
 			os.Exit(1)
 		}
-		raw, err := os.ReadFile(inputPath)
-		if err != nil {
-			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
-			os.Exit(1)
-		}
 
-		rowData := make(map[string]string)
-		err = json.Unmarshal(raw, &rowData)
+		rowData, err := flaarum_shared.ParseDataFormat(inputPath)
 		if err != nil {
-			color.Red.Printf("The json file is not valid.\nError: %s\n", err)
+			color.Red.Println("The input file is not valid.\nError: %s\n", err)
 			os.Exit(1)
 		}
 
@@ -415,6 +452,8 @@ Table Search Commands:
 			color.Red.Printf("Error updating row.\nError: %s\n", err)
 			os.Exit(1)
 		}
+
+		os.Remove(inputPath)
 
 	case "dr":
 		if len(os.Args) < 3 {
