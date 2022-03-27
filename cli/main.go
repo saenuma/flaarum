@@ -76,7 +76,7 @@ Table(s) Commands:
 
 Table Data Commands:
 
-	bir   Begin Insert Row: This command creates a file that would be edited and passed into the 'ir' command.
+  bir   Begin Insert Row: This command creates a file that would be edited and passed into the 'ir' command.
         It expects a project and table combo eg. 'first_proj/users'
 
   ir    Insert a row: Expects a project and table combo eg. 'first_proj/users' and a path containing a
@@ -86,7 +86,7 @@ Table Data Commands:
         It expects a project, table and id combo eg. 'first_proj/users/31'
 
   ur    Update Row: Expects a project, table and id combo eg. 'first_proj/users/31' and a path containing a
-				file generated from the 'bur' command.
+        file generated from the 'bur' command.
 
   dr    Delete Row: Expects one or more project, table and id combo eg. 'first_proj/users/31'
 
