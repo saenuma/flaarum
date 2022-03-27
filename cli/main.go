@@ -310,10 +310,48 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
+	case "bir":
+		if len(os.Args) != 3 {
+			color.Red.Println(`'bir' command expects a project and table combo eg. 'first_proj/users' `)
+			os.Exit(1)
+		}
+
+		parts := strings.Split(os.Args[2], "/")
+		cl.ProjName = parts[0]
+		vnum, err := cl.GetCurrentTableVersionNum(parts[1])
+		if err != nil {
+			color.Red.Printf("Error reading current table version number of table '%s' of Project '%s'.\nError: %s\n",
+				parts[1], parts[0], err)
+			os.Exit(1)
+		}
+
+		tableStructStmt, err := cl.GetTableStructureParsed(parts[1], vnum)
+		if err != nil {
+			color.Red.Printf("Error reading table structure number '%d' of table '%s' of Project '%s'.\nError: %s\n",
+				vnum, parts[1], parts[0], err)
+			os.Exit(1)
+		}
+
+		out := ""
+		for _, fieldStruct := range tableStructStmt.Fields {
+			out += fieldStruct.FieldName + ":  \n"
+		}
+
+		outName := "bir-" + strings.ToLower(flaarum_shared.UntestedRandomString(10)) + ".txt"
+		outPath, err := flaarum_shared.GetFlaarumPath(outName)
+		if err != nil {
+			color.Red.Println("The supplied path '%s' does not exits.\n", outPath)
+			os.Exit(1)
+		}
+
+		os.WriteFile(outPath, []byte(out), 0777)
+
+		fmt.Println("Edit the file at ", outPath, " and input it with the 'ir' command.")
+
 	case "ir":
 		if len(os.Args) != 4 {
 			color.Red.Println(`'ir' command expects a project and table combo eg. 'first_proj/users' and a path containing a
-        json representation of the data to be inserted into the mentioned table.`)
+        a file generated from the 'bir' command.`)
 			os.Exit(1)
 		}
 
@@ -322,16 +360,10 @@ Table Search Commands:
 			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
 			os.Exit(1)
 		}
-		raw, err := os.ReadFile(inputPath)
-		if err != nil {
-			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
-			os.Exit(1)
-		}
 
-		rowData := make(map[string]string)
-		err = json.Unmarshal(raw, &rowData)
+		rowData, err := flaarum_shared.ParseDataFormat(inputPath)
 		if err != nil {
-			color.Red.Printf("The json file is not valid.\nError: %s\n", err)
+			color.Red.Println("The input file is not valid.\nError: %s\n", err)
 			os.Exit(1)
 		}
 
