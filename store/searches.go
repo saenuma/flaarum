@@ -1234,29 +1234,21 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 	tmpRet := make([]map[string]string, 0)
   for _, retId := range retIds {
-    rowMap := make(map[string]string)
-    raw, err := os.ReadFile(filepath.Join(tablePath, "data", retId))
-    if err != nil {
-      continue
-    }
-    err = json.Unmarshal(raw, &rowMap)
-    if err != nil {
-      return nil, errors.Wrap(err, "json error.")
-    }
+
+		rowMap, err := flaarum_shared.ReadDataFile(filepath.Join(tablePath, "data", retId))
+		if err != nil {
+			continue
+		}
 
     for field, data := range rowMap {
 
       pTbl, ok := expDetails[field]
       if ok {
-        rowMap2 := make(map[string]string)
-        raw2, err := os.ReadFile(filepath.Join(dataPath, projName, pTbl, "data", data))
-        if err != nil {
-          continue
-        }
-        err = json.Unmarshal(raw2, &rowMap2)
-        if err != nil {
-          return nil, errors.Wrap(err, "json error.")
-        }
+				rowMap2, err := flaarum_shared.ReadDataFile(filepath.Join(dataPath, projName, pTbl, "data", data))
+				if err != nil {
+					continue
+				}
+
         for f, d := range rowMap2 {
           rowMap[field + "." + f] = d
         }

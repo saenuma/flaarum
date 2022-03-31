@@ -11,7 +11,6 @@ import (
 	"github.com/otiai10/copy"
 	"github.com/saenuma/mof"
 	"github.com/saenuma/flaarum/flaarum_shared"
-	"encoding/json"
 	"sync"
 	"strings"
 	"strconv"
@@ -148,16 +147,10 @@ func inCommand() {
       }
 
       for _, rowFI := range rowFIs {
-        rowMap := make(map[string]string)
-        rowBytes, err := os.ReadFile(filepath.Join(dataPath, projName, tblFI.Name(), "data", rowFI.Name()))
-        if err != nil {
-          log.Println(err)
-        }
-        err = json.Unmarshal(rowBytes, &rowMap)
-        if err != nil {
-          log.Println(err)
-        }
-
+				rowMap, err := flaarum_shared.ReadDataFile( filepath.Join(dataPath, projName, tblFI.Name(), "data", rowFI.Name()) )
+				if err != nil {
+					log.Println(err)
+				}
         // create indexes
         for k, v := range rowMap {
           if k == "id" {

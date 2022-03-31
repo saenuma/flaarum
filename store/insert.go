@@ -5,7 +5,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"strconv"
-	"encoding/json"
 	"path/filepath"
 	"fmt"
 	"strings"
@@ -48,7 +47,10 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
     if ok && v != "" {
 			if fd.FieldType == "string" || fd.FieldType == "email" || fd.FieldType == "url" || fd.FieldType == "ipaddr" {
 				if len(v) > 220 {
-					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s is longer than 200 characters'", v, k))
+					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is longer than 220 characters", v, k))
+				}
+				if strings.Contains(v, "\n") {
+					return nil, errors.New(fmt.Sprintf("The value of field '%s' contains new line.", k))
 				}
 			}
 
@@ -315,11 +317,13 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
 func saveRowData(projName, tableName, rowId string, toWrite map[string]string) error {
   tablePath := getTablePath(projName, tableName)
-  jsonBytes, err := json.Marshal(&toWrite)
-  if err != nil {
-    return errors.Wrap(err, "json error")
-  }
-  err = os.WriteFile(filepath.Join(tablePath, "data", rowId), jsonBytes, 0777)
+
+	out := ""
+	for k, v := range toWrite {
+		out += fmt.Sprintf("%s: %v\n", k, v)
+	}
+
+  err := os.WriteFile(filepath.Join(tablePath, "data", rowId), []byte(out), 0777)
   if err != nil {
     return errors.Wrap(err, "write file failed.")
   }

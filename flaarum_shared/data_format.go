@@ -4,19 +4,21 @@ import (
   "os"
   "strings"
   "fmt"
+  "encoding/json"
+  "github.com/pkg/errors"
 )
 
 
 func ParseDataFormat(path string) (map[string]string, error) {
-  rawConf, err := os.ReadFile(path)
+  rawData, err := os.ReadFile(path)
   if err != nil {
     return nil, err
   }
 
   ret := make(map[string]string)
 
-  partsOfRawConf := strings.Split(string(rawConf), "\n\n")
-  for _, part := range partsOfRawConf {
+  partsOfRawData := strings.Split(string(rawData), "\n\n")
+  for _, part := range partsOfRawData {
     innerParts := strings.Split(strings.TrimSpace(part), "\n")
 
     for _, line := range innerParts {
@@ -41,4 +43,28 @@ func ParseDataFormat(path string) (map[string]string, error) {
   }
 
   return ret, nil
+}
+
+
+func ReadDataFile(path string) (map[string]string, error) {
+	// this file checks if the data was encoded in json or a custom format
+	// json was the former default encoding
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	firstChar := string(raw)[0]
+	if firstChar == '{' {
+		// read json
+		rowMap := make(map[string]string)
+		err = json.Unmarshal(raw, &rowMap)
+		if err != nil {
+			return nil, errors.Wrap(err, "json error.")
+		}
+		return rowMap, nil
+	} else {
+		// read custom data format
+		return ParseDataFormat(path)
+	}
 }
