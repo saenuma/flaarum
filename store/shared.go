@@ -119,6 +119,13 @@ func isNotIndexedField(projName, tableName, fieldName string) bool {
       return true
     }
   }
+
+	for _, fd := range ts.Fields {
+		if fd.FieldName == fieldName && fd.FieldType == "text" {
+			return true
+		}
+	}
+	
   return false
 }
 
