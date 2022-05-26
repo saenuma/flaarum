@@ -187,7 +187,12 @@ func (cl *Client) ParseRow (rowStr map[string]string, tableStruct flaarum_shared
     }
   }
 
-  tmpRow["id"] = rowStr["id"]
+	idInt, err := strconv.ParseInt(rowStr["id"], 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+  tmpRow["id"] = idInt
 
   if _, ok := rowStr["_version"]; ok {
     versionInt, err := strconv.ParseInt(rowStr["_version"], 10, 64)
