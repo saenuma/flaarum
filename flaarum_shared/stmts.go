@@ -86,7 +86,7 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 			return ts, err
 		}
 
-		if FindIn([]string{"int", "float", "string", "bool", "date", "datetime", "email", "url", "ipaddr"}, parts[1]) == -1 {
+		if FindIn([]string{"int", "float", "string", "bool", "date", "datetime", "email", "url", "ipaddr", "text"}, parts[1]) == -1 {
 			return ts, errors.New(fmt.Sprintf("Bad Statement: the field type '%s' is not allowed in flaarum.", parts[1]))
 		}
 		fs := FieldStruct{FieldName: parts[0], FieldType: parts[1]}

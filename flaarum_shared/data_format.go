@@ -42,6 +42,18 @@ func ParseDataFormat(path string) (map[string]string, error) {
 
   }
 
+  rawDataStr := string(rawData)
+  for k, v := range ret {
+    if strings.TrimSpace(v) == "" {
+      firstIndex := strings.Index(rawDataStr, fmt.Sprintf("\n%s:", k))
+      lastIndex := strings.LastIndex(rawDataStr, fmt.Sprintf("\n%s:", k))
+      padding := len( fmt.Sprintf("\n%s:", k))
+      if firstIndex != lastIndex {
+        ret[k] = rawDataStr[firstIndex+padding: lastIndex]
+      }
+    }
+  }
+
   return ret, nil
 }
 

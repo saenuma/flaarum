@@ -320,7 +320,12 @@ func saveRowData(projName, tableName, rowId string, toWrite map[string]string) e
 
 	out := ""
 	for k, v := range toWrite {
-		out += fmt.Sprintf("%s: %v\n", k, v)
+		ft := flaarum_shared.GetFieldType(projName, tableName, k)
+		if ft == "text" {
+			out += fmt.Sprintf("%s:\n%s\n%s:\n", k, v, k)
+		} else {
+			out += fmt.Sprintf("%s: %v\n", k, v)
+		}
 	}
 
   err := os.WriteFile(filepath.Join(tablePath, "data", rowId), []byte(out), 0777)

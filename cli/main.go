@@ -341,7 +341,11 @@ Table Search Commands:
 
 		out := ""
 		for _, fieldStruct := range tableStructStmt.Fields {
-			out += fieldStruct.FieldName + ":  \n"
+			if fieldStruct.FieldType == "text" {
+				out += fmt.Sprintf("%s:\n\n\n%s:\n", fieldStruct.FieldName, fieldStruct.FieldName)
+			} else {
+				out += fieldStruct.FieldName + ":  \n"
+			}
 		}
 
 		outName := "bir-" + strings.ToLower(flaarum_shared.UntestedRandomString(10)) + ".txt"
@@ -407,7 +411,11 @@ Table Search Commands:
 
 		out := ""
 		for k, v := range *arow {
-			out += fmt.Sprintf("%s: %v\n", k, v)
+			if flaarum_shared.GetFieldType(parts[0], parts[1], k) == "text" {
+				out += fmt.Sprintf("%s:\n%s\n%s:\n", k, v, k)
+			} else {
+				out += fmt.Sprintf("%s: %v\n", k, v)
+			}
 		}
 
 		outName := "bur-" + strings.ToLower(flaarum_shared.UntestedRandomString(10)) + ".txt"
