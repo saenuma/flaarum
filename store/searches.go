@@ -1124,7 +1124,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 					tmpIds := make([][]string, 0)
 					for _, char := range charsOfData {
-						if char == "/" {
+						if char == "/" || char == " " || char == "\t" || char == "." {
 							continue
 						}
 
@@ -1149,7 +1149,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 				} else {
 					tmpIds := make([][]string, 0)
 					for _, char := range charsOfData {
-						if char == "/" || char == " " || char == "\t" {
+						if char == "/" || char == " " || char == "\t" || char == "." {
 							continue
 						}
 
