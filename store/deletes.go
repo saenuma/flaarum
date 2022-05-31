@@ -9,7 +9,7 @@ import (
   "fmt"
   "github.com/saenuma/flaarum/flaarum_shared"
   "strings"
-  "github.com/adam-hanna/arrayOperations"
+  arrayOperations "github.com/adam-hanna/arrayOperations"
   "time"
   "strconv"
 )
@@ -309,7 +309,7 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
           return errors.Wrap(err, "read file failed.")
         }
         writtenIds := strings.Split(string(raw), "\n")
-        toWriteIds := arrayOperations.DifferenceString([]string{rowId}, writtenIds)
+        toWriteIds := arrayOperations.Difference([]string{rowId}, writtenIds)
         if len(toWriteIds) == 0 {
           err = os.Remove(indexesForAChar)
           if err != nil {
@@ -334,7 +334,7 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
       return errors.Wrap(err, "read file failed.")
     }
     similarIds := strings.Split(string(raw), "\n")
-    toWriteIds := arrayOperations.DifferenceString([]string{rowId}, similarIds)
+    toWriteIds := arrayOperations.Difference([]string{rowId}, similarIds)
     if len(toWriteIds) == 0 {
       err = os.Remove(indexesPath)
       if err != nil {

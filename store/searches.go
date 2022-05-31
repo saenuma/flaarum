@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"github.com/adam-hanna/arrayOperations"
+	arrayOperations "github.com/adam-hanna/arrayOperations"
 	"sort"
 	"os"
 	"strconv"
@@ -283,7 +283,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               if err != nil {
                 return nil, errors.Wrap(err, "read file failed.")
               }
-              trueWhereValues = arrayOperations.UnionString(trueWhereValues, strings.Split(string(raw), "\n"))
+              trueWhereValues = arrayOperations.Union(trueWhereValues, strings.Split(string(raw), "\n"))
             }
           }
 
@@ -306,7 +306,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               if err != nil {
                 return nil, errors.Wrap(err, "read file failed.")
               }
-              stringIds = arrayOperations.UnionString(stringIds, strings.Split(string(raw), "\n"))
+              stringIds = arrayOperations.Union(stringIds, strings.Split(string(raw), "\n"))
             }
           }
           beforeFilter = append(beforeFilter, stringIds)
@@ -864,7 +864,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               if err != nil {
                 return nil, errors.Wrap(err, "read file failed.")
               }
-              trueWhereValues = arrayOperations.UnionString(trueWhereValues, strings.Split(string(raw), "\n"))
+              trueWhereValues = arrayOperations.Union(trueWhereValues, strings.Split(string(raw), "\n"))
 
             }
           }
@@ -885,7 +885,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               if err != nil {
                 return nil, errors.Wrap(err, "read file failed.")
               }
-              stringIds = arrayOperations.UnionString(stringIds, strings.Split(string(raw), "\n"))
+              stringIds = arrayOperations.Union(stringIds, strings.Split(string(raw), "\n"))
             }
 
           }
@@ -945,7 +945,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               return nil, errors.Wrap(err, "ioutil error.")
             }
 
-            trueWhereValues = arrayOperations.UnionString(trueWhereValues, strings.Split(string(raw), "\n"))
+            trueWhereValues = arrayOperations.Union(trueWhereValues, strings.Split(string(raw), "\n"))
           }
 
           stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
@@ -979,7 +979,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
               return nil, errors.Wrap(err, "ioutil error.")
             }
 
-            stringIds = arrayOperations.UnionString(stringIds, strings.Split(string(raw), "\n"))
+            stringIds = arrayOperations.Union(stringIds, strings.Split(string(raw), "\n"))
           }
 
           beforeFilter = append(beforeFilter, stringIds)
@@ -1015,10 +1015,10 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if err != nil {
               return nil, errors.Wrap(err, "read file failed.")
             }
-            exemptedIds = arrayOperations.UnionString(exemptedIds, strings.Split(string(raw), "\n"))
+            exemptedIds = arrayOperations.Union(exemptedIds, strings.Split(string(raw), "\n"))
           }
 
-          trueWhereValues := arrayOperations.DifferenceString(allForeignIds, exemptedIds)
+          trueWhereValues := arrayOperations.Difference(allForeignIds, exemptedIds)
 
           stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
           if err != nil {
@@ -1047,10 +1047,10 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if err != nil {
               return nil, errors.Wrap(err, "read file failed.")
             }
-            exemptedIds = arrayOperations.UnionString(exemptedIds, strings.Split(string(raw), "\n"))
+            exemptedIds = arrayOperations.Union(exemptedIds, strings.Split(string(raw), "\n"))
           }
 
-          stringIds := arrayOperations.DifferenceString(allIds, exemptedIds)
+          stringIds := arrayOperations.Difference(allIds, exemptedIds)
           beforeFilter = append(beforeFilter, stringIds)
         }
 
@@ -1083,7 +1083,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if err != nil {
               return nil, errors.Wrap(err, "read file failed.")
             }
-            trueWhereValues = arrayOperations.UnionString(trueWhereValues, strings.Split(string(raw), "\n"))
+            trueWhereValues = arrayOperations.Union(trueWhereValues, strings.Split(string(raw), "\n"))
           }
 
           stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
@@ -1104,7 +1104,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
             if err != nil {
               return nil, errors.Wrap(err, "read file failed.")
             }
-            stringIds = arrayOperations.UnionString(stringIds, strings.Split(string(raw), "\n"))
+            stringIds = arrayOperations.Union(stringIds, strings.Split(string(raw), "\n"))
           }
         }
 
@@ -1138,7 +1138,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 						}
 					}
 
-					trueWhereValues := arrayOperations.IntersectString(tmpIds...)
+					trueWhereValues := arrayOperations.Intersect(tmpIds...)
 
 					stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
           if err != nil {
@@ -1163,7 +1163,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 						}
 					}
 
-					stringIds := arrayOperations.IntersectString(tmpIds...)
+					stringIds := arrayOperations.Intersect(tmpIds...)
 
 					beforeFilter = append(beforeFilter, stringIds)
 				}
@@ -1184,9 +1184,9 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 		}
 
 		if andsCount == len(stmtStruct.WhereOptions) - 1 {
-			retIds = arrayOperations.IntersectString(beforeFilter...)
+			retIds = arrayOperations.Intersect(beforeFilter...)
 		} else if orsCount == len(stmtStruct.WhereOptions) - 1 {
-			retIds = arrayOperations.UnionString(beforeFilter...)
+			retIds = arrayOperations.Union(beforeFilter...)
 		} else {
 
 			beforeUnion := make([][]string, 0)
@@ -1204,7 +1204,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 						if stmtStruct.WhereOptions[innerIndex].Joiner == "or" {
 							break
 						}
-						tmpIntersected = arrayOperations.IntersectString(tmpIntersected, beforeFilter[innerIndex])
+						tmpIntersected = arrayOperations.Intersect(tmpIntersected, beforeFilter[innerIndex])
 						innerIndex += 1
 						continue
 					}
@@ -1228,7 +1228,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 				continue
 			}
 
-			retIds = arrayOperations.UnionString(beforeUnion...)
+			retIds = arrayOperations.Union(beforeUnion...)
 		}
 	}
 

@@ -11,7 +11,7 @@ import (
 	"time"
   "fmt"
   "strconv"
-  "github.com/adam-hanna/arrayOperations"
+  arrayOperations "github.com/adam-hanna/arrayOperations"
   "github.com/saenuma/zazabul"
 	"math"
 	"sort"
@@ -316,7 +316,7 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
       return errors.Wrap(err, "read failed.")
     }
     previousEntries := strings.Split(string(raw), "\n")
-    newEntries := arrayOperations.UnionString(previousEntries, []string{rowId})
+    newEntries := arrayOperations.Union(previousEntries, []string{rowId})
     err = os.WriteFile(indexPath, []byte(strings.Join(newEntries, "\n")), 0777)
     if err != nil {
       return errors.Wrap(err, "write failed.")
@@ -433,7 +433,7 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 		      return errors.Wrap(err, "read failed.")
 		    }
 		    previousEntries := strings.Split(string(raw), "\n")
-		    newEntries := arrayOperations.UnionString(previousEntries, []string{rowId})
+		    newEntries := arrayOperations.Union(previousEntries, []string{rowId})
 		    err = os.WriteFile(indexesForAChar, []byte(strings.Join(newEntries, "\n")), 0777)
 		    if err != nil {
 		      return errors.Wrap(err, "write failed.")
