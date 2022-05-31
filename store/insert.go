@@ -318,7 +318,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 func saveRowData(projName, tableName, rowId string, toWrite map[string]string) error {
   tablePath := getTablePath(projName, tableName)
 
-	out := ""
+	out := "\n"
 	for k, v := range toWrite {
 		ft := flaarum_shared.GetFieldType(projName, tableName, k)
 		if ft == "text" {

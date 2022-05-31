@@ -339,7 +339,7 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
-		out := ""
+		out := "\n"
 		for _, fieldStruct := range tableStructStmt.Fields {
 			if fieldStruct.FieldType == "text" {
 				out += fmt.Sprintf("%s:\n\n\n%s:\n", fieldStruct.FieldName, fieldStruct.FieldName)
@@ -409,7 +409,7 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
-		out := ""
+		out := "\n"
 		for k, v := range *arow {
 			if flaarum_shared.GetFieldType(parts[0], parts[1], k) == "text" {
 				out += fmt.Sprintf("%s:\n%s\n%s:\n", k, v, k)

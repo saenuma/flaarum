@@ -17,28 +17,24 @@ func ParseDataFormat(path string) (map[string]string, error) {
 
   ret := make(map[string]string)
 
-  partsOfRawData := strings.Split(string(rawData), "\n\n")
-  for _, part := range partsOfRawData {
-    innerParts := strings.Split(strings.TrimSpace(part), "\n")
-
-    for _, line := range innerParts {
-      var colonIndex int
-      for i, ch := range line {
-				if fmt.Sprintf("%c", ch) == ":" {
-					colonIndex = i
-					break
-				}
+  partsOfRawData := strings.Split(string(rawData), "\n")
+  for _, line := range partsOfRawData {
+    var colonIndex int
+    for i, ch := range line {
+			if fmt.Sprintf("%c", ch) == ":" {
+				colonIndex = i
+				break
 			}
+		}
 
-      if colonIndex == 0 {
-        continue
-      }
-
-      optName := strings.TrimSpace(line[0:colonIndex])
-      optValue := strings.TrimSpace(line[colonIndex + 1: ])
-
-      ret[optName] = optValue
+    if colonIndex == 0 {
+      continue
     }
+
+    optName := strings.TrimSpace(line[0:colonIndex])
+    optValue := strings.TrimSpace(line[colonIndex + 1: ])
+
+    ret[optName] = optValue
 
   }
 
