@@ -1,8 +1,8 @@
 # flaarum
 
-![Flaarum Logo](https://github.com/bankole7782/flaarum/raw/master/flaarum-logo.png "Flaarum logo")
+![Flaarum Logo](https://github.com/saenuma/flaarum/raw/master/flaarum-logo.png "Flaarum logo")
 
-[![GoDoc](https://godoc.org/github.com/bankole7782/flaarum?status.svg)](https://godoc.org/github.com/bankole7782/flaarum)
+[![GoDoc](https://godoc.org/github.com/saenuma/flaarum?status.svg)](https://godoc.org/github.com/saenuma/flaarum)
 
 A database that enforces structures and features its own query language.
 
@@ -35,7 +35,7 @@ A database that enforces structures and features its own query language.
 
 The tutorial pages is located at [saenuma.com](https://saenuma.com/flaarumtuts/intro).
 
-API documentation can be found on [godoc](https://godoc.org/github.com/bankole7782/flaarum)
+API documentation can be found on [godoc](https://godoc.org/github.com/saenuma/flaarum)
 
 
 ## Install
