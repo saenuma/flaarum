@@ -298,7 +298,7 @@ func emptyTable(w http.ResponseWriter, r *http.Request) {
 
   }
 
-	err = os.Remove(filepath.Join(dataPath, projName, tableName, "lastId"))
+	err := os.Remove(filepath.Join(dataPath, projName, tableName, "lastId"))
 	if err != nil {
 		printError(w, errors.Wrap(err, "delete file failed."))
 		return
