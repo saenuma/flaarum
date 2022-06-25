@@ -20,8 +20,6 @@ A database that enforces structures and features its own query language.
 
 1.  Supports its own query language.
 
-2.	Full text Search.
-
 
 ## Technologies Used.
 
@@ -33,56 +31,42 @@ A database that enforces structures and features its own query language.
 
 ## Documentation
 
-The tutorial pages is located at [saenuma.com](https://saenuma.com/flaarumtuts/intro).
+The tutorial pages is located at [saenuma.com](https://sae.ng/flaarumtuts/intro).
 
-API documentation can be found on [godoc](https://godoc.org/github.com/saenuma/flaarum)
+API documentation can be found on [godoc](https://pkg.go.dev/github.com/saenuma/flaarum)
 
 
-## Install
+## Development Environment Installation.
 
-1.	Install from snapstore using `sudo snap install flaarum`
+1.	Install wsl on windows. Search on google for instructions
+
+1.  Launch wsl and run `wget https://sae.ng/install_flaarum.sh`
+
+1.  Execute the downloaded script by running `sudo ./install_flaarum.sh`
 
 1.	You don't need a key to connect with the database when not in production.
 
 
-### Basic Production Setup (Google Cloud)
+### Production Environment Installation
 
-1.	Create a launch file with `flaarum.lgcp initb` and edit it to your specifications
+1. 	Launch a server and make sure it has a static internal address.
 
-2.	Create a service account and store the downloaded json in your flaarum folder (gotten from `flaarum.cli pwd`)
+1.  Download install script by running `wget https://sae.ng/install_flaarum.sh`
 
-3.	If you have a project that you've not launched an instance in before. Enable compute api with this command
-		`gcloud services enable compute.googleapis.com --project {project}`.Remember to replace the project with you project name.
+1.  Execute the downloaded script by running `sudo ./install_flaarum.sh`
 
-4.	Launch the service with `flaarum.lgcp lb launchfile serviceaccountfile`
-    where launchfile is the name of the file created in step 1 excluding the path and serviceaccountfile is the json in step 2
-    excluding the path.
+1.  Make production ready by running `sudo flprod mpr`
 
-5.	SSH into the server and run `flaarum.prod r` to get your key string. Needed in your program to connect to your flaarum server.
-
-
-### AutoScaling Production Setup (Google Cloud)
-
-1.	Create a launch file with `flaarum.lgcp initas` and edit it to your specifications
-
-2.	Create a service account and store the downloaded json in your flaarum folder (gotten from `flaarum.cli pwd`)
-
-3.	If you have a project that you've not launched an instance in before. Enable compute api with this command
-		`gcloud services enable compute.googleapis.com --project {project}`.Remember to replace the project with you project name.
-
-4.	Launch the service with `flaarum.lgcp las launchfile serviceaccountfile`
-    where launchfile is the name of the file created in step 1 excluding the path and serviceaccountfile is the json in step 2
-    excluding the path.
-
-5.	SSH into the server (not the control server) and run `flaarum.prod r` to get your key string. Needed in your program to connect to your flaarum server.
+1.	SSH into the server and run `sudo flprod r` to get your key string. Needed in your program to connect to your flaarum server.
 
 
 ## CLI
 
-You can use the cli `flaarum.cli` to administer the database from the terminal.
+You can use the cli `flcli` to administer the database from the terminal.
 
-Run it with help `flaarum.cli help` to view available options.
+Run it with help `flcli help` to view available options.
 
+You must SSH into the server to use the `flcli` command.
 
 ## License
 

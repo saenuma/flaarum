@@ -9,6 +9,5 @@ build:
 
 	cp store/https-server.crt bin/https-server.crt
 	cp store/https-server.key bin/https-server.key
-	cp english-stopwords.json bin/english-stopwords.json
 
 	cp services/* bin/
