@@ -5,7 +5,6 @@ import (
   "os"
   "fmt"
   "path/filepath"
-  "strconv"
   "github.com/saenuma/flaarum/flaarum_shared"
 )
 
@@ -15,7 +14,6 @@ func main() {
   if err != nil {
     panic(err)
   }
-
 
 	if len(os.Args) < 2 {
 		color.Red.Println("Wrong number of inputs. Run this program with --help to view the help message.")
@@ -27,21 +25,6 @@ func main() {
 		fmt.Printf(`flaarum's progs launches long running programs needed in flaarum.
 
 Available Commands:
-
-  ast     Autoscaling long running tests. The method of test used here is the generation of random inserts.
-
-          The name of the table created is called 'vals'. Please delete the table after tests.
-
-          To begin testing autoscaling deployments set the resize_frequency to 1 hour and then run this program.
-          This program should be ran from the same local network but from a different machine. Keep checking the
-          CPU usage of the flaarum server to see if it passes 70 percent. Autoscaling upwards starts at 70 percent.
-
-          It expects three inputs: the address, the keystring and the number of threads.
-          The number of threads should start from twenty.
-
-          This program must be ran with 'sudo'.
-
-          Example: sudo flaarum.progs ast 127.0.0.1 not-yet-set 50
 
   in      In command restores a backup of a flaarum project. It expects the name of the flaarum project to be
           restored into and a file containing the backup data. This file must reside in this part '%s'.
@@ -118,36 +101,6 @@ Available Commands:
       color.Red.Println("No long running task is running.")
     }
 
-  case "ast":
-    hasLongRunningTaskActive := isLongRunningTaskActive()
-    if hasLongRunningTaskActive {
-      color.Red.Println("Wait for long running task(s) to be completed.")
-      os.Exit(1)
-    }
-
-    if len(os.Args) < 5 {
-      color.Red.Println("Expecting three inputs: the address, the keystring and the number of threads. The number of threads should start from twenty.")
-      return
-    }
-
-    addr := os.Args[2]
-    fks := os.Args[3]
-    _, err := strconv.Atoi(os.Args[4])
-    if err != nil {
-      color.Red.Println(err.Error())
-      return
-    }
-
-    astCommandInstrPath := filepath.Join(dataPath, "ast.ast_instr")
-
-    out := addr + "\n" + fks + "\n" + os.Args[4]
-    err = os.WriteFile(astCommandInstrPath, []byte(out), 0777)
-    if err != nil {
-      panic(err)
-    }
-
-    fmt.Println("Wait for operation to finish before using the database.")
-
 	default:
 		color.Red.Println("Unexpected command. Run this program 'inout' with --help to find out the supported commands.")
 		os.Exit(1)
@@ -160,13 +113,10 @@ func isLongRunningTaskActive() bool {
   dataPath, _ := flaarum_shared.GetDataPath()
   outCommandInstrPath := filepath.Join(dataPath, "out.out_instr")
   inCommandInstrPath := filepath.Join(dataPath, "in.in_instr")
-  astCommandInstrPath := filepath.Join(dataPath, "ast.ast_instr")
 
   if flaarum_shared.DoesPathExists(outCommandInstrPath) {
     return true
   } else if flaarum_shared.DoesPathExists(inCommandInstrPath) {
-    return true
-  } else if flaarum_shared.DoesPathExists(astCommandInstrPath) {
     return true
   }
 
