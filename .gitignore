@@ -22,3 +22,5 @@ artifacts/
 flaarum.tar.xz
 *.snap
 *.xdelta3
+
+bin/

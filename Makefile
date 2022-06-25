@@ -1,15 +1,17 @@
 
 build:
-	rm -rf artifacts/flaarum.tar.xz
-	go build -o artifacts/cli ./cli
-	go build -o artifacts/gcpasr ./gcpasr
-	go build -o artifacts/progs ./progs
-	go build -o artifacts/lgcp ./lgcp
-	go build -o artifacts/prod ./prod
-	go build -o artifacts/store ./store
-	go build -o artifacts/statsr ./statsr
-	go build -o artifacts/daemon ./daemon
+	rm -rf bin/
+	go build -o bin/flcli ./cli
+	go build -o bin/fldaemon ./daemon
+	go build -o bin/flgcpasr ./gcpasr
+	go build -o bin/flprogs ./progs
+	go build -o bin/fllgcp ./lgcp
+	go build -o bin/flprod ./prod
+	go build -o bin/flstore ./store
+	go build -o bin/flstatsr ./statsr
 
-	cp store/https-server.crt artifacts/https-server.crt
-	cp store/https-server.key artifacts/https-server.key
-	cp english-stopwords.json artifacts/english-stopwords.json
+	cp store/https-server.crt bin/https-server.crt
+	cp store/https-server.key bin/https-server.key
+	cp english-stopwords.json bin/english-stopwords.json
+
+	cp services/* bin/

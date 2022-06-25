@@ -1,0 +1,14 @@
+[Unit]
+Description=Responds to database instructions
+Wants=network.target
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/opt/saenuma/flaarum/flstore
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
