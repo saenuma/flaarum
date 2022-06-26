@@ -4,9 +4,9 @@ sudo apt update
 sudo apt install nano
 
 echo "Updating PATH variable"
-if [ ! -d "/opt/saenuma/flaarum/"]
+if [ ! -d "/opt/saenuma/flaarum/" ]
 then
-  sudo echo 'export PATH="$PATH:/opt/saenuma/flaarum/bin/"' >> /etc/environment
+  sudo echo 'PATH="$PATH:/opt/saenuma/flaarum/bin/"' >> /etc/environment
 fi
 
 echo "Fetching Assets"
