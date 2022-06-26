@@ -11,3 +11,5 @@ build:
 	cp store/https-server.key bin/https-server.key
 
 	cp services/* bin/
+
+	tar -cJf flaarum.tar.xz bin/* 
