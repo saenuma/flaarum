@@ -102,9 +102,9 @@ func GetDataPath() (string, error) {
 		if err != nil {
 			return "", errors.Wrap(err, "os error")
 		}
-		dd = filepath.Join(hd, "Flaarum", "flaarum.zconf")
+		dd = filepath.Join(hd, "Flaarum")
 	} else {
-		dd = filepath.Join(FLAARUM_PATH, "flaarum.zconf")
+		dd = FLAARUM_PATH
 	}
 
 	err := os.MkdirAll(dd, 0777)
