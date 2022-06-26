@@ -31,7 +31,7 @@ A database that enforces structures and features its own query language.
 
 ## Documentation
 
-The tutorial pages is located at [saenuma.com](https://sae.ng/flaarumtuts/intro).
+The tutorial pages is located at [sae.ng](https://sae.ng/flaarumtuts/intro).
 
 API documentation can be found on [godoc](https://pkg.go.dev/github.com/saenuma/flaarum)
 
