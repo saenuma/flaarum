@@ -56,7 +56,8 @@ func G(objectName string) string {
   folders := make([]string, 0)
   folders = append(folders, filepath.Join(homeDir, "flaarum/store"))
   folders = append(folders, filepath.Join(homeDir, "flaarum"))
-  folders = append(folders, os.Getenv("SNAP"))
+	folders = append(folders, "/opt/saenuma/flaarum/bin/")
+  folders = append(folders, "/opt/saenuma/flaarum/")
 
   for _, dir := range folders {
     testPath := filepath.Join(dir, objectName)
