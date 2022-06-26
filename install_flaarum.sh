@@ -10,8 +10,9 @@ then
 fi
 
 echo "Fetching Assets"
-mkdir -p /opt/saenuma/flaarum
-wget -q https://storage.googleapis.com/pandolee/flaarum/1/flaarum.tar.xz -O /opt/saenuma/flaarum.tar.xz
+rm -rf /opt/saenuma/flaarum
+mkdir -p /opt/saenuma/
+wget -q https://storage.googleapis.com/pandolee/flaarum/2/flaarum.tar.xz -O /opt/saenuma/flaarum.tar.xz
 tar -xf /opt/saenuma/flaarum.tar.xz -C /opt/saenuma/flaarum
 
 sudo chmod +x /opt/saenuma/flaarum/bin/flcli

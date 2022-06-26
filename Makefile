@@ -1,6 +1,8 @@
 
 build:
 	rm -rf bin/
+	rm -rf flaarum.tar.xz
+	
 	go build -o bin/flcli ./cli
 	go build -o bin/fldaemon ./daemon
 	go build -o bin/flprogs ./progs
@@ -12,4 +14,4 @@ build:
 
 	cp services/* bin/
 
-	tar -cJf flaarum.tar.xz bin/* 
+	tar -cJf flaarum.tar.xz bin/*

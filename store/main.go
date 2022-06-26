@@ -10,7 +10,6 @@ import (
 	"sync"
 	"github.com/saenuma/flaarum/flaarum_shared"
   "github.com/saenuma/zazabul"
-  "encoding/json"
   "github.com/pkg/errors"
 )
 
