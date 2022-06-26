@@ -66,6 +66,7 @@ func G(objectName string) string {
     }
   }
 
+	fmt.Println("Could not find: ", objectName)
   panic("Improperly configured.")
 }
 

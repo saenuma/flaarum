@@ -16,7 +16,6 @@ import (
 
 var projsMutex *sync.RWMutex // for projects and tables (table data uses different mutexes) creation, editing, deletion
 var tablesMutexes map[string]*sync.RWMutex
-var STOP_WORDS []string
 
 func init() {
 	dataPath, err := GetDataPath()
@@ -46,19 +45,6 @@ func init() {
     }
     conf.Write(confPath)
   }
-
-  // load stop words once
-  stopWordsJsonPath := flaarum_shared.G("english-stopwords.json")
-  jsonBytes, err := os.ReadFile(stopWordsJsonPath)
-  if err != nil {
-    panic(err)
-  }
-  stopWordsList := make([]string, 0)
-  err = json.Unmarshal(jsonBytes, &stopWordsList)
-  if err != nil {
-    panic(err)
-  }
-  STOP_WORDS = stopWordsList
 }
 
 
@@ -97,12 +83,12 @@ func main() {
 
   // stats
   r.HandleFunc("/get-and-delete-stats", getAndDeleteStats)
-	
+
 	r.Use(keyEnforcementMiddleware)
 
   fmt.Printf("Serving on port: %d\n",flaarum_shared.PORT)
 
-	err := http.ListenAndServeTLS(fmt.Sprintf(":%d", flaarum_shared.PORT), flaarum_shared.G("https-server.crt"), 
+	err := http.ListenAndServeTLS(fmt.Sprintf(":%d", flaarum_shared.PORT), flaarum_shared.G("https-server.crt"),
     flaarum_shared.G("https-server.key"), r)
 	if err != nil {
 		panic(err)
@@ -135,7 +121,7 @@ func keyEnforcementMiddleware(next http.Handler) http.Handler {
       } else {
         // Call the next handler, which can be another middleware in the chain, or the final handler.
         next.ServeHTTP(w, r)
-      }    
+      }
     }
 
   })
