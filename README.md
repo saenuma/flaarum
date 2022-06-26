@@ -44,6 +44,8 @@ API documentation can be found on [godoc](https://pkg.go.dev/github.com/saenuma/
 
 1.  Execute the downloaded script by running `sudo ./install_flaarum.sh`
 
+1.  Use the `ifconfig` command in wsl to get the ip address of the WSL VM. This is needed to connect to the machine.
+
 1.	You don't need a key to connect with the database when not in production.
 
 
