@@ -1,23 +1,17 @@
 package flaarum_shared
 
 import (
-  "os"
   "strings"
   "fmt"
-  "encoding/json"
-  "github.com/pkg/errors"
+  "os"
 )
 
 
-func ParseDataFormat(path string) (map[string]string, error) {
-  rawData, err := os.ReadFile(path)
-  if err != nil {
-    return nil, err
-  }
-
+func ParseEncodedRowData(rawData []byte) (map[string]string, error) {
   ret := make(map[string]string)
+  nl := GetNewline()
 
-  partsOfRawData := strings.Split(string(rawData), "\n")
+  partsOfRawData := strings.Split(string(rawData), nl)
   for _, line := range partsOfRawData {
     var colonIndex int
     for i, ch := range line {
@@ -41,9 +35,9 @@ func ParseDataFormat(path string) (map[string]string, error) {
   rawDataStr := string(rawData)
   for k, v := range ret {
     if strings.TrimSpace(v) == "" {
-      firstIndex := strings.Index(rawDataStr, fmt.Sprintf("\n%s:", k))
-      lastIndex := strings.LastIndex(rawDataStr, fmt.Sprintf("\n%s:", k))
-      padding := len( fmt.Sprintf("\n%s:", k))
+      firstIndex := strings.Index(rawDataStr, fmt.Sprintf("%s%s:", nl, k))
+      lastIndex := strings.LastIndex(rawDataStr, fmt.Sprintf("%s%s:", nl, k))
+      padding := len( fmt.Sprintf("%s%s:", nl, k))
       if firstIndex != lastIndex {
         ret[k] = rawDataStr[firstIndex+padding: lastIndex]
       }
@@ -54,25 +48,27 @@ func ParseDataFormat(path string) (map[string]string, error) {
 }
 
 
-func ReadDataFile(path string) (map[string]string, error) {
-	// this file checks if the data was encoded in json or a custom format
-	// json was the former default encoding
-	raw, err := os.ReadFile(path)
+func ParseDataFormat(path string) (map[string]string, error) {
+  raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	firstChar := string(raw)[0]
-	if firstChar == '{' {
-		// read json
-		rowMap := make(map[string]string)
-		err = json.Unmarshal(raw, &rowMap)
-		if err != nil {
-			return nil, errors.Wrap(err, "json error.")
-		}
-		return rowMap, nil
-	} else {
-		// read custom data format
-		return ParseDataFormat(path)
-	}
+  return ParseEncodedRowData(raw)
+}
+
+
+func EncodeRowData(projName, tableName string, toWrite map[string]string) string {
+  nl := GetNewline()
+  out := nl
+  for k, v := range toWrite {
+    ft := GetFieldType(projName, tableName, k)
+    if ft == "text" {
+    out += fmt.Sprintf("%s:%s%s%s%s:%s", k, nl, v, nl, k, nl)
+    } else {
+      out += fmt.Sprintf("%s: %s%s", k, v, nl)
+    }
+  }
+
+  return out
 }

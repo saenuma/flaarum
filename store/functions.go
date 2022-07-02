@@ -8,7 +8,6 @@ import (
   "github.com/saenuma/flaarum/flaarum_shared"
   "github.com/pkg/errors"
   "path/filepath"
-  "os"
 )
 
 
@@ -48,13 +47,14 @@ func allRowsCount(w http.ResponseWriter, r *http.Request) {
   tablesMutexes[fullTableName].RLock()
   defer tablesMutexes[fullTableName].RUnlock()
 
-  dataFIs, err := os.ReadDir(filepath.Join(tablePath, "data"))
+  dataF1Path := filepath.Join(tablePath, "data.flaa1")
+  elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
   if err != nil {
-    printError(w, errors.Wrap(err, "ioutil error."))
+    printError(w, err)
     return
   }
 
-  fmt.Fprintf(w, "%d", len(dataFIs))
+  fmt.Fprintf(w, "%d", len(elemsMap))
 }
 
 

@@ -98,17 +98,18 @@ func AppendDataF1File(projName, tableName, name string, elem DataF1Elem) error {
 func ReadPortionF2File(projName, tableName, name string, begin, end int64) ([]byte, error) {
   dataPath, _ := GetDataPath()
   path := filepath.Join(dataPath, projName, tableName, name + ".flaa2")
-  f2FileHandle, err := os.OpenFile(path, os.O_RDWR, 0777)
+  f2FileHandle, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0777)
   if err != nil {
     return []byte{}, errors.Wrap(err, "os error")
   }
   defer f2FileHandle.Close()
 
-  outData := make([]byte, 0, end-begin)
+  outData := make([]byte, end-begin)
   _, err = f2FileHandle.ReadAt(outData, begin)
   if err != nil {
     return outData, errors.Wrap(err, "os error")
   }
 
+  fmt.Println(string(outData))
   return outData, nil
 }

@@ -324,23 +324,8 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 func saveRowData(projName, tableName, rowId string, toWrite map[string]string) error {
   tablePath := getTablePath(projName, tableName)
 
-	makeOutData := func (projName, tableName string, toWrite map[string]string) string {
-		out := "\n"
-		for k, v := range toWrite {
-			ft := flaarum_shared.GetFieldType(projName, tableName, k)
-			if ft == "text" {
-			out += fmt.Sprintf("%s:\n%s\n%s:\n", k, v, k)
-			} else {
-				out += fmt.Sprintf("%s: %v\n", k, v)
-			}
-		}
-
-		return out
-	}
-
 	dataLumpPath := filepath.Join(tablePath, "data.flaa2")
-
-	dataForCurrentRow := makeOutData(projName, tableName, toWrite)
+	dataForCurrentRow := flaarum_shared.EncodeRowData(projName, tableName, toWrite)
 	var begin int64
 	var end int64
 	if doesPathExists(dataLumpPath) {

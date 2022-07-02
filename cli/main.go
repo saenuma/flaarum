@@ -4,14 +4,15 @@ package main
 import (
 	"os"
 	"fmt"
-	"github.com/saenuma/flaarum"
-	"github.com/saenuma/flaarum/flaarum_shared"
 	"strings"
 	"strconv"
 	"encoding/json"
+	"os/exec"
+	"runtime"
 	"github.com/gookit/color"
 	"github.com/tidwall/pretty"
-	"os/exec"
+	"github.com/saenuma/flaarum"
+	"github.com/saenuma/flaarum/flaarum_shared"
 )
 
 func main() {
@@ -311,14 +312,11 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
-		out := "\n"
+		inMap := make(map[string]string)
 		for _, fieldStruct := range tableStructStmt.Fields {
-			if fieldStruct.FieldType == "text" {
-				out += fmt.Sprintf("%s:\n\n\n%s:\n", fieldStruct.FieldName, fieldStruct.FieldName)
-			} else {
-				out += fieldStruct.FieldName + ":  \n"
-			}
+			inMap[fieldStruct.FieldName] = ""
 		}
+		out := flaarum_shared.EncodeRowData(cl.ProjName, parts[1], inMap)
 
 		outName := "bir-" + strings.ToLower(flaarum_shared.UntestedRandomString(10)) + ".txt"
 		outPath, err := flaarum_shared.GetFlaarumPath(outName)
@@ -512,15 +510,19 @@ Table Search Commands:
 
     prettyJson := pretty.Pretty(jsonBytes)
 
-    cmd := exec.Command("less")
-    cmd.Stdin = strings.NewReader(string(prettyJson))
-    cmd.Stdout = os.Stdout
+		if runtime.GOOS == "windows" {
+			fmt.Println(string(prettyJson))
+		} else {
+			cmd := exec.Command("less")
+			cmd.Stdin = strings.NewReader(string(prettyJson))
+			cmd.Stdout = os.Stdout
 
-    err = cmd.Run()
-    if err != nil {
-    	color.Red.Println("Error occured.\nError: %s\n", err)
-    	os.Exit(1)
-    }
+			err = cmd.Run()
+			if err != nil {
+				color.Red.Println("Error occured.\nError: %s\n", err)
+				os.Exit(1)
+			}
+		}
 
   case "rc":
 		if len(os.Args) != 4 {
