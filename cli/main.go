@@ -173,18 +173,6 @@ Table Search Commands:
 		}
 		fmt.Println()
 
-	case "rt":
-		if len(os.Args) != 5 {
-			color.Red.Println("'rt' command expects a project name, old table name and a new table name.")
-			os.Exit(1)
-		}
-		cl.ProjName = os.Args[2]
-		err := cl.RenameTable(os.Args[3], os.Args[4])
-		if err != nil {
-			color.Red.Println("Error renamining table.\nError: %s\n", err)
-			os.Exit(1)
-		}
-
 	case "arc":
 		if len(os.Args) != 3 {
 			color.Red.Println("'arc' command expects a project and table combo eg. 'first_proj/users'.")
@@ -249,22 +237,6 @@ Table Search Commands:
 			err = cl.DeleteTable(parts[1])
 			if err != nil {
 				color.Red.Printf("Error deleting table '%s'. \nError: %s\n", arg, err)
-				os.Exit(1)
-			}
-		}
-
-	case "et":
-		if len(os.Args) < 3 {
-			color.Red.Println("'et' command expects combo(s) of project and table eg. 'first_proj/users'.")
-			os.Exit(1)
-		}
-		for _, arg := range os.Args[2:] {
-			parts := strings.Split(arg, "/")
-			cl.ProjName = parts[0]
-
-			err = cl.EmptyTable(parts[1])
-			if err != nil {
-				color.Red.Printf("Error emptying table '%s'. \nError: %s\n", arg, err)
 				os.Exit(1)
 			}
 		}

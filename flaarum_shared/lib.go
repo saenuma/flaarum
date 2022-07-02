@@ -188,18 +188,23 @@ func GetCurrentVersionNum(projName, tableName string) (int, error) {
 	dataPath, _ := GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 
-	tableStructsFIs, err := os.ReadDir(filepath.Join(tablePath, "structures"))
+	tableObjsFIs, err := os.ReadDir(tablePath)
 	if err != nil {
 		return -1, errors.Wrap(err, "ioutil error")
 	}
 
 	versionNumbers := make([]int, 0)
-	for _, tsfi := range tableStructsFIs {
-		num, err := strconv.Atoi(tsfi.Name())
-		if err != nil {
-			return -1, errors.Wrap(err, "strconv error.")
+	for _, tofi := range tableObjsFIs {
+		if strings.HasPrefix(tofi.Name(), "structure") {
+			left := strings.Replace(tofi.Name(), "structure", "", 1)
+			left = strings.Replace(left, ".txt", "", 1)
+			num, err := strconv.Atoi(left)
+			if err != nil {
+				return -1, errors.Wrap(err, "strconv error.")
+			}
+			versionNumbers = append(versionNumbers, num)
 		}
-		versionNumbers = append(versionNumbers, num)
+
 	}
 
 	sort.Ints(versionNumbers)

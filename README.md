@@ -1,4 +1,4 @@
-# flaarum
+# flaarum (currently in a bad state)
 
 ![Flaarum Logo](https://github.com/saenuma/flaarum/raw/master/flaarum-logo.png "Flaarum logo")
 

@@ -9,7 +9,6 @@ import (
 	"github.com/gorilla/mux"
 	"strings"
 	"os"
-	"strconv"
 	"encoding/json"
 )
 
@@ -116,17 +115,14 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	toMake := []string{"data", "indexes", "tindexes", "structures", "txtinstrs", "intindexes", "timeindexes", "likeindexes",}
-	for _, tm := range toMake {
-		err := os.MkdirAll(filepath.Join(dataPath, projName, tableStruct.TableName, tm), 0777)
-		if err != nil {
-			printError(w, errors.Wrap(err, "os error."))
-			return
-		}
+	err = os.MkdirAll(filepath.Join(dataPath, projName, tableStruct.TableName), 0777)
+	if err != nil {
+		printError(w, errors.Wrap(err, "os error."))
+		return
 	}
 
 	formattedStmt := formatTableStruct(tableStruct)
-	err = os.WriteFile(filepath.Join(dataPath, projName, tableStruct.TableName, "structures", "1"),
+	err = os.WriteFile(filepath.Join(dataPath, projName, tableStruct.TableName, "structure1.txt"),
 		[]byte(formattedStmt), 0777)
 	if err != nil {
 		printError(w, errors.Wrap(err, "ioutil error."))
@@ -172,16 +168,17 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	oldFormattedStmt, err := os.ReadFile(filepath.Join(tablePath, "structures", strconv.Itoa(currentVersionNum)))
+	oldFormattedStmt, err := os.ReadFile(filepath.Join(tablePath, fmt.Sprintf("structure%d.txt", currentVersionNum)))
 	if err != nil {
-		printError(w, errors.Wrap(err, "ioutil error"))
+		printError(w, err)
 		return
 	}
 
 	formattedStmt := formatTableStruct(tableStruct)
 	if formattedStmt != string(oldFormattedStmt) {
 		nextVersionNumber := currentVersionNum + 1
-		err = os.WriteFile(filepath.Join(tablePath, "structures", strconv.Itoa(nextVersionNumber)), []byte(formattedStmt), 0777)
+		newStructurePath := filepath.Join(tablePath, fmt.Sprintf("structure%d.txt", nextVersionNumber))
+		err = os.WriteFile(newStructurePath, []byte(formattedStmt), 0777)
 		if err != nil {
 			printError(w, errors.Wrap(err, "ioutil error."))
 			return
@@ -241,7 +238,7 @@ func getTableStructureHTTP(w http.ResponseWriter, r *http.Request) {
 	defer projsMutex.Unlock()
 
 	tablePath := filepath.Join(dataPath, projName, tableName)
-	stmt, err := os.ReadFile(filepath.Join(tablePath, "structures", versionNum))
+	stmt, err := os.ReadFile(filepath.Join(tablePath, fmt.Sprintf("structure%s.txt", versionNum)))
 	if err != nil {
 		printError(w, errors.Wrap(err, "ioutil error"))
 		return
@@ -269,55 +266,6 @@ func getExistingTables(projName string) ([]string, error) {
 }
 
 
-func emptyTable(w http.ResponseWriter, r *http.Request) {
-  vars := mux.Vars(r)
-  projName := vars["proj"]
-  tableName := vars["tbl"]
-  dataPath, _ := GetDataPath()
-
-  projsMutex.Lock()
-  defer projsMutex.Unlock()
-
-  createTableMutexIfNecessary(projName, tableName)
-  fullTableName := projName + ":" + tableName
-  tablesMutexes[fullTableName].Lock()
-  defer tablesMutexes[fullTableName].Unlock()
-
-  if ! doesTableExists(projName, tableName) {
-    printError(w, errors.New(fmt.Sprintf("Table '%s' does not exist in project '%s'.", tableName, projName)))
-    return
-  }
-
-  toDelete := []string{"data", "indexes", "tindexes", "txtinstrs", "intindexes", "timeindexes", "likeindexes",}
-  for _, todo := range toDelete {
-    err := os.RemoveAll(filepath.Join(dataPath, projName, tableName, todo))
-    if err != nil {
-      printError(w, errors.Wrap(err, "delete directory failed."))
-      return
-    }
-
-  }
-
-	err := os.Remove(filepath.Join(dataPath, projName, tableName, "lastId"))
-	if err != nil {
-		printError(w, errors.Wrap(err, "delete file failed."))
-		return
-	}
-
-  for _, tm := range toDelete {
-    toMakePath := filepath.Join(dataPath, projName, tableName, tm)
-    err := os.MkdirAll(toMakePath, 0777)
-    if err != nil {
-      err = errors.Wrap(err, "directory creation failed.")
-      printError(w, err)
-      return
-    }
-  }
-
-  fmt.Fprintf(w, "ok")
-}
-
-
 func listTables(w http.ResponseWriter, r *http.Request) {
   vars := mux.Vars(r)
   projName := vars["proj"]
@@ -338,69 +286,6 @@ func listTables(w http.ResponseWriter, r *http.Request) {
   }
 
   fmt.Fprintf(w, string(jsonBytes))
-}
-
-
-func renameTable(w http.ResponseWriter, r *http.Request) {
-  vars := mux.Vars(r)
-  projName := vars["proj"]
-  tableName := vars["tbl"]
-  newTableName := vars["ntbl"]
-
-  dataPath, _ := GetDataPath()
-
-  projsMutex.Lock()
-  defer projsMutex.Unlock()
-
-  createTableMutexIfNecessary(projName, tableName)
-  fullTableName := projName + ":" + tableName
-  tablesMutexes[fullTableName].Lock()
-  defer tablesMutexes[fullTableName].Unlock()
-
-  if ! doesTableExists(projName, tableName) {
-    printError(w, errors.New(fmt.Sprintf("Table '%s' does not exist in project '%s'.", tableName, projName)))
-    return
-  }
-
-  if doesTableExists(projName, newTableName) {
-    printError(w, errors.New(fmt.Sprintf("Table '%s' does exists in project '%s' and cannot be used as a new name",
-      newTableName, projName)))
-  }
-
-  structuresFolder := filepath.Join(dataPath, projName, tableName, "structures")
-  structuresFIs, err := os.ReadDir(structuresFolder)
-  if err != nil {
-    printError(w, errors.Wrap(err, "read directory failed."))
-    return
-  }
-
-  for _, vfi := range structuresFIs {
-    structurePath := filepath.Join(structuresFolder, vfi.Name())
-    raw, err := os.ReadFile(structurePath)
-    if err != nil {
-      printError(w, errors.Wrap(err, "read failed."))
-      return
-    }
-
-    structurePathContents := string(raw)
-    out := strings.ReplaceAll(structurePathContents, tableName, newTableName)
-
-    err = os.WriteFile(structurePath, []byte(out), 0777)
-    if err != nil {
-      printError(w, errors.Wrap(err, "write failed."))
-      return
-    }
-  }
-
-  oldPath := filepath.Join(dataPath, projName, tableName)
-  newPath := filepath.Join(dataPath, projName, newTableName)
-  err = os.Rename(oldPath, newPath)
-  if err != nil {
-    printError(w, errors.Wrap(err, "rename failed."))
-    return
-  }
-
-  fmt.Fprintf(w, "ok")
 }
 
 

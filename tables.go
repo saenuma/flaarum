@@ -127,29 +127,6 @@ func (cl *Client) GetCurrentTableStructureParsed(tableName string) (flaarum_shar
 }
 
 
-func (cl *Client) EmptyTable(tableName string) error {
-  urlValues := url.Values{}
-  urlValues.Set("key-str", cl.KeyStr)
-
-  resp, err := httpCl.PostForm(cl.Addr + "empty-table/" + cl.ProjName + "/" + tableName,
-    urlValues)
-  if err != nil {
-    return ConnError{err.Error()}
-  }
-  defer resp.Body.Close()
-  body, err :=  io.ReadAll(resp.Body)
-  if err != nil {
-    return ConnError{err.Error()}
-  }
-
-  if resp.StatusCode == 200 {
-    return nil
-  } else {
-    return ServerError{string(body)}
-  }
-}
-
-
 func (cl Client) ListTables() ([]string, error) {
   urlValues := url.Values{}
   urlValues.Add("key-str", cl.KeyStr)
@@ -175,29 +152,6 @@ func (cl Client) ListTables() ([]string, error) {
     return nil, ServerError{string(body)}
   }
 
-}
-
-
-func (cl *Client) RenameTable(tableName, newTableName string) error {
-  urlValues := url.Values{}
-  urlValues.Set("key-str", cl.KeyStr)
-
-  resp, err := httpCl.PostForm(cl.Addr + "rename-table/" + cl.ProjName + "/" + tableName + "/" + newTableName,
-    urlValues)
-  if err != nil {
-    return ConnError{err.Error()}
-  }
-  defer resp.Body.Close()
-  body, err :=  io.ReadAll(resp.Body)
-  if err != nil {
-    return ConnError{err.Error()}
-  }
-
-  if resp.StatusCode == 200 {
-    return nil
-  } else {
-    return ServerError{string(body)}
-  }
 }
 
 
