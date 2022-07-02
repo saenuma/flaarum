@@ -340,13 +340,13 @@ Table Search Commands:
 
 		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
 		if err != nil {
-			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
+			color.Red.Printf("The supplied path '%s' does not exits.\n", inputPath)
 			os.Exit(1)
 		}
 
 		rowData, err := flaarum_shared.ParseDataFormat(inputPath)
 		if err != nil {
-			color.Red.Println("The input file is not valid.\nError: %s\n", err)
+			color.Red.Printf("The input file is not valid.\nError: %s\n", err)
 			os.Exit(1)
 		}
 

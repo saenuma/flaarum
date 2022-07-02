@@ -54,8 +54,9 @@ func G(objectName string) string {
     panic(err)
   }
   folders := make([]string, 0)
-  folders = append(folders, filepath.Join(homeDir, "flaarum/store"))
-  folders = append(folders, filepath.Join(homeDir, "flaarum"))
+  folders = append(folders, filepath.Join(homeDir, "flaarum", "store"))
+	folders = append(folders, filepath.Join(homeDir, "flaarum"))
+  folders = append(folders, filepath.Join(homeDir, "p", "flaarum", "store"))
 	folders = append(folders, "/opt/saenuma/flaarum/bin/")
   folders = append(folders, "/opt/saenuma/flaarum/")
 
@@ -215,7 +216,7 @@ func GetCurrentVersionNum(projName, tableName string) (int, error) {
 
 func GetTableStructureParsed(projName, tableName string, versionNum int) (TableStruct, error) {
   dataPath, _ := GetDataPath()
-  raw, err := os.ReadFile(filepath.Join(dataPath, projName, tableName, "structures", strconv.Itoa(versionNum)))
+  raw, err := os.ReadFile(filepath.Join(dataPath, projName, tableName, fmt.Sprintf("structure%d.txt", versionNum)))
   if err != nil {
     return TableStruct{}, errors.Wrap(err, "ioutil error")
   }
@@ -451,4 +452,14 @@ func IsNotIndexedFieldVersioned(projName, tableName, fieldName, version string) 
 		}
 	}
 	return false
+}
+
+
+// Platform independent newline
+func GetNewline() string {
+	if runtime.GOOS == "windows" {
+		return "\r\n"
+	} else {
+		return "\n"
+	}
 }

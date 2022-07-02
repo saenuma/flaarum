@@ -263,21 +263,25 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 	defer tablesMutexes[fullTableName].Unlock()
 
   var nextId int64
-  if ! doesPathExists(filepath.Join(tablePath, "lastId")) {
+	dataF1Path := filepath.Join(tablePath, "data.flaa1")
+  if ! doesPathExists(dataF1Path) {
     nextId = 1
   } else {
-    raw, err := os.ReadFile(filepath.Join(tablePath, "lastId"))
-    if err != nil {
-      printError(w, errors.Wrap(err, "ioutil error"))
-      return
-    }
+		// read till you find the lastId
+		elems, err := ParseDataF1File(dataF1Path)
+		if err != nil {
+			printError(w, err)
+			return
+		}
 
-    rawNum, err := strconv.ParseInt(string(raw), 10, 64)
-    if err != nil {
-      printError(w, errors.Wrap(err, "strconv error"))
-      return
-    }
-    nextId = rawNum + 1
+		fmt.Println(elems)
+		lastId, err := strconv.ParseInt(elems[len(elems) - 1].DataKey, 10, 64)
+		if err != nil {
+			printError(w, errors.Wrap(err, "strconv error"))
+			return
+		}
+
+		nextId = lastId + 1
   }
 
   nextIdStr := strconv.FormatInt(nextId, 10)
@@ -289,26 +293,26 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
   }
 
   // create indexes
-  for k, v := range toInsert {
-    if isNotIndexedField(projName, tableName, k) {
-				// do nothing.
-    } else {
-      err := makeIndex(projName, tableName, k, v, nextIdStr)
-      if err != nil {
-        printError(w, err)
-        return
-      }
-    }
+  // for k, v := range toInsert {
+  //   if isNotIndexedField(projName, tableName, k) {
+	// 			// do nothing.
+  //   } else {
+  //     err := makeIndex(projName, tableName, k, v, nextIdStr)
+  //     if err != nil {
+  //       printError(w, err)
+  //       return
+  //     }
+  //   }
+	//
+  // }
+	//
 
-  }
-
-
-  // store last id
-  err = os.WriteFile(filepath.Join(tablePath, "lastId"), []byte(nextIdStr), 0777)
-  if err != nil {
-    printError(w, errors.Wrap(err, "ioutil error"))
-    return
-  }
+  // // store last id
+  // err = os.WriteFile(filepath.Join(tablePath, "lastId"), []byte(nextIdStr), 0777)
+  // if err != nil {
+  //   printError(w, errors.Wrap(err, "ioutil error"))
+  //   return
+  // }
 
   fmt.Fprintf(w, nextIdStr)
 
@@ -318,19 +322,55 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 func saveRowData(projName, tableName, rowId string, toWrite map[string]string) error {
   tablePath := getTablePath(projName, tableName)
 
-	out := "\n"
-	for k, v := range toWrite {
-		ft := flaarum_shared.GetFieldType(projName, tableName, k)
-		if ft == "text" {
+	makeOutData := func (projName, tableName string, toWrite map[string]string) string {
+		out := "\n"
+		for k, v := range toWrite {
+			ft := flaarum_shared.GetFieldType(projName, tableName, k)
+			if ft == "text" {
 			out += fmt.Sprintf("%s:\n%s\n%s:\n", k, v, k)
-		} else {
-			out += fmt.Sprintf("%s: %v\n", k, v)
+			} else {
+				out += fmt.Sprintf("%s: %v\n", k, v)
+			}
 		}
+
+		return out
 	}
 
-  err := os.WriteFile(filepath.Join(tablePath, "data", rowId), []byte(out), 0777)
-  if err != nil {
-    return errors.Wrap(err, "write file failed.")
+	dataLumpPath := filepath.Join(tablePath, "data.flaa2")
+
+	dataForCurrentRow := makeOutData(projName, tableName, toWrite)
+	var begin int64
+	var end int64
+	if doesPathExists(dataLumpPath) {
+		dataLumpHandle, err := os.OpenFile(dataLumpPath,	os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+		if err != nil {
+			return errors.Wrap(err, "os error")
+		}
+		defer dataLumpHandle.Close()
+
+		stat, err := dataLumpHandle.Stat()
+		if err != nil {
+			return errors.Wrap(err, "os error")
+		}
+
+		size := stat.Size()
+		dataLumpHandle.Write([]byte(dataForCurrentRow))
+		begin = size + 1
+		end = int64(len([]byte(dataForCurrentRow))) + size
+	} else {
+		err := os.WriteFile(dataLumpPath, []byte(dataForCurrentRow), 0777)
+		if err != nil {
+			return errors.Wrap(err, "os error")
+		}
+
+		begin = 0
+		end = int64(len([]byte(dataForCurrentRow)))
+	}
+
+	elem := DataF1Elem {rowId, begin, end}
+	err := WriteDataF1File(projName, tableName, "data", elem)
+	if err != nil {
+    return errors.Wrap(err, "os error")
   }
 
   return nil
