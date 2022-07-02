@@ -108,8 +108,9 @@ func getTablePath(projName, tableName string) string {
 }
 
 
+// to be deleted
 func makeSafeIndexName(v string) string {
-  return flaarum_shared.MakeSafeIndexName(v)
+	return v
 }
 
 func isNotIndexedField(projName, tableName, fieldName string) bool {
@@ -125,7 +126,7 @@ func isNotIndexedField(projName, tableName, fieldName string) bool {
 			return true
 		}
 	}
-	
+
   return false
 }
 

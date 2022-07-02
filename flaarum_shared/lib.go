@@ -13,7 +13,7 @@ import (
   "strconv"
   arrayOperations "github.com/adam-hanna/arrayOperations"
   "github.com/saenuma/zazabul"
-	"math"
+	// "math"
 	"sort"
 	"runtime"
 )
@@ -23,7 +23,7 @@ const (
   DATE_FORMAT = "2006-01-02"
   DATETIME_FORMAT = "2006-01-02T15:04 MST"
   STRING_MAX_LENGTH = 100
-  BACKUP_EXT = "flaa1"
+  BACKUP_EXT = "flaa3"
   PORT = 22318
 	TEXT_INTR_DELIM = "~~~"
 	FLAARUM_PATH = "/var/lib/flaarum"
@@ -225,11 +225,6 @@ func GetTableStructureParsed(projName, tableName string, versionNum int) (TableS
 }
 
 
-func MakeSafeIndexName(v string) string {
-  return strings.ReplaceAll(v, "/", "~~a~~")
-}
-
-
 func GetFieldType(projName, tableName, fieldName string) string {
 	versionNum, _ := GetCurrentVersionNum(projName, tableName)
 	tableStruct, _ := GetTableStructureParsed(projName, tableName, versionNum)
@@ -296,148 +291,180 @@ func GetFieldType(projName, tableName, fieldName string) string {
 func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 	// make exact search indexes
   dataPath, _ := GetDataPath()
-  indexFolder := filepath.Join(dataPath, projName, tableName, "indexes", fieldName)
-  err := os.MkdirAll(indexFolder, 0777)
-  if err != nil {
-    return errors.Wrap(err, "create directory failed.")
-  }
-  indexPath := filepath.Join(indexFolder, MakeSafeIndexName(newData))
-  if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-    err = os.WriteFile(indexPath, []byte(rowId), 0777)
-    if err != nil {
-      return errors.Wrap(err, "file write failed.")
-    }
-  } else {
-    raw, err := os.ReadFile(indexPath)
-    if err != nil {
-      return errors.Wrap(err, "read failed.")
-    }
-    previousEntries := strings.Split(string(raw), "\n")
-    newEntries := arrayOperations.Union(previousEntries, []string{rowId})
-    err = os.WriteFile(indexPath, []byte(strings.Join(newEntries, "\n")), 0777)
-    if err != nil {
-      return errors.Wrap(err, "write failed.")
-    }
-  }
+	indexesF1Path := filepath.Join(dataPath, projName, tableName, fieldName + "_indexes.flaa1")
+  indexesF2Path := filepath.Join(dataPath, projName, tableName, fieldName + "_indexes.flaa2")
 
-	// make integer indexes
-	fieldType := GetFieldType(projName, tableName, fieldName)
-	if fieldType == "int" {
-		intIndexesFile := filepath.Join(dataPath, projName, tableName, "intindexes", fieldName)
-		if ! DoesPathExists(intIndexesFile) {
-			out := fmt.Sprintf("%s: %s\n", newData, rowId)
-			os.WriteFile(intIndexesFile, []byte(out), 0777)
+	var begin int64
+	var end int64
+	if ! DoesPathExists(indexesF1Path) {
+		begin = 0
+		err := os.WriteFile(indexesF2Path, []byte(rowId + ","), 0777)
+		if err != nil {
+			return errors.Wrap(err, "os error")
+		}
+		end = int64(len([]byte(rowId + ",")))
+	} else {
+		elemsMap, err := ParseDataF1File(indexesF2Path)
+		if err != nil {
+			return err
+		}
+
+		elem, ok := elemsMap[newData]
+		var newDataToWrite string
+		if ! ok {
+			newDataToWrite = rowId + ","
 		} else {
-			intIndexes, err := ReadIntIndexesFromFile(intIndexesFile)
+			readBytes, err := ReadPortionF2File(projName, tableName, fieldName + "_indexes", elem.DataBegin, elem.DataEnd)
 			if err != nil {
 				return err
 			}
-			intIndex, err := strconv.ParseInt(newData, 10, 64)
-			if err != nil {
-				return errors.Wrap(err, "strconv error")
-			}
-			rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
-			if err != nil {
-				return errors.Wrap(err, "strconv error")
-			}
-
-			newIntIndexes := AppendToIntIndexes(intIndexes, intIndex, rowIdInt)
-			err = WriteIntIndexesToFile(newIntIndexes, intIndexesFile)
-			if err != nil {
-				return err
-			}
-		}
-	} else if fieldType == "float" {
-		// make integer indexes
-		intIndexesFile := filepath.Join(dataPath, projName, tableName, "intindexes", fieldName)
-		if ! DoesPathExists(intIndexesFile) {
-			newDataFloat, _ := strconv.ParseFloat(newData, 64)
-			newDataInt := int64( math.Ceil(newDataFloat) )
-			out := fmt.Sprintf("%d: %s", newDataInt, rowId)
-			os.WriteFile(intIndexesFile, []byte(out), 0777)
-		} else {
-			intIndexes, err := ReadIntIndexesFromFile(intIndexesFile)
-			if err != nil {
-				return err
-			}
-			newDataFloat, _ := strconv.ParseFloat(newData, 64)
-			newDataInt := int64( math.Ceil(newDataFloat) )
-
-			rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
-			if err != nil {
-				return errors.Wrap(err, "strconv error")
-			}
-
-			newIntIndexes := AppendToIntIndexes(intIndexes, newDataInt, rowIdInt)
-			err = WriteIntIndexesToFile(newIntIndexes, intIndexesFile)
-			if err != nil {
-				return err
-			}
-
+			previousEntries := strings.Split(string(readBytes), ",")
+			newEntries := arrayOperations.Union(previousEntries, []string{rowId})
+			newDataToWrite = strings.Join(newEntries, ",")
 		}
 
-	} else if fieldType == "date" || fieldType == "datetime" {
-		// make time indexes
-		timeIndexesFile := filepath.Join(dataPath, projName, tableName, "timeindexes", fieldName)
-		if ! DoesPathExists(timeIndexesFile) {
-			out := fmt.Sprintf("%s::%s\n", newData, rowId)
-			os.WriteFile(timeIndexesFile, []byte(out), 0777)
-		} else {
-			oldTimeIndexes, err := ReadTimeIndexesFromFile(timeIndexesFile, fieldType)
-			if err != nil {
-				return err
-			}
+		f2IndexesHandle, err := os.OpenFile(indexesF2Path,	os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+		if err != nil {
+			return errors.Wrap(err, "os error")
+		}
+		defer f2IndexesHandle.Close()
 
-			var timeValue time.Time
-			if fieldType == "date" {
-				timeValue, err = time.Parse(DATE_FORMAT, newData)
-				if err != nil {
-					return errors.Wrap(err, "time error")
-				}
-			} else if fieldType == "datetime" {
-				timeValue, err = time.Parse(DATETIME_FORMAT, newData)
-				if err != nil {
-					return errors.Wrap(err, "time error")
-				}
-			}
-
-			rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
-			if err != nil {
-				return errors.Wrap(err, "strconv error")
-			}
-
-			newTimeIndexes := AppendToTimeIndexes(oldTimeIndexes, timeValue, rowIdInt)
-			err = WriteTimeIndexesToFile(newTimeIndexes, timeIndexesFile, fieldType)
+		stat, err := f2IndexesHandle.Stat()
+		if err != nil {
+			return errors.Wrap(err, "os error")
 		}
 
-	} else if fieldType == "string" {
-		likeIndexesPath := filepath.Join(dataPath, projName, tableName, "likeindexes", fieldName)
-		os.MkdirAll(likeIndexesPath, 0777)
-		charsOfData := strings.Split(strings.ToLower(newData), "")
-		for _, char := range charsOfData {
-			if char == "/" || char == " " || char == "\t" || char == "." {
-				continue
-			}
-			indexesForAChar := filepath.Join(likeIndexesPath, strings.ToLower(char))
-			if ! DoesPathExists(indexesForAChar) {
-				err = os.WriteFile(indexesForAChar, []byte(rowId), 0777)
-				if err != nil {
-					return errors.Wrap(err, "file write failed.")
-				}
-			} else {
-				raw, err := os.ReadFile(indexesForAChar)
-		    if err != nil {
-		      return errors.Wrap(err, "read failed.")
-		    }
-		    previousEntries := strings.Split(string(raw), "\n")
-		    newEntries := arrayOperations.Union(previousEntries, []string{rowId})
-		    err = os.WriteFile(indexesForAChar, []byte(strings.Join(newEntries, "\n")), 0777)
-		    if err != nil {
-		      return errors.Wrap(err, "write failed.")
-		    }
-			}
-		}
+		size := stat.Size()
+		f2IndexesHandle.Write([]byte(newDataToWrite))
+		begin = size + 1
+		end = int64(len([]byte(newDataToWrite))) + size
 	}
+
+	elem := DataF1Elem {newData, begin, end}
+	err := AppendDataF1File(projName, tableName, fieldName + "_indexes", elem)
+	if err != nil {
+		return errors.Wrap(err, "os error")
+	}
+
+	//
+	// // make integer indexes
+	// fieldType := GetFieldType(projName, tableName, fieldName)
+	// if fieldType == "int" {
+	// 	intIndexesFile := filepath.Join(dataPath, projName, tableName, "intindexes", fieldName)
+	// 	if ! DoesPathExists(intIndexesFile) {
+	// 		out := fmt.Sprintf("%s: %s\n", newData, rowId)
+	// 		os.WriteFile(intIndexesFile, []byte(out), 0777)
+	// 	} else {
+	// 		intIndexes, err := ReadIntIndexesFromFile(intIndexesFile)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		intIndex, err := strconv.ParseInt(newData, 10, 64)
+	// 		if err != nil {
+	// 			return errors.Wrap(err, "strconv error")
+	// 		}
+	// 		rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
+	// 		if err != nil {
+	// 			return errors.Wrap(err, "strconv error")
+	// 		}
+	//
+	// 		newIntIndexes := AppendToIntIndexes(intIndexes, intIndex, rowIdInt)
+	// 		err = WriteIntIndexesToFile(newIntIndexes, intIndexesFile)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// } else if fieldType == "float" {
+	// 	// make integer indexes
+	// 	intIndexesFile := filepath.Join(dataPath, projName, tableName, "intindexes", fieldName)
+	// 	if ! DoesPathExists(intIndexesFile) {
+	// 		newDataFloat, _ := strconv.ParseFloat(newData, 64)
+	// 		newDataInt := int64( math.Ceil(newDataFloat) )
+	// 		out := fmt.Sprintf("%d: %s", newDataInt, rowId)
+	// 		os.WriteFile(intIndexesFile, []byte(out), 0777)
+	// 	} else {
+	// 		intIndexes, err := ReadIntIndexesFromFile(intIndexesFile)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		newDataFloat, _ := strconv.ParseFloat(newData, 64)
+	// 		newDataInt := int64( math.Ceil(newDataFloat) )
+	//
+	// 		rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
+	// 		if err != nil {
+	// 			return errors.Wrap(err, "strconv error")
+	// 		}
+	//
+	// 		newIntIndexes := AppendToIntIndexes(intIndexes, newDataInt, rowIdInt)
+	// 		err = WriteIntIndexesToFile(newIntIndexes, intIndexesFile)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	//
+	// 	}
+	//
+	// } else if fieldType == "date" || fieldType == "datetime" {
+	// 	// make time indexes
+	// 	timeIndexesFile := filepath.Join(dataPath, projName, tableName, "timeindexes", fieldName)
+	// 	if ! DoesPathExists(timeIndexesFile) {
+	// 		out := fmt.Sprintf("%s::%s\n", newData, rowId)
+	// 		os.WriteFile(timeIndexesFile, []byte(out), 0777)
+	// 	} else {
+	// 		oldTimeIndexes, err := ReadTimeIndexesFromFile(timeIndexesFile, fieldType)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	//
+	// 		var timeValue time.Time
+	// 		if fieldType == "date" {
+	// 			timeValue, err = time.Parse(DATE_FORMAT, newData)
+	// 			if err != nil {
+	// 				return errors.Wrap(err, "time error")
+	// 			}
+	// 		} else if fieldType == "datetime" {
+	// 			timeValue, err = time.Parse(DATETIME_FORMAT, newData)
+	// 			if err != nil {
+	// 				return errors.Wrap(err, "time error")
+	// 			}
+	// 		}
+	//
+	// 		rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
+	// 		if err != nil {
+	// 			return errors.Wrap(err, "strconv error")
+	// 		}
+	//
+	// 		newTimeIndexes := AppendToTimeIndexes(oldTimeIndexes, timeValue, rowIdInt)
+	// 		err = WriteTimeIndexesToFile(newTimeIndexes, timeIndexesFile, fieldType)
+	// 	}
+	//
+	// } else if fieldType == "string" {
+	// 	likeIndexesPath := filepath.Join(dataPath, projName, tableName, "likeindexes", fieldName)
+	// 	os.MkdirAll(likeIndexesPath, 0777)
+	// 	charsOfData := strings.Split(strings.ToLower(newData), "")
+	// 	for _, char := range charsOfData {
+	// 		if char == "/" || char == " " || char == "\t" || char == "." {
+	// 			continue
+	// 		}
+	// 		indexesForAChar := filepath.Join(likeIndexesPath, strings.ToLower(char))
+	// 		if ! DoesPathExists(indexesForAChar) {
+	// 			err = os.WriteFile(indexesForAChar, []byte(rowId), 0777)
+	// 			if err != nil {
+	// 				return errors.Wrap(err, "file write failed.")
+	// 			}
+	// 		} else {
+	// 			raw, err := os.ReadFile(indexesForAChar)
+	// 	    if err != nil {
+	// 	      return errors.Wrap(err, "read failed.")
+	// 	    }
+	// 	    previousEntries := strings.Split(string(raw), "\n")
+	// 	    newEntries := arrayOperations.Union(previousEntries, []string{rowId})
+	// 	    err = os.WriteFile(indexesForAChar, []byte(strings.Join(newEntries, "\n")), 0777)
+	// 	    if err != nil {
+	// 	      return errors.Wrap(err, "write failed.")
+	// 	    }
+	// 		}
+	// 	}
+	// }
 
   return nil
 }

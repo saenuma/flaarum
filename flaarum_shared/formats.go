@@ -1,4 +1,4 @@
-package main
+package flaarum_shared
 
 import (
   "os"
@@ -6,9 +6,7 @@ import (
   "github.com/pkg/errors"
   "fmt"
   "strconv"
-  "sort"
   "path/filepath"
-  "github.com/saenuma/flaarum/flaarum_shared"
 )
 
 type DataF1Elem struct {
@@ -18,15 +16,15 @@ type DataF1Elem struct {
 }
 
 
-func ParseDataF1File(path string) ([]DataF1Elem, error) {
+func ParseDataF1File(path string) (map[string]DataF1Elem, error) {
   rawConf, err := os.ReadFile(path)
   if err != nil {
     return nil, err
   }
 
-  ret := make([]DataF1Elem, 0)
+  ret := make(map[string]DataF1Elem, 0)
 
-  nl := flaarum_shared.GetNewline()
+  nl := GetNewline()
   partsOfRawConf := strings.Split(string(rawConf), nl + nl)
   for _, part := range partsOfRawConf {
     innerParts := strings.Split(strings.TrimSpace(part), nl)
@@ -68,27 +66,23 @@ func ParseDataF1File(path string) ([]DataF1Elem, error) {
     if elem.DataKey == "" {
       continue
     }
-    ret = append(ret, elem)
+    ret[elem.DataKey] = elem
   }
-
-  sort.Slice(ret, func(i, j int) bool {
-    return ret[i].DataKey < ret[j].DataKey
-  })
 
   return ret, nil
 }
 
 
-func WriteDataF1File(projName, tableName, name string, elem DataF1Elem) error {
-  tablePath := getTablePath(projName, tableName)
-  path := filepath.Join(tablePath, name + ".flaa1")
+func AppendDataF1File(projName, tableName, name string, elem DataF1Elem) error {
+  dataPath, _ := GetDataPath()
+  path := filepath.Join(dataPath, projName, tableName, name + ".flaa1")
   dataF1Handle, err := os.OpenFile(path,	os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
   if err != nil {
     return errors.Wrap(err, "os error")
   }
   defer dataF1Handle.Close()
 
-  nl := flaarum_shared.GetNewline()
+  nl := GetNewline()
   out := fmt.Sprintf("data_key: %s%sdata_begin: %d%sdata_end:%d%s%s", elem.DataKey, nl,
     elem.DataBegin, nl, elem.DataEnd, nl, nl)
 
@@ -98,4 +92,23 @@ func WriteDataF1File(projName, tableName, name string, elem DataF1Elem) error {
   }
 
   return nil
+}
+
+
+func ReadPortionF2File(projName, tableName, name string, begin, end int64) ([]byte, error) {
+  dataPath, _ := GetDataPath()
+  path := filepath.Join(dataPath, projName, tableName, name + ".flaa2")
+  f2FileHandle, err := os.OpenFile(path, os.O_RDWR, 0777)
+  if err != nil {
+    return []byte{}, errors.Wrap(err, "os error")
+  }
+  defer f2FileHandle.Close()
+
+  outData := make([]byte, 0, end-begin)
+  _, err = f2FileHandle.ReadAt(outData, begin)
+  if err != nil {
+    return outData, errors.Wrap(err, "os error")
+  }
+
+  return outData, nil
 }

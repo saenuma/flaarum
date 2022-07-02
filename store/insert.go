@@ -2,18 +2,19 @@ package main
 
 import (
 	"net/http"
-	"github.com/gorilla/mux"
-	"github.com/pkg/errors"
 	"strconv"
 	"path/filepath"
 	"fmt"
 	"strings"
 	"time"
-	"github.com/saenuma/flaarum/flaarum_shared"
-  "github.com/mcnijman/go-emailaddress"
   "net"
   "net/url"
   "os"
+	"sort"
+	"github.com/pkg/errors"
+	"github.com/gorilla/mux"
+	"github.com/mcnijman/go-emailaddress"
+	"github.com/saenuma/flaarum/flaarum_shared"
 )
 
 
@@ -267,19 +268,27 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
   if ! doesPathExists(dataF1Path) {
     nextId = 1
   } else {
-		// read till you find the lastId
-		elems, err := ParseDataF1File(dataF1Path)
+		elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
 		if err != nil {
 			printError(w, err)
 			return
 		}
 
-		fmt.Println(elems)
-		lastId, err := strconv.ParseInt(elems[len(elems) - 1].DataKey, 10, 64)
-		if err != nil {
-			printError(w, errors.Wrap(err, "strconv error"))
-			return
+		elemsKeys := make([]int64, 0, len(elemsMap))
+		for k, _ := range elemsMap {
+			elemKey, err := strconv.ParseInt(k, 10, 64)
+			if err != nil {
+				printError(w, err)
+				continue
+			}
+			elemsKeys = append(elemsKeys, elemKey)
 		}
+
+		sort.Slice(elemsKeys, func(i, j int) bool {
+			return elemsKeys[i] < elemsKeys[j]
+		})
+
+		lastId := elemsKeys[len(elemsKeys) - 1]
 
 		nextId = lastId + 1
   }
@@ -293,26 +302,19 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
   }
 
   // create indexes
-  // for k, v := range toInsert {
-  //   if isNotIndexedField(projName, tableName, k) {
-	// 			// do nothing.
-  //   } else {
-  //     err := makeIndex(projName, tableName, k, v, nextIdStr)
-  //     if err != nil {
-  //       printError(w, err)
-  //       return
-  //     }
-  //   }
-	//
-  // }
-	//
+  for k, v := range toInsert {
+    if isNotIndexedField(projName, tableName, k) {
+				// do nothing.
+    } else {
+      err := makeIndex(projName, tableName, k, v, nextIdStr)
+      if err != nil {
+        printError(w, err)
+        return
+      }
+    }
 
-  // // store last id
-  // err = os.WriteFile(filepath.Join(tablePath, "lastId"), []byte(nextIdStr), 0777)
-  // if err != nil {
-  //   printError(w, errors.Wrap(err, "ioutil error"))
-  //   return
-  // }
+  }
+
 
   fmt.Fprintf(w, nextIdStr)
 
@@ -367,8 +369,8 @@ func saveRowData(projName, tableName, rowId string, toWrite map[string]string) e
 		end = int64(len([]byte(dataForCurrentRow)))
 	}
 
-	elem := DataF1Elem {rowId, begin, end}
-	err := WriteDataF1File(projName, tableName, "data", elem)
+	elem := flaarum_shared.DataF1Elem{rowId, begin, end}
+	err := flaarum_shared.AppendDataF1File(projName, tableName, "data", elem)
 	if err != nil {
     return errors.Wrap(err, "os error")
   }
