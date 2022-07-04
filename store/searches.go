@@ -216,30 +216,37 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           trueWhereValues := make([]string, 0)
           parts := strings.Split(whereStruct.FieldName, ".")
 
-          indexFileName := makeSafeIndexName(whereStruct.FieldValue)
           pTbl, ok := expDetails[parts[0]]
           if ! ok {
             continue
           }
-          indexesPath := filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFileName)
-          if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
-            // do nothing
-          } else {
-            raw, err := os.ReadFile(indexesPath)
-            if err != nil {
-              return nil, errors.Wrap(err, "read file failed.")
-            }
-            trueWhereValues = strings.Split(string(raw), "\n")
+
+					indexesF1Path := filepath.Join(getTablePath(projName, pTbl), parts[1] + "_indexes.flaa1")
+
+					if doesPathExists(indexesF1Path) {
+						elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
+						if err != nil {
+							return nil, err
+						}
+						elemHandle, ok := elemsMap[parts[1]]
+						if ok {
+							readBytes, err := flaarum_shared.ReadPortionF2File(projName, pTbl, parts[1] + "_indexes",
+								elemHandle.DataBegin, elemHandle.DataEnd)
+							if err != nil {
+								fmt.Printf("%+v\n", err)
+							}
+							trueWhereValues = append(trueWhereValues, strings.Split(string(readBytes), ",")...)
+						}
           }
 
-          stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
-          if err != nil {
-            return nil, err
-          }
-          beforeFilter = append(beforeFilter, stringIds)
+					stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+					if err != nil {
+						return nil, err
+					}
+					beforeFilter = append(beforeFilter, stringIds)
+
 
         } else {
-					fmt.Println("Got to exact search")
 					indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName + "_indexes.flaa1")
 
 					if ! doesPathExists(indexesF1Path) {
@@ -250,7 +257,6 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 							return nil, err
 						}
 						elemHandle, ok := elemsMap[whereStruct.FieldValue]
-						fmt.Println(elemHandle)
 						if ! ok {
 							beforeFilter = append(beforeFilter, make([]string, 0))
 						} else {
@@ -259,8 +265,6 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 							if err != nil {
 								fmt.Printf("%+v\n", err)
 							}
-							fmt.Println("len of readBytes", len(readBytes))
-							fmt.Println("out of readBytes", string(readBytes))
 							beforeFilter = append(beforeFilter, strings.Split(string(readBytes), ","))
 						}
           }
