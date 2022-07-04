@@ -104,12 +104,11 @@ func ReadPortionF2File(projName, tableName, name string, begin, end int64) ([]by
   }
   defer f2FileHandle.Close()
 
-  outData := make([]byte, end-begin)
+  outData := make([]byte, end - begin)
   _, err = f2FileHandle.ReadAt(outData, begin)
   if err != nil {
     return outData, errors.Wrap(err, "os error")
   }
 
-  fmt.Println(string(outData))
   return outData, nil
 }

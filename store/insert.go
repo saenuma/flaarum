@@ -342,7 +342,7 @@ func saveRowData(projName, tableName, rowId string, toWrite map[string]string) e
 
 		size := stat.Size()
 		dataLumpHandle.Write([]byte(dataForCurrentRow))
-		begin = size + 1
+		begin = size
 		end = int64(len([]byte(dataForCurrentRow))) + size
 	} else {
 		err := os.WriteFile(dataLumpPath, []byte(dataForCurrentRow), 0777)

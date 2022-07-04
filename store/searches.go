@@ -239,9 +239,10 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           beforeFilter = append(beforeFilter, stringIds)
 
         } else {
+					fmt.Println("Got to exact search")
 					indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName + "_indexes.flaa1")
 
-					if doesPathExists(indexesF1Path) {
+					if ! doesPathExists(indexesF1Path) {
 						beforeFilter = append(beforeFilter, make([]string, 0))
           } else {
 						elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
@@ -249,14 +250,18 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 							return nil, err
 						}
 						elemHandle, ok := elemsMap[whereStruct.FieldValue]
+						fmt.Println(elemHandle)
 						if ! ok {
 							beforeFilter = append(beforeFilter, make([]string, 0))
 						} else {
-							rowsStr, err := flaarum_shared.ReadPortionF2File(projName, tableName,
-								whereStruct.FieldName + "_indexes.flaa2", elemHandle.DataBegin, elemHandle.DataEnd)
-							if err == nil {
-								beforeFilter = append(beforeFilter, strings.Split(string(rowsStr), ","))
+							readBytes, err := flaarum_shared.ReadPortionF2File(projName, tableName,
+								whereStruct.FieldName + "_indexes", elemHandle.DataBegin, elemHandle.DataEnd)
+							if err != nil {
+								fmt.Printf("%+v\n", err)
 							}
+							fmt.Println("len of readBytes", len(readBytes))
+							fmt.Println("out of readBytes", string(readBytes))
+							beforeFilter = append(beforeFilter, strings.Split(string(readBytes), ","))
 						}
           }
         }
@@ -1255,6 +1260,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 		if !ok {
 			continue
 		}
+		fmt.Println(retId)
 		rawRowData, err := flaarum_shared.ReadPortionF2File(projName, tableName, "data",
 			elem.DataBegin, elem.DataEnd)
 		if err != nil {

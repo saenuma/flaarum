@@ -304,7 +304,7 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 		}
 		end = int64(len([]byte(rowId + ",")))
 	} else {
-		elemsMap, err := ParseDataF1File(indexesF2Path)
+		elemsMap, err := ParseDataF1File(indexesF1Path)
 		if err != nil {
 			return err
 		}
@@ -320,7 +320,7 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 			}
 			previousEntries := strings.Split(string(readBytes), ",")
 			newEntries := arrayOperations.Union(previousEntries, []string{rowId})
-			newDataToWrite = strings.Join(newEntries, ",")
+			newDataToWrite = strings.Join(newEntries, ",") + ","
 		}
 
 		f2IndexesHandle, err := os.OpenFile(indexesF2Path,	os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
@@ -336,11 +336,11 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 
 		size := stat.Size()
 		f2IndexesHandle.Write([]byte(newDataToWrite))
-		begin = size + 1
+		begin = size
 		end = int64(len([]byte(newDataToWrite))) + size
 	}
 
-	elem := DataF1Elem {newData, begin, end}
+	elem := DataF1Elem{newData, begin, end}
 	err := AppendDataF1File(projName, tableName, fieldName + "_indexes", elem)
 	if err != nil {
 		return errors.Wrap(err, "os error")

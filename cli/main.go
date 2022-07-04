@@ -15,6 +15,7 @@ import (
 	"github.com/saenuma/flaarum/flaarum_shared"
 )
 
+
 func main() {
 	if len(os.Args) < 2 {
 		color.Red.Println("expected a command. Open help to view commands.")
