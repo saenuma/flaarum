@@ -249,17 +249,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
         } else {
 					indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName + "_indexes.flaa1")
 
-					if ! doesPathExists(indexesF1Path) {
-						beforeFilter = append(beforeFilter, make([]string, 0))
-          } else {
+					if doesPathExists(indexesF1Path) {
 						elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
 						if err != nil {
 							return nil, err
 						}
 						elemHandle, ok := elemsMap[whereStruct.FieldValue]
-						if ! ok {
-							beforeFilter = append(beforeFilter, make([]string, 0))
-						} else {
+						if ok {
 							readBytes, err := flaarum_shared.ReadPortionF2File(projName, tableName,
 								whereStruct.FieldName + "_indexes", elemHandle.DataBegin, elemHandle.DataEnd)
 							if err != nil {
@@ -272,16 +268,21 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
       } else if whereStruct.Relation == "!=" {
         if whereStruct.FieldName == "id" {
-          rows, err := os.ReadDir(filepath.Join(tablePath, "data"))
-          if err != nil {
-            return nil, errors.Wrap(err, "read file failed.")
-          }
-          stringIds := make([]string, 0)
-          for _, row := range rows {
-            if row.Name() != whereStruct.FieldValue {
-              stringIds = append(stringIds, row.Name())
-            }
-          }
+					dataF1Path := filepath.Join(tablePath, "data.flaa1")
+
+					elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
+					if err != nil {
+						return nil, err
+					}
+
+					stringIds := make([]string, 0)
+
+					for k, _ := range elemsMap {
+						if k != whereStruct.FieldValue {
+							stringIds = append(stringIds, k)
+						}
+					}
+
           beforeFilter = append(beforeFilter, stringIds)
         } else if strings.Contains(whereStruct.FieldName, ".") {
           trueWhereValues := make([]string, 0)
@@ -314,23 +315,29 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           beforeFilter = append(beforeFilter, stringIds)
 
         } else {
-          indexFileName := makeSafeIndexName(whereStruct.FieldValue)
-          allIndexes, err := os.ReadDir(filepath.Join(tablePath, "indexes", whereStruct.FieldName))
-          if err != nil {
-            return nil, errors.Wrap(err, "read dir failed.")
-          }
-          stringIds := make([]string, 0)
-          for _, indPath := range allIndexes {
-            if indPath.Name() != indexFileName {
-              raw, err := os.ReadFile(filepath.Join(tablePath, "indexes", whereStruct.FieldName, indPath.Name()))
-              if err != nil {
-                return nil, errors.Wrap(err, "read file failed.")
-              }
-              stringIds = arrayOperations.Union(stringIds, strings.Split(string(raw), "\n"))
-            }
-          }
-          beforeFilter = append(beforeFilter, stringIds)
-        }
+
+					indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName + "_indexes.flaa1")
+
+					if doesPathExists(indexesF1Path) {
+						elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
+						if err != nil {
+							return nil, err
+						}
+
+						stringIds := make([]string, 0)
+						for k, elem := range elemsMap {
+							if k != whereStruct.FieldValue {
+								readBytes, err := flaarum_shared.ReadPortionF2File(projName, tableName,
+									whereStruct.FieldName + "_indexes", elem.DataBegin, elem.DataEnd)
+								if err != nil {
+									fmt.Printf("%+v\n", err)
+								}
+								stringIds = append(stringIds, strings.Split(string(readBytes), ",")...)
+							}
+						}
+						beforeFilter = append(beforeFilter, stringIds)
+					}
+				}
 
       } else if whereStruct.Relation == ">" || whereStruct.Relation == ">=" {
 
