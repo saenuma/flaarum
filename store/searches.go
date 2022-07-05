@@ -81,36 +81,6 @@ func findIdsContainingTrueWhereValues(projName, tableName, field string, trueWhe
 }
 
 
-func getNeededIdsFromIntIndexes(container []flaarum_shared.IntIndexes) []string {
-	retInts := make([]int64, 0)
-	for _, item := range container {
-		retInts = append(retInts, item.Ids...)
-	}
-
-	ret := make([]string, 0)
-	for _, intYeah := range retInts {
-		ret = append(ret, strconv.FormatInt(intYeah, 10))
-	}
-
-	return ret
-}
-
-
-func getNeededIdsFromTimeIndexes(container []flaarum_shared.TimeIndexes) []string {
-	retInts := make([]int64, 0)
-	for _, item := range container {
-		retInts = append(retInts, item.Ids...)
-	}
-
-	ret := make([]string, 0)
-	for _, intYeah := range retInts {
-		ret = append(ret, strconv.FormatInt(intYeah, 10))
-	}
-
-	return ret
-}
-
-
 func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 	stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
 	if err != nil {
@@ -801,13 +771,9 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 					resolvedFieldName := parts[1]
 
 					currentFieldType := flaarum_shared.GetFieldType(projName, pTbl, resolvedFieldName)
+					otherTableindexesF1Path := filepath.Join(getTablePath(projName, pTbl), parts[1] + "_indexes.flaa1")
 
 					if currentFieldType == "date" || currentFieldType == "datetime" {
-						timeIndexesFile := filepath.Join(getTablePath(projName, pTbl), "timeindexes", resolvedFieldName)
-						timeIndexes, err := flaarum_shared.ReadTimeIndexesFromFile(timeIndexesFile, currentFieldType)
-						if err != nil {
-							return nil, err
-						}
 
 						var whereStructFieldValueTime time.Time
 						if currentFieldType == "date" {
@@ -822,55 +788,95 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 							}
 						}
 
-						exactMatch := false
-						brokeLoop := false
-						index := 0
-						for i, elem := range timeIndexes {
-							if elem.GoTimeValue.Equal(whereStructFieldValueTime) {
-								exactMatch = true
-								brokeLoop = true
-								index = i
-								break
+						if doesPathExists(otherTableindexesF1Path) {
+							elemsMap, err := flaarum_shared.ParseDataF1File(otherTableindexesF1Path)
+							if err != nil {
+								return nil, err
 							}
-							if elem.GoTimeValue.After(whereStructFieldValueTime) {
-								index = i
-								brokeLoop = true
-								break
-							}
-						}
 
+							elemsKeys := make([]time.Time, 0, len(elemsMap))
 
-						if brokeLoop && exactMatch {
-							if whereStruct.Relation == "<=" {
-								newIndex := index + 1
-								if len(timeIndexes) != newIndex {
-									elems := getNeededIdsFromTimeIndexes(timeIndexes[0 : newIndex])
-									trueWhereValues = append(trueWhereValues, elems...)
+							for k, _ := range elemsMap {
+								var elemValueTime time.Time
+								if currentFieldType == "date" {
+									elemValueTime, err = time.Parse(flaarum_shared.DATE_FORMAT, k)
+									if err != nil {
+										return nil, errors.Wrap(err, "time parsing error")
+									}
+								} else {
+									elemValueTime, err = time.Parse(flaarum_shared.DATETIME_FORMAT, k)
+									if err != nil {
+										return nil, errors.Wrap(err, "time parsing error")
+									}
 								}
-							} else if whereStruct.Relation == "<" {
-								elems := getNeededIdsFromTimeIndexes(timeIndexes[0 : index])
-								trueWhereValues = append(trueWhereValues, elems...)
+
+								elemsKeys = append(elemsKeys, elemValueTime)
 							}
-						} else if brokeLoop {
-							elems := getNeededIdsFromTimeIndexes(timeIndexes[0 : index])
-							trueWhereValues = append(trueWhereValues, elems...)
-						}
 
-						stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
-						if err != nil {
-							return nil, err
-						}
+							sort.Slice(elemsKeys, func(i, j int) bool {
+								return elemsKeys[i].Before(elemsKeys[j])
+							})
 
-						beforeFilter = append(beforeFilter, stringIds)
+							exactMatch := false
+							brokeLoop := false
+							index := 0
+							for i, indexedValue := range elemsKeys {
+								if indexedValue.Equal(whereStructFieldValueTime) {
+									exactMatch = true
+									brokeLoop = true
+									index = i
+									break
+								}
+								if indexedValue.After(whereStructFieldValueTime) {
+									index = i
+									brokeLoop = true
+									break
+								}
+							}
+
+							foundIndexedValues := make([]time.Time, 0)
+							if brokeLoop && exactMatch {
+								if whereStruct.Relation == "<" {
+									newIndex := index + 1
+									if len(elemsKeys) != newIndex {
+										foundIndexedValues = elemsKeys[0: newIndex]
+									}
+								} else if whereStruct.Relation == "<=" {
+									foundIndexedValues = elemsKeys[0: index]
+								}
+							} else if brokeLoop {
+								foundIndexedValues = elemsKeys[0: index]
+							}
+
+							// retrieve the id of the foundIndexedValues
+							for _, indexedValue := range foundIndexedValues {
+								var indexedValueStr string
+								if currentFieldType == "date" {
+									indexedValueStr = indexedValue.Format(flaarum_shared.DATE_FORMAT)
+								} else {
+									indexedValueStr = indexedValue.Format(flaarum_shared.DATETIME_FORMAT)
+								}
+
+								elem, ok := elemsMap[indexedValueStr]
+								if ok {
+									readBytes, err := flaarum_shared.ReadPortionF2File(projName, pTbl,
+										resolvedFieldName + "_indexes", elem.DataBegin, elem.DataEnd)
+									if err != nil {
+										fmt.Printf("%+v\n", err)
+									}
+									trueWhereValues = append(trueWhereValues, strings.Split(string(readBytes), ",")...)
+								}
+							}
+
+							stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+		          if err != nil {
+		            return nil, err
+		          }
+
+							beforeFilter = append(beforeFilter, stringIds)
+						}
 
 					} else if currentFieldType == "int" || currentFieldType == "float" {
-
-						intIndexesFile := filepath.Join(getTablePath(projName, pTbl), "intindexes", resolvedFieldName)
-						intIndexes, err := flaarum_shared.ReadIntIndexesFromFile(intIndexesFile)
-						if err != nil {
-							return nil, err
-						}
-
 						var whereStructFieldValueInt int64
 						if flaarum_shared.GetFieldType(projName, tableName, whereStruct.FieldName) == "float" {
 							tmp, err := strconv.ParseFloat(whereStruct.FieldValue, 64)
@@ -885,60 +891,105 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 							}
 						}
 
-						exactMatch := false
-						brokeLoop := false
-						index := 0
-						for i, elem := range intIndexes {
-							if elem.IntIndex == whereStructFieldValueInt {
-								exactMatch = true
-								brokeLoop = true
-								index = i
-								break
+						if doesPathExists(otherTableindexesF1Path) {
+							elemsMap, err := flaarum_shared.ParseDataF1File(otherTableindexesF1Path)
+							if err != nil {
+								return nil, err
 							}
-							if elem.IntIndex > whereStructFieldValueInt {
-								index = i
-								brokeLoop = true
-								break
-							}
-						}
 
+							elemsKeys := make([]int64, 0, len(elemsMap))
 
-						if brokeLoop && exactMatch {
-							if whereStruct.Relation == "<=" {
-								newIndex := index + 1
-								if len(intIndexes) != newIndex {
-									elems := getNeededIdsFromIntIndexes(intIndexes[0: newIndex])
-									trueWhereValues = append(trueWhereValues, elems...)
+							storeOfOriginalFloatStr := make(map[int64]string)
+							for k, _ := range elemsMap {
+								var elemValueInt int64
+								if currentFieldType == "float" {
+									tmp, err := strconv.ParseFloat(k, 64)
+									if err != nil {
+										return nil, errors.Wrap(err, "strconv error")
+									}
+									whereStructFieldValueInt = int64(tmp)
+									storeOfOriginalFloatStr[whereStructFieldValueInt] = k
+								} else {
+									elemValueInt, err = strconv.ParseInt(k, 10, 64)
+									if err != nil {
+										return nil, errors.Wrap(err, "strconv error")
+									}
 								}
-							} else if whereStruct.Relation == "<" {
-								elems := getNeededIdsFromIntIndexes(intIndexes[0: index ])
-								trueWhereValues = append(trueWhereValues, elems...)
+
+								elemsKeys = append(elemsKeys, elemValueInt)
 							}
-						} else if brokeLoop {
-							elems := getNeededIdsFromIntIndexes(intIndexes[0 : index ])
-							trueWhereValues = append(trueWhereValues, elems...)
+
+							sort.Slice(elemsKeys, func(i, j int) bool {
+								return elemsKeys[i] < elemsKeys[j]
+							})
+
+							exactMatch := false
+							brokeLoop := false
+							index := 0
+							for i, indexedValue := range elemsKeys {
+								if indexedValue == whereStructFieldValueInt {
+									exactMatch = true
+									brokeLoop = true
+									index = i
+									break
+								}
+								if indexedValue > whereStructFieldValueInt {
+									index = i
+									brokeLoop = true
+									break
+								}
+							}
+
+							foundIndexedValues := make([]int64, 0)
+							if brokeLoop && exactMatch {
+								if whereStruct.Relation == "<" {
+									newIndex := index + 1
+									if len(elemsKeys) != newIndex {
+										foundIndexedValues = elemsKeys[0: newIndex]
+									}
+								} else if whereStruct.Relation == "<=" {
+									foundIndexedValues = elemsKeys[0: index]
+								}
+							} else if brokeLoop {
+								foundIndexedValues = elemsKeys[0: index ]
+							}
+
+							// retrieve the id of the foundIndexedValues
+							for _, indexedValue := range foundIndexedValues {
+								var indexedValueStr string
+								if currentFieldType == "float" {
+									indexedValueStr = storeOfOriginalFloatStr[indexedValue]
+								} else {
+									indexedValueStr = strconv.FormatInt(indexedValue, 10)
+								}
+
+								elem, ok := elemsMap[indexedValueStr]
+								if ok {
+									readBytes, err := flaarum_shared.ReadPortionF2File(projName, pTbl,
+										resolvedFieldName + "_indexes", elem.DataBegin, elem.DataEnd)
+									if err != nil {
+										fmt.Printf("%+v\n", err)
+									}
+									trueWhereValues = append(trueWhereValues, strings.Split(string(readBytes), ",")...)
+								}
+							}
+
+							stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+							if err != nil {
+								return nil, err
+							}
+
+							beforeFilter = append(beforeFilter, stringIds)
 						}
 
-	          stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
-	          if err != nil {
-	            return nil, err
-	          }
-
-	          beforeFilter = append(beforeFilter, stringIds)
 					}
-
         } else {
 					stringIds := make([]string, 0)
 
 					currentFieldType := flaarum_shared.GetFieldType(projName, tableName, whereStruct.FieldName)
+					indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName + "_indexes.flaa1")
 
 					if currentFieldType == "date" || currentFieldType == "datetime" {
-						timeIndexesFile := filepath.Join(dataPath, projName, tableName, "intindexes", whereStruct.FieldName)
-						timeIndexes, err := flaarum_shared.ReadTimeIndexesFromFile(timeIndexesFile, currentFieldType)
-						if err != nil {
-							return nil, err
-						}
-
 						var whereStructFieldValueTime time.Time
 						if currentFieldType == "date" {
 							whereStructFieldValueTime, err = time.Parse(flaarum_shared.DATE_FORMAT, whereStruct.FieldValue)
@@ -952,49 +1003,90 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 							}
 						}
 
-						exactMatch := false
-						brokeLoop := false
-						index := 0
-						for i, elem := range timeIndexes {
-							if elem.GoTimeValue.Equal(whereStructFieldValueTime) {
-								exactMatch = true
-								brokeLoop = true
-								index = i
-								break
+						if doesPathExists(indexesF1Path) {
+							elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
+							if err != nil {
+								return nil, err
 							}
-							if elem.GoTimeValue.After(whereStructFieldValueTime) {
-								index = i
-								brokeLoop = true
-								break
-							}
-						}
 
+							elemsKeys := make([]time.Time, 0, len(elemsMap))
 
-						if brokeLoop && exactMatch {
-							if whereStruct.Relation == "<=" {
-								newIndex := index + 1
-								if len(timeIndexes) != newIndex {
-									elems := getNeededIdsFromTimeIndexes(timeIndexes[0 : newIndex])
-									stringIds = append(stringIds, elems...)
+							for k, _ := range elemsMap {
+								var elemValueTime time.Time
+								if currentFieldType == "date" {
+									elemValueTime, err = time.Parse(flaarum_shared.DATE_FORMAT, k)
+									if err != nil {
+										return nil, errors.Wrap(err, "time parsing error")
+									}
+								} else {
+									elemValueTime, err = time.Parse(flaarum_shared.DATETIME_FORMAT, k)
+									if err != nil {
+										return nil, errors.Wrap(err, "time parsing error")
+									}
 								}
-							} else if whereStruct.Relation == "<" {
-								elems := getNeededIdsFromTimeIndexes(timeIndexes[0 : index])
-								stringIds = append(stringIds, elems...)
-							}
-						} else if brokeLoop {
-							elems := getNeededIdsFromTimeIndexes(timeIndexes[0 : index])
-							stringIds = append(stringIds, elems...)
-						}
 
-						beforeFilter = append(beforeFilter, stringIds)
+								elemsKeys = append(elemsKeys, elemValueTime)
+							}
+
+							sort.Slice(elemsKeys, func(i, j int) bool {
+								return elemsKeys[i].Before(elemsKeys[j])
+							})
+
+							exactMatch := false
+							brokeLoop := false
+							index := 0
+							for i, indexedValue := range elemsKeys {
+								if indexedValue.Equal(whereStructFieldValueTime) {
+									exactMatch = true
+									brokeLoop = true
+									index = i
+									break
+								}
+								if indexedValue.After(whereStructFieldValueTime) {
+									index = i
+									brokeLoop = true
+									break
+								}
+							}
+
+							foundIndexedValues := make([]time.Time, 0)
+							if brokeLoop && exactMatch {
+								if whereStruct.Relation == "<" {
+									newIndex := index + 1
+									if len(elemsKeys) != newIndex {
+										foundIndexedValues = elemsKeys[0: newIndex ]
+									}
+								} else if whereStruct.Relation == "<=" {
+									foundIndexedValues = elemsKeys[0: index ]
+								}
+							} else if brokeLoop {
+								foundIndexedValues = elemsKeys[0: index ]
+							}
+
+							// retrieve the id of the foundIndexedValues
+							for _, indexedValue := range foundIndexedValues {
+								var indexedValueStr string
+								if currentFieldType == "date" {
+									indexedValueStr = indexedValue.Format(flaarum_shared.DATE_FORMAT)
+								} else {
+									indexedValueStr = indexedValue.Format(flaarum_shared.DATETIME_FORMAT)
+								}
+
+								elem, ok := elemsMap[indexedValueStr]
+								if ok {
+									readBytes, err := flaarum_shared.ReadPortionF2File(projName, tableName,
+										whereStruct.FieldName + "_indexes", elem.DataBegin, elem.DataEnd)
+									if err != nil {
+										fmt.Printf("%+v\n", err)
+									}
+									stringIds = append(stringIds, strings.Split(string(readBytes), ",")...)
+								}
+							}
+
+							beforeFilter = append(beforeFilter, stringIds)
+						}
 
 					} else if currentFieldType == "int" || currentFieldType == "float" {
-
-						intIndexesFile := filepath.Join(dataPath, projName, tableName, "intindexes", whereStruct.FieldName)
-						intIndexes, err := flaarum_shared.ReadIntIndexesFromFile(intIndexesFile)
-						if err != nil {
-							return nil, err
-						}
 
 						var whereStructFieldValueInt int64
 						if flaarum_shared.GetFieldType(projName, tableName, whereStruct.FieldName) == "float" {
@@ -1010,42 +1102,92 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 							}
 						}
 
-						exactMatch := false
-						brokeLoop := false
-						index := 0
-						for i, elem := range intIndexes {
-							if elem.IntIndex == whereStructFieldValueInt {
-								exactMatch = true
-								brokeLoop = true
-								index = i
-								break
+						if doesPathExists(indexesF1Path) {
+							elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
+							if err != nil {
+								return nil, err
 							}
-							if elem.IntIndex > whereStructFieldValueInt {
-								index = i
-								brokeLoop = true
-								break
-							}
-						}
 
+							elemsKeys := make([]int64, 0, len(elemsMap))
 
-						if brokeLoop && exactMatch {
-							if whereStruct.Relation == "<=" {
-								newIndex := index + 1
-								if len(intIndexes) != newIndex {
-									elems := getNeededIdsFromIntIndexes(intIndexes[0 : newIndex])
-									stringIds = append(stringIds, elems...)
+							storeOfOriginalFloatStr := make(map[int64]string)
+							for k, _ := range elemsMap {
+								var elemValueInt int64
+								if currentFieldType == "float" {
+									tmp, err := strconv.ParseFloat(k, 64)
+									if err != nil {
+										return nil, errors.Wrap(err, "strconv error")
+									}
+									whereStructFieldValueInt = int64(tmp)
+									storeOfOriginalFloatStr[whereStructFieldValueInt] = k
+								} else {
+									elemValueInt, err = strconv.ParseInt(k, 10, 64)
+									if err != nil {
+										return nil, errors.Wrap(err, "strconv error")
+									}
 								}
-							} else if whereStruct.Relation == "<" {
-								elems := getNeededIdsFromIntIndexes(intIndexes[0 : index])
-								stringIds = append(stringIds, elems...)
-							}
-						} else if brokeLoop {
-							elems := getNeededIdsFromIntIndexes(intIndexes[0 : index])
-							stringIds = append(stringIds, elems...)
-						}
 
-						beforeFilter = append(beforeFilter, stringIds)
-	        }
+								elemsKeys = append(elemsKeys, elemValueInt)
+							}
+
+							sort.Slice(elemsKeys, func(i, j int) bool {
+								return elemsKeys[i] < elemsKeys[j]
+							})
+
+							exactMatch := false
+							brokeLoop := false
+							index := 0
+							for i, indexedValue := range elemsKeys {
+								if indexedValue == whereStructFieldValueInt {
+									exactMatch = true
+									brokeLoop = true
+									index = i
+									break
+								}
+								if indexedValue > whereStructFieldValueInt {
+									index = i
+									brokeLoop = true
+									break
+								}
+							}
+
+							foundIndexedValues := make([]int64, 0)
+							if brokeLoop && exactMatch {
+								if whereStruct.Relation == "<" {
+									newIndex := index + 1
+									if len(elemsKeys) != newIndex {
+										foundIndexedValues = elemsKeys[0: newIndex]
+									}
+								} else if whereStruct.Relation == "<=" {
+									foundIndexedValues = elemsKeys[0: index]
+								}
+							} else if brokeLoop {
+								foundIndexedValues = elemsKeys[0: index]
+							}
+
+							// retrieve the id of the foundIndexedValues
+							for _, indexedValue := range foundIndexedValues {
+								var indexedValueStr string
+								if currentFieldType == "float" {
+									indexedValueStr = storeOfOriginalFloatStr[indexedValue]
+								} else {
+									indexedValueStr = strconv.FormatInt(indexedValue, 10)
+								}
+
+								elem, ok := elemsMap[indexedValueStr]
+								if ok {
+									readBytes, err := flaarum_shared.ReadPortionF2File(projName, tableName,
+										whereStruct.FieldName + "_indexes", elem.DataBegin, elem.DataEnd)
+									if err != nil {
+										fmt.Printf("%+v\n", err)
+									}
+									stringIds = append(stringIds, strings.Split(string(readBytes), ",")...)
+								}
+							}
+
+							beforeFilter = append(beforeFilter, stringIds)
+						}
+					}
 				}
 
       } else if whereStruct.Relation == "in" {
