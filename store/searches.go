@@ -482,8 +482,6 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 								return elemsKeys[i] < elemsKeys[j]
 							})
 
-							fmt.Println("elemsKeys sorted", elemsKeys)
-
 							exactMatch := false
 							brokeLoop := false
 							index := 0
@@ -696,8 +694,6 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 							sort.Slice(elemsKeys, func(i, j int) bool {
 								return elemsKeys[i] < elemsKeys[j]
 							})
-
-							fmt.Println("elemsKeys sorted", elemsKeys)
 
 							exactMatch := false
 							brokeLoop := false
@@ -1597,7 +1593,6 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 		if !ok {
 			continue
 		}
-		fmt.Println(retId)
 		rawRowData, err := flaarum_shared.ReadPortionF2File(projName, tableName, "data",
 			elem.DataBegin, elem.DataEnd)
 		if err != nil {
@@ -1610,20 +1605,36 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 			continue
 		}
 
-    // for field, data := range rowMap {
-		//
-    //   pTbl, ok := expDetails[field]
-    //   if ok {
-		// 		rowMap2, err := flaarum_shared.ReadDataFile(filepath.Join(dataPath, projName, pTbl, "data", data))
-		// 		if err != nil {
-		// 			continue
-		// 		}
-		//
-    //     for f, d := range rowMap2 {
-    //       rowMap[field + "." + f] = d
-    //     }
-    //   }
-    // }
+    for field, data := range rowMap {
+
+      pTbl, ok := expDetails[field]
+      if ok {
+				pTblelemsMap, err := flaarum_shared.ParseDataF1File(filepath.Join(getTablePath(projName, pTbl), "data.flaa1"))
+				if err != nil {
+					fmt.Println(err)
+				}
+				
+				pTblelem, ok := pTblelemsMap[data]
+				if !ok {
+					continue
+				}
+				rawRowData2, err := flaarum_shared.ReadPortionF2File(projName, pTbl, "data",
+					pTblelem.DataBegin, pTblelem.DataEnd)
+				if err != nil {
+					return nil, err
+				}
+
+				rowMap2, err := flaarum_shared.ParseEncodedRowData(rawRowData2)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+
+        for f, d := range rowMap2 {
+          rowMap[field + "." + f] = d
+        }
+      }
+    }
 
     rowMap["id"] = retId
     tmpRet = append(tmpRet, rowMap)
@@ -1632,7 +1643,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
   elems := tmpRet
   if stmtStruct.OrderBy != "" {
     if stmtStruct.OrderDirection == "asc" {
-      sort.SliceStable(elems, func(i, j int) bool {
+      sort.Slice(elems, func(i, j int) bool {
         if confirmFieldType(projName, tableName, stmtStruct.OrderBy, "int", elems[i]["_version"]) &&
         confirmFieldType(projName, tableName, stmtStruct.OrderBy, "int", elems[j]["_version"]) {
           x, err1 := strconv.ParseInt(elems[i][stmtStruct.OrderBy], 10, 64)
