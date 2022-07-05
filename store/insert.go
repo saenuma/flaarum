@@ -125,8 +125,17 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
       }
     }
     if fd.Unique && ok1 {
-      indexPath := filepath.Join(dataPath, projName, tableName, "indexes", fd.FieldName, makeSafeIndexName(newValue))
-      if doesPathExists(indexPath) {
+			innerStmt := fmt.Sprintf(`
+      	table: %s
+      	where:
+      		%s = %s
+      	`, tableName, fd.FieldName, newValue)
+			toCheckRows, err := innerSearch(projName, innerStmt)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(*toCheckRows) > 0 {
         return nil, errors.New(fmt.Sprintf("The data '%s' is not unique to field '%s'.", newValue, fd.FieldName))
       }
     }

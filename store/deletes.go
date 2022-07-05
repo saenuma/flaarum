@@ -119,9 +119,7 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
         continue
       }
 
-      if isNotIndexedField(projName, tableName, f) {
-        // do nothing
-      } else {
+      if ! isNotIndexedField(projName, tableName, f) {
         deleteIndex(projName, tableName, f, d, row["id"], row["_version"])
       }
     }
@@ -192,29 +190,6 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
       }
     }
 
-  }
-
-
-  indexFileName := makeSafeIndexName(data)
-  indexesPath := filepath.Join(getTablePath(projName, tableName), "indexes", fieldName, indexFileName)
-  if doesPathExists(indexesPath) {
-    raw, err := os.ReadFile(indexesPath)
-    if err != nil {
-      return errors.Wrap(err, "read file failed.")
-    }
-    similarIds := strings.Split(string(raw), "\n")
-    toWriteIds := arrayOperations.Difference([]string{rowId}, similarIds)
-    if len(toWriteIds) == 0 {
-      err = os.Remove(indexesPath)
-      if err != nil {
-        return errors.Wrap(err, "file delete failed.")
-      }
-    } else {
-      err = os.WriteFile(indexesPath, []byte(strings.Join(toWriteIds, "\n")), 0777)
-      if err != nil {
-        return errors.Wrap(err, "file write failed.")
-      }
-    }
   }
 
   indexesF1Path := filepath.Join(dataPath, projName, tableName, fieldName + "_indexes.flaa1")

@@ -378,14 +378,15 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
-		out := "\n"
+		inMap := make(map[string]string)
 		for k, v := range *arow {
-			if flaarum_shared.GetFieldType(parts[0], parts[1], k) == "text" {
-				out += fmt.Sprintf("%s:\n%s\n%s:\n", k, v, k)
-			} else {
-				out += fmt.Sprintf("%s: %v\n", k, v)
+			if k == "id" || k == "_version" {
+				continue
 			}
+			inMap[k] = fmt.Sprintf("%v", v)
 		}
+
+		out := flaarum_shared.EncodeRowData(cl.ProjName, parts[1], inMap)
 
 		outName := "bur-" + strings.ToLower(flaarum_shared.UntestedRandomString(10)) + ".txt"
 		outPath, err := flaarum_shared.GetFlaarumPath(outName)
@@ -426,7 +427,7 @@ Table Search Commands:
 			  id = %s
 			`, parts[1], parts[2]), rowData)
 		if err != nil {
-			color.Red.Printf("Error updating row.\nError: %s\n", err)
+			color.Red.Printf("Error updating row.\nError: %+v\n", err)
 			os.Exit(1)
 		}
 

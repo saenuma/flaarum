@@ -71,17 +71,18 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
     for k, v := range row {
       if k == "id" {
         newRow[k] = v
+        continue
       }
       _, ok := fieldsDescs[k]
       if ok {
         newRow[k] = v
-      } else if isNotIndexedFieldVersioned(projName, tableName, k, row["_version"]) {
-        // do nothing
       } else {
-        err = deleteIndex(projName, tableName, k, v, row["id"], row["_version"])
-        if err != nil {
-          printError(w, err)
-          return
+        if ! isNotIndexedFieldVersioned(projName, tableName, k, row["_version"]) {
+          err = deleteIndex(projName, tableName, k, v, row["id"], row["_version"])
+          if err != nil {
+            printError(w, err)
+            return
+          }
         }
       }
     }

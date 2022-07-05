@@ -108,11 +108,6 @@ func getTablePath(projName, tableName string) string {
 }
 
 
-// to be deleted
-func makeSafeIndexName(v string) string {
-	return v
-}
-
 func isNotIndexedField(projName, tableName, fieldName string) bool {
 	ts, _ := getCurrentTableStructureParsed(projName, tableName)
   for _, fd := range ts.Fields {
