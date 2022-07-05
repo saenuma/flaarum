@@ -72,8 +72,6 @@ Table(s) Commands:
   ctvn  Current Table Version Number: Expects a project and table combo eg. 'first_proj/users'
   ts    Table Structure Statement: Expects a project and table combo eg. 'first_proj/users' and a valid number.
   dt    Delete Table: Expects one or more project and table combo eg. 'first_proj/users'.
-  et    Empty Table: Expects one or more project and table combo eg. 'first_proj/users'.
-  rt    Rename Table: Expects a project, old table name and the new table name.
 
 
 Table Data Commands:
