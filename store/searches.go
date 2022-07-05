@@ -228,7 +228,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 						if err != nil {
 							return nil, err
 						}
-						elemHandle, ok := elemsMap[parts[1]]
+						elemHandle, ok := elemsMap[whereStruct.FieldValue]
 						if ok {
 							readBytes, err := flaarum_shared.ReadPortionF2File(projName, pTbl, parts[1] + "_indexes",
 								elemHandle.DataBegin, elemHandle.DataEnd)
@@ -288,25 +288,30 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           trueWhereValues := make([]string, 0)
           parts := strings.Split(whereStruct.FieldName, ".")
 
-          indexFileName := makeSafeIndexName(whereStruct.FieldValue)
           pTbl, ok := expDetails[parts[0]]
           if ! ok {
             continue
           }
 
-          allIndexes, err := os.ReadDir(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1]))
-          if err != nil {
-            return nil, errors.Wrap(err, "read dir failed.")
-          }
-          for _, indexFI := range allIndexes {
-            if indexFI.Name() != indexFileName {
-              raw, err := os.ReadFile(filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFI.Name()))
-              if err != nil {
-                return nil, errors.Wrap(err, "read file failed.")
-              }
-              trueWhereValues = arrayOperations.Union(trueWhereValues, strings.Split(string(raw), "\n"))
-            }
-          }
+					otherTableindexesF1Path := filepath.Join(getTablePath(projName, pTbl), parts[1] + "_indexes.flaa1")
+
+					if doesPathExists(otherTableindexesF1Path) {
+						elemsMap, err := flaarum_shared.ParseDataF1File(otherTableindexesF1Path)
+						if err != nil {
+							return nil, err
+						}
+						for k, elem := range elemsMap {
+							if k != whereStruct.FieldValue {
+								readBytes, err := flaarum_shared.ReadPortionF2File(projName, pTbl,
+									parts[1] + "_indexes", elem.DataBegin, elem.DataEnd)
+								if err != nil {
+									fmt.Printf("%+v\n", err)
+								}
+								trueWhereValues = append(trueWhereValues, strings.Split(string(readBytes), ",")...)
+							}
+						}
+
+					}
 
           stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
           if err != nil {
