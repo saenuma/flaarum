@@ -92,18 +92,6 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
         }
         tablesMutexes[otherTblFullName].Unlock()
 
-      } else if fkd.OnDelete == "on_delete_empty" {
-        otherTblFullName := projName + ":" + otherTbl
-        tablesMutexes[otherTblFullName].Lock()
-
-        err := innerDeleteField(projName, otherTbl, fkd.FieldName, rows)
-        if err != nil {
-          printError(w, err)
-          tablesMutexes[otherTblFullName].Unlock()
-          return
-        }
-        tablesMutexes[otherTblFullName].Unlock()
-
       }
 
     }
@@ -138,10 +126,21 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
       }
     }
 
-    // delete row file
-    err := os.Remove(filepath.Join(getTablePath(projName, tableName), "data", row["id"]))
+    dataPath, _ := GetDataPath()
+    dataF1Path := filepath.Join(dataPath, projName, tableName, "data.flaa1")
+    // update flaa1 file by rewriting it.
+    elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
+		if err != nil {
+			return err
+		}
+
+    if _, ok := elemsMap[ row["id"] ]; ok {
+      delete(elemsMap, row["id"])
+    }
+
+    err = flaarum_shared.RewriteF1File(projName, tableName, "data", elemsMap)
     if err != nil {
-      return errors.Wrap(err, "file delete failed.")
+      return err
     }
   }
 
@@ -171,32 +170,6 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
       }
     }
 
-    timeIndexesFile := filepath.Join(dataPath, projName, tableName, "timeindexes", fieldName)
-    if flaarum_shared.DoesPathExists(timeIndexesFile) {
-      timeIndexes, err := flaarum_shared.ReadTimeIndexesFromFile(timeIndexesFile, "date")
-      if err != nil {
-        return err
-      }
-
-      timeValueToDelete, err := time.Parse(flaarum_shared.DATE_FORMAT, data)
-      if err != nil {
-        return errors.Wrap(err, "time convert error")
-      }
-
-      rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
-      if err != nil {
-        return errors.Wrap(err, "strconv error")
-      }
-
-      newTimeIndexes := flaarum_shared.RemoveFromTimeIndexes(timeIndexes, timeValueToDelete, rowIdInt)
-      if len(newTimeIndexes) > 0 {
-        err = flaarum_shared.WriteTimeIndexesToFile(newTimeIndexes, timeIndexesFile, "date")
-  			if err != nil {
-  				return err
-  			}
-      }
-    }
-
   } else if confirmFieldType(projName, tableName, fieldName, "datetime", version) {
     valueInTimeType, err := time.Parse(flaarum_shared.DATETIME_FORMAT, data)
     if err != nil {
@@ -219,110 +192,6 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
       }
     }
 
-    timeIndexesFile := filepath.Join(dataPath, projName, tableName, "timeindexes", fieldName)
-    if flaarum_shared.DoesPathExists(timeIndexesFile) {
-      timeIndexes, err := flaarum_shared.ReadTimeIndexesFromFile(timeIndexesFile, "datetime")
-      if err != nil {
-        return err
-      }
-
-      timeValueToDelete, err := time.Parse(flaarum_shared.DATETIME_FORMAT, data)
-      if err != nil {
-        return errors.Wrap(err, "time convert error")
-      }
-
-      rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
-      if err != nil {
-        return errors.Wrap(err, "strconv error")
-      }
-
-      newTimeIndexes := flaarum_shared.RemoveFromTimeIndexes(timeIndexes, timeValueToDelete, rowIdInt)
-      if len(newTimeIndexes) > 0 {
-        err = flaarum_shared.WriteTimeIndexesToFile(newTimeIndexes, timeIndexesFile, "datetime")
-        if err != nil {
-          return err
-        }
-      }
-    }
-
-  } else if confirmFieldType(projName, tableName, fieldName, "int", version) {
-    intIndexesFile := filepath.Join(dataPath, projName, tableName, "intindexes", fieldName)
-    if flaarum_shared.DoesPathExists(intIndexesFile) {
-      intIndexes, err := flaarum_shared.ReadIntIndexesFromFile(intIndexesFile)
-      if err != nil {
-        return err
-      }
-
-      intIndex, err := strconv.ParseInt(data, 10, 64)
-      if err != nil {
-        return errors.Wrap(err, "strconv error")
-      }
-      rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
-      if err != nil {
-        return errors.Wrap(err, "strconv error")
-      }
-
-      newIntIndexes := flaarum_shared.RemoveFromIntIndexes(intIndexes, intIndex, rowIdInt)
-      if len(newIntIndexes) > 0 {
-        err = flaarum_shared.WriteIntIndexesToFile(newIntIndexes, intIndexesFile)
-  			if err != nil {
-  				return err
-  			}
-      }
-    }
-  } else if confirmFieldType(projName, tableName, fieldName, "float", version) {
-    intIndexesFile := filepath.Join(dataPath, projName, tableName, "intindexes", fieldName)
-    if flaarum_shared.DoesPathExists(intIndexesFile) {
-      intIndexes, err := flaarum_shared.ReadIntIndexesFromFile(intIndexesFile)
-      if err != nil {
-        return err
-      }
-
-      intIndexFloat, err := strconv.ParseFloat(data, 64)
-      if err != nil {
-        return errors.Wrap(err, "strconv error")
-      }
-      rowIdInt, err := strconv.ParseInt(rowId, 10, 64)
-      if err != nil {
-        return errors.Wrap(err, "strconv error")
-      }
-
-      newIntIndexes := flaarum_shared.RemoveFromIntIndexes(intIndexes, int64(intIndexFloat), rowIdInt)
-      if len(newIntIndexes) > 0 {
-        err = flaarum_shared.WriteIntIndexesToFile(newIntIndexes, intIndexesFile)
-  			if err != nil {
-  				return err
-  			}
-      }
-    }
-  } else if confirmFieldType(projName, tableName, fieldName, "string", version) {
-    likeIndexesPath := filepath.Join(dataPath, projName, tableName, "likeindexes", fieldName)
-    if flaarum_shared.DoesPathExists(likeIndexesPath) {
-      charsOfData := strings.Split(strings.ToLower(data), "")
-      for _, char := range charsOfData {
-        if char == "/" || char == " " || char == "\t" {
-          continue
-        }
-        indexesForAChar := filepath.Join(likeIndexesPath, char)
-        raw, err := os.ReadFile(indexesForAChar)
-        if err != nil {
-          return errors.Wrap(err, "read file failed.")
-        }
-        writtenIds := strings.Split(string(raw), "\n")
-        toWriteIds := arrayOperations.Difference([]string{rowId}, writtenIds)
-        if len(toWriteIds) == 0 {
-          err = os.Remove(indexesForAChar)
-          if err != nil {
-            return errors.Wrap(err, "file delete failed.")
-          }
-        } else {
-          err = os.WriteFile(indexesForAChar, []byte(strings.Join(toWriteIds, "\n")), 0777)
-          if err != nil {
-            return errors.Wrap(err, "file write failed.")
-          }
-        }
-      }
-    }
   }
 
 
@@ -348,117 +217,60 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
     }
   }
 
-  indexesFieldsPath := filepath.Join(getTablePath(projName, tableName), "indexes", fieldName)
-  fileFIs, err := os.ReadDir(indexesFieldsPath)
-  if err == nil && len(fileFIs) == 0 {
-    err = os.Remove(indexesFieldsPath)
+  indexesF1Path := filepath.Join(dataPath, projName, tableName, fieldName + "_indexes.flaa1")
+  // update flaa1 file by rewriting it.
+  elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
+  if err != nil {
+    return err
+  }
+
+  if elem, ok := elemsMap[ data ]; ok {
+    readBytes, err := flaarum_shared.ReadPortionF2File(projName, tableName, fieldName + "_indexes",
+      elem.DataBegin, elem.DataEnd)
     if err != nil {
-      return errors.Wrap(err, "delete failed.")
+      fmt.Printf("%+v\n", err)
+    }
+    similarIds := strings.Split(string(readBytes), ",")
+    toWriteIds := arrayOperations.Difference([]string{rowId}, similarIds)
+
+    tablePath := getTablePath(projName, tableName)
+  	indexesF2Path := filepath.Join(tablePath, fieldName + "_indexes.flaa2")
+    toWriteData := strings.Join(toWriteIds, ",")
+
+    var begin int64
+  	var end int64
+  	if doesPathExists(indexesF2Path) {
+  		indexesF2Handle, err := os.OpenFile(indexesF2Path,	os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+  		if err != nil {
+  			return errors.Wrap(err, "os error")
+  		}
+  		defer indexesF2Handle.Close()
+
+  		stat, err := indexesF2Handle.Stat()
+  		if err != nil {
+  			return errors.Wrap(err, "os error")
+  		}
+
+  		size := stat.Size()
+  		indexesF2Handle.Write([]byte(toWriteData))
+  		begin = size
+  		end = int64(len([]byte(toWriteData))) + size
+  	} else {
+  		err := os.WriteFile(indexesF2Path, []byte(toWriteData), 0777)
+  		if err != nil {
+  			return errors.Wrap(err, "os error")
+  		}
+
+  		begin = 0
+  		end = int64(len([]byte(toWriteData)))
+  	}
+
+    elem := flaarum_shared.DataF1Elem{data, begin, end}
+    err = flaarum_shared.AppendDataF1File(projName, tableName, fieldName + "_indexes", elem)
+    if err != nil {
+      return errors.Wrap(err, "os error")
     }
   }
 
   return nil
-}
-
-
-func innerDeleteField(projName, tableName, fieldName string, rows *[]map[string]string) error {
-  // validation
-  if ! doesTableExists(projName, tableName) {
-    return errors.New(fmt.Sprintf("table '%s' of database '%s' does not exists.", tableName, projName))
-  }
-
-  for _, row := range *rows {
-    versionNum, _ := strconv.Atoi(row["_version"])
-    ts, err := getTableStructureParsed(projName, tableName, versionNum)
-    if err != nil {
-      return err
-    }
-
-    for _, fd := range ts.Fields {
-      if fd.FieldName == fieldName && fd.Required {
-        return errors.New(fmt.Sprintf("The field '%s' is required and so cannot be deleted.", fieldName))
-      }
-    }
-
-    f := fieldName
-    data, ok := row[f]
-    if ok {
-      err := deleteIndex(projName, tableName, f, data, row["id"], row["_version"])
-      if err != nil {
-        return err
-      }
-
-      delete(row, f)
-      if confirmFieldType(projName, tableName, f, "date", row["_version"]) {
-        delete(row, f + "_year")
-        delete(row, f + "_month")
-        delete(row, f + "_day")
-      } else if confirmFieldType(projName, tableName, f, "datetime", row["_version"]) {
-        delete(row, f + "_year")
-        delete(row, f + "_month")
-        delete(row, f + "_day")
-        delete(row, f + "_hour")
-      }
-    }
-
-    rowId := row["id"]
-    delete(row, "id")
-    // write data
-    err = saveRowData(projName, tableName, rowId, row)
-    if err != nil {
-      return err
-    }
-
-  }
-
-  return nil
-}
-
-
-func deleteFields(w http.ResponseWriter, r *http.Request) {
-  vars := mux.Vars(r)
-  projName := vars["proj"]
-
-  stmt := r.FormValue("stmt")
-  stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
-  if err != nil {
-    printError(w, err)
-    return
-  }
-
-  tableName := stmtStruct.TableName
-
-  if ! doesTableExists(projName, tableName) {
-    printError(w, errors.New(fmt.Sprintf("table '%s' of database '%s' does not exists.", tableName, projName)))
-    return
-  }
-
-  toDeleteFields := make([]string, 0)
-  for j := 1;; j++ {
-    f := r.FormValue("to_delete_field" + strconv.Itoa(j))
-    if f == "" {
-      break
-    }
-    toDeleteFields = append(toDeleteFields, f)
-  }
-
-  rows, err := innerSearch(projName, stmt)
-  if err != nil {
-    printError(w, err)
-    return
-  }
-
-  fullTableName := projName + ":" + tableName
-  tablesMutexes[fullTableName].Lock()
-  defer tablesMutexes[fullTableName].Unlock()
-
-  for _, fieldName := range toDeleteFields {
-    err := innerDeleteField(projName, tableName, fieldName, rows)
-    if err != nil {
-      printError(w, err)
-      return
-    }
-  }
-
-  fmt.Fprintf(w, "ok")
 }

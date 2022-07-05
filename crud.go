@@ -340,33 +340,6 @@ func (cl Client) DeleteRows(stmt string) error {
 }
 
 
-func (cl Client) DeleteFields(stmt string, toDeleteFields []string) error {
-  urlValues := url.Values{}
-  urlValues.Add("key-str", cl.KeyStr)
-  urlValues.Add("stmt", stmt)
-  for i, f := range toDeleteFields {
-    urlValues.Add(fmt.Sprintf("to_delete_field%d", i+1), f)
-  }
-
-  resp, err := httpCl.PostForm(fmt.Sprintf("%sdelete-fields/%s", cl.Addr, cl.ProjName), urlValues)
-  if err != nil {
-    return ConnError{err.Error()}
-  }
-  defer resp.Body.Close()
-
-  body, err := io.ReadAll(resp.Body)
-  if err != nil {
-    return ConnError{err.Error()}
-  }
-
-  if resp.StatusCode == 200 {
-    return nil
-  } else {
-    return ServerError{string(body)}
-  }
-}
-
-
 func (cl Client) CountRows(stmt string) (int64, error) {
   urlValues := url.Values{}
   urlValues.Set("key-str", cl.KeyStr)

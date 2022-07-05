@@ -17,7 +17,7 @@ type DataF1Elem struct {
 
 
 func ParseDataF1File(path string) (map[string]DataF1Elem, error) {
-  rawConf, err := os.ReadFile(path)
+  rawF1File, err := os.ReadFile(path)
   if err != nil {
     return nil, err
   }
@@ -25,8 +25,8 @@ func ParseDataF1File(path string) (map[string]DataF1Elem, error) {
   ret := make(map[string]DataF1Elem, 0)
 
   nl := GetNewline()
-  partsOfRawConf := strings.Split(string(rawConf), nl + nl)
-  for _, part := range partsOfRawConf {
+  partsOfRawF1File := strings.Split(string(rawF1File), nl + nl)
+  for _, part := range partsOfRawF1File {
     innerParts := strings.Split(strings.TrimSpace(part), nl)
 
     var elem DataF1Elem
@@ -111,6 +111,26 @@ func ReadPortionF2File(projName, tableName, name string, begin, end int64) ([]by
   }
 
   return outData, nil
+}
+
+
+func RewriteF1File(projName, tableName, name string, elems map[string]DataF1Elem) error {
+  dataPath, _ := GetDataPath()
+  path := filepath.Join(dataPath, projName, tableName, name + ".flaa1")
+
+  nl := GetNewline()
+  out := nl
+  for _, elem := range elems {
+    out += fmt.Sprintf("data_key: %s%sdata_begin: %d%sdata_end:%d%s%s", elem.DataKey, nl,
+      elem.DataBegin, nl, elem.DataEnd, nl, nl)
+  }
+
+  err := os.WriteFile(path, []byte(out), 0777)
+  if err != nil {
+    return errors.Wrap(err, "os error")
+  }
+
+  return nil
 }
 
 

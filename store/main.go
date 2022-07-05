@@ -72,7 +72,6 @@ func main() {
 	r.HandleFunc("/insert-row/{proj}/{tbl}", insertRow)
 	r.HandleFunc("/search-table/{proj}", searchTable)
 	r.HandleFunc("/delete-rows/{proj}", deleteRows)
-  r.HandleFunc("/delete-fields/{proj}", deleteFields)
   r.HandleFunc("/update-rows/{proj}", updateRows)
   r.HandleFunc("/count-rows/{proj}", countRows)
   r.HandleFunc("/sum-rows/{proj}", sumRows)

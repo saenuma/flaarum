@@ -303,9 +303,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
   // create indexes
   for k, v := range toInsert {
-    if isNotIndexedField(projName, tableName, k) {
-				// do nothing.
-    } else {
+    if ! isNotIndexedField(projName, tableName, k) {
       err := makeIndex(projName, tableName, k, v, nextIdStr)
       if err != nil {
         printError(w, err)
