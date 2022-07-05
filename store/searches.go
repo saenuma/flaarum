@@ -1197,25 +1197,30 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
           trueWhereValues := make([]string, 0)
           parts := strings.Split(whereStruct.FieldName, ".")
+					pTbl, ok := expDetails[parts[0]]
+          if ! ok {
+            continue
+          }
 
-          for _, inval := range whereStruct.FieldValues {
+					otherTableIndexesF1Path := filepath.Join(getTablePath(projName, pTbl), parts[1] + "_indexes.flaa1")
 
-            indexFileName := makeSafeIndexName(inval)
-            pTbl, ok := expDetails[parts[0]]
-            if ! ok {
-              continue
-            }
-            indexesPath := filepath.Join(getTablePath(projName, pTbl), "indexes", parts[1], indexFileName)
-            if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
-              // do nothing
-            } else {
-              raw, err := os.ReadFile(indexesPath)
-              if err != nil {
-                return nil, errors.Wrap(err, "read file failed.")
-              }
-              trueWhereValues = arrayOperations.Union(trueWhereValues, strings.Split(string(raw), "\n"))
+					if doesPathExists(otherTableIndexesF1Path) {
+						elemsMap, err := flaarum_shared.ParseDataF1File(otherTableIndexesF1Path)
+						if err != nil {
+							return nil, err
+						}
 
-            }
+						for _, inval := range whereStruct.FieldValues {
+							elemHandle, ok := elemsMap[inval]
+							if ok {
+								readBytes, err := flaarum_shared.ReadPortionF2File(projName, pTbl, parts[1] + "_indexes",
+									elemHandle.DataBegin, elemHandle.DataEnd)
+								if err != nil {
+									fmt.Printf("%+v\n", err)
+								}
+								trueWhereValues = append(trueWhereValues, strings.Split(string(readBytes), ",")...)
+							}
+						}
           }
 
           stringIds, err = findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
@@ -1224,20 +1229,28 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
           }
           beforeFilter = append(beforeFilter, stringIds)
         } else {
-          for _, inval := range whereStruct.FieldValues {
-            indexFileName := makeSafeIndexName(inval)
-            indexesPath := filepath.Join(tablePath, "indexes", whereStruct.FieldName, indexFileName)
-            if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
-              // do nothing
-            } else {
-              raw, err := os.ReadFile(indexesPath)
-              if err != nil {
-                return nil, errors.Wrap(err, "read file failed.")
-              }
-              stringIds = arrayOperations.Union(stringIds, strings.Split(string(raw), "\n"))
-            }
+					indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName + "_indexes.flaa1")
 
+					if doesPathExists(indexesF1Path) {
+						elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
+						if err != nil {
+							return nil, err
+						}
+
+						for _, inval := range whereStruct.FieldValues {
+							elemHandle, ok := elemsMap[inval]
+							if ok {
+								readBytes, err := flaarum_shared.ReadPortionF2File(projName, tableName,
+									whereStruct.FieldName + "_indexes", elemHandle.DataBegin, elemHandle.DataEnd)
+								if err != nil {
+									fmt.Printf("%+v\n", err)
+								}
+								stringIds = append(stringIds, strings.Split(string(readBytes), ",")...)
+							}
+
+						}
           }
+
         }
 
         beforeFilter = append(beforeFilter, stringIds)
@@ -1613,7 +1626,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 				if err != nil {
 					fmt.Println(err)
 				}
-				
+
 				pTblelem, ok := pTblelemsMap[data]
 				if !ok {
 					continue
