@@ -6,7 +6,7 @@ sudo apt install nano
 echo "Fetching Assets"
 rm -rf /opt/saenuma/flaarum
 mkdir -p /opt/saenuma/flaarum
-wget -q https://storage.googleapis.com/pandolee/flaarum/3/flaarum.tar.xz -O /opt/saenuma/flaarum.tar.xz
+wget -q https://storage.googleapis.com/pandolee/flaarum/4/flaarum.tar.xz -O /opt/saenuma/flaarum.tar.xz
 tar -xf /opt/saenuma/flaarum.tar.xz -C /opt/saenuma/flaarum
 
 sudo chmod +x /opt/saenuma/flaarum/bin/flcli
