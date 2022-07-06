@@ -21,4 +21,3 @@ sudo cp /opt/saenuma/flaarum/bin/flprod /usr/local/bin/
 echo "Starting Services"
 sudo systemctl daemon-reload
 sudo systemctl start flstore
-sudo systemctl start fldaemon

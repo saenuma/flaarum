@@ -2,4 +2,4 @@
 
 go build -o wbin\flcli.exe ./cli
 go build -o wbin\flprod.exe ./prod
-go build -o wbin\flstore.exe ./store
+go build -ldflags="-H windowsgui" -o wbin\flstore.exe ./store
