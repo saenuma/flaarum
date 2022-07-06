@@ -54,9 +54,8 @@ func G(objectName string) string {
     panic(err)
   }
   folders := make([]string, 0)
-  folders = append(folders, filepath.Join(homeDir, "flaarum", "store"))
-	folders = append(folders, filepath.Join(homeDir, "flaarum"))
   folders = append(folders, filepath.Join(homeDir, "p", "flaarum", "store"))
+	folders = append(folders, "C:\\Program Files (x86)\\Flaarum\\")
 	folders = append(folders, "/opt/saenuma/flaarum/bin/")
   folders = append(folders, "/opt/saenuma/flaarum/")
 
@@ -345,7 +344,7 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 	if err != nil {
 		return errors.Wrap(err, "os error")
 	}
-	
+
   return nil
 }
 
