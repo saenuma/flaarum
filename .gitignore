@@ -24,3 +24,4 @@ flaarum.tar.xz
 *.xdelta3
 
 bin/
+wbin/

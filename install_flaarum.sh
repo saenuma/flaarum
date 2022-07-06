@@ -10,17 +10,13 @@ wget -q https://storage.googleapis.com/pandolee/flaarum/3/flaarum.tar.xz -O /opt
 tar -xf /opt/saenuma/flaarum.tar.xz -C /opt/saenuma/flaarum
 
 sudo chmod +x /opt/saenuma/flaarum/bin/flcli
-sudo chmod +x /opt/saenuma/flaarum/bin/fldaemon
 sudo chmod +x /opt/saenuma/flaarum/bin/flprod
-sudo chmod +x /opt/saenuma/flaarum/bin/flprogs
 sudo chmod +x /opt/saenuma/flaarum/bin/flstore
 
-sudo cp /opt/saenuma/flaarum/bin/fldaemon.service /etc/systemd/system/fldaemon.service
 sudo cp /opt/saenuma/flaarum/bin/flstore.service /etc/systemd/system/flstore.service
 
 sudo cp /opt/saenuma/flaarum/bin/flcli /usr/local/bin/
 sudo cp /opt/saenuma/flaarum/bin/flprod /usr/local/bin/
-sudo cp /opt/saenuma/flaarum/bin/flprogs /usr/local/bin/
 
 echo "Starting Services"
 sudo systemctl daemon-reload
