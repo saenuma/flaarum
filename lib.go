@@ -8,6 +8,7 @@ import (
 	"github.com/saenuma/flaarum/flaarum_shared"
 	"time"
 	"net/url"
+	"fmt"
 )
 
 
@@ -54,6 +55,12 @@ type Client struct {
 
 func NewClient(ip, keyStr, projName string) Client {
 	return Client{"https://" + ip + ":22318/", keyStr, projName}
+}
+
+
+// Used whenever you changed the default port
+func NewClientCustomPort(ip, keyStr, projName string, port int) Client {
+	return Client{"https://" + ip + fmt.Sprintf(":%d/", port), keyStr, projName}
 }
 
 

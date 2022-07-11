@@ -38,6 +38,10 @@ debug: false
 // this key can be gotten from 'flaarum.prod r' if it has been created with 'flaarum.prod c'
 in_production: false
 
+// port is used while connecting to the database
+// changing the port can be used to hide your database during production
+port: 22318
+
 `
 
 func DoesPathExists(p string) bool {
