@@ -39,9 +39,26 @@ func main() {
 	} else {
 		keyStr = "not-yet-set"
 	}
-	cl := flaarum.NewClient("127.0.0.1", keyStr, "first_proj")
+	port := flaarum_shared.GetSetting("port")
+	if port == "" {
+		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
+		os.Exit(1)
+	}
+	var cl flaarum.Client
 
-	err := cl.Ping()
+	portInt, err := strconv.Atoi(port)
+	if err != nil {
+		color.Red.Println("Invalid port setting.")
+		os.Exit(1)
+	}
+
+	if portInt != flaarum_shared.PORT {
+		cl = flaarum.NewClientCustomPort("127.0.0.1", keyStr, "first_proj", portInt)
+	} else {
+		cl = flaarum.NewClient("127.0.0.1", keyStr, "first_proj")
+	}
+
+	err = cl.Ping()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
