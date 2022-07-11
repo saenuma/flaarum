@@ -77,13 +77,9 @@ func main() {
   r.HandleFunc("/sum-rows/{proj}", sumRows)
   r.HandleFunc("/all-rows-count/{proj}/{tbl}", allRowsCount)
 
-  // stats
-  r.HandleFunc("/get-and-delete-stats", getAndDeleteStats)
-
 	r.Use(keyEnforcementMiddleware)
 
 	port := flaarum_shared.GetSetting("port")
-
 
   fmt.Printf("Serving on port: %s\n", port)
 
@@ -97,30 +93,26 @@ func main() {
 
 func keyEnforcementMiddleware(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    if r.URL.Path == "/get-and-delete-stats" {
-      next.ServeHTTP(w, r)
-    } else {
-      inProd := flaarum_shared.GetSetting("in_production")
-      if inProd == "" {
-        panic(errors.New("Have you installed and launched flaarum.store"))
-      } else if inProd == "true" {
-        keyStr := r.FormValue("key-str")
-        keyPath := flaarum_shared.GetKeyStrPath()
-        raw, err := os.ReadFile(keyPath)
-        if err != nil {
-          http.Error(w, "Improperly Configured Server", http.StatusInternalServerError)
-        }
-        if keyStr == string(raw) {
-          // Call the next handler, which can be another middleware in the chain, or the final handler.
-          next.ServeHTTP(w, r)
-        } else {
-          http.Error(w, "Forbidden", http.StatusForbidden)
-        }
-
-      } else {
+    inProd := flaarum_shared.GetSetting("in_production")
+    if inProd == "" {
+      panic(errors.New("Have you installed and launched flaarum.store"))
+    } else if inProd == "true" {
+      keyStr := r.FormValue("key-str")
+      keyPath := flaarum_shared.GetKeyStrPath()
+      raw, err := os.ReadFile(keyPath)
+      if err != nil {
+        http.Error(w, "Improperly Configured Server", http.StatusInternalServerError)
+      }
+      if keyStr == string(raw) {
         // Call the next handler, which can be another middleware in the chain, or the final handler.
         next.ServeHTTP(w, r)
+      } else {
+        http.Error(w, "Forbidden", http.StatusForbidden)
       }
+
+    } else {
+      // Call the next handler, which can be another middleware in the chain, or the final handler.
+      next.ServeHTTP(w, r)
     }
 
   })
