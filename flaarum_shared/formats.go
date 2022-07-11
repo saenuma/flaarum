@@ -17,12 +17,12 @@ type DataF1Elem struct {
 
 
 func ParseDataF1File(path string) (map[string]DataF1Elem, error) {
+  ret := make(map[string]DataF1Elem, 0)
   rawF1File, err := os.ReadFile(path)
   if err != nil {
-    return nil, err
+    return ret, err
   }
 
-  ret := make(map[string]DataF1Elem, 0)
 
   nl := GetNewline()
   partsOfRawF1File := strings.Split(string(rawF1File), nl + nl)
@@ -51,13 +51,13 @@ func ParseDataF1File(path string) (map[string]DataF1Elem, error) {
       } else if optName == "data_begin" {
         data, err := strconv.ParseInt(optValue, 10, 64)
         if err != nil {
-          return nil, errors.New("data_begin is not of type int64")
+          return ret, errors.New("data_begin is not of type int64")
         }
         elem.DataBegin = data
       } else if optName == "data_end" {
         data, err := strconv.ParseInt(optValue, 10, 64)
         if err != nil {
-          return nil, errors.New("data_end is not of type int64")
+          return ret, errors.New("data_end is not of type int64")
         }
         elem.DataEnd = data
       }

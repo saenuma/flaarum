@@ -1324,10 +1324,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 	// read the whole foundRows using its Id
 	tmpRet := make([]map[string]string, 0)
-	elemsMap, err := flaarum_shared.ParseDataF1File(filepath.Join(tablePath, "data.flaa1"))
-	if err != nil {
-		fmt.Println(err)
-	}
+	elemsMap, _ := flaarum_shared.ParseDataF1File(filepath.Join(tablePath, "data.flaa1"))
 
   for _, retId := range retIds {
 		elem, ok := elemsMap[retId]
