@@ -24,8 +24,6 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
     return nil, err
   }
 
-  dataPath, _ := flaarum_shared.GetDataPath()
-
   fieldsDescs := make(map[string]flaarum_shared.FieldStruct)
   for _, fd := range tableStruct.Fields {
     fieldsDescs[fd.FieldName] = fd
@@ -141,16 +139,27 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
     }
   }
 
+	// validate all foreign keys
   for _, fkd := range tableStruct.ForeignKeys {
     v, ok := dataMap[fkd.FieldName]
     if ok {
-      dataPath := filepath.Join(dataPath, projName, fkd.PointedTable, "data", v)
-      if ! doesPathExists(dataPath) {
-        return nil,  errors.New(fmt.Sprintf("The data with id '%s' does not exist in table '%s'", v, fkd.PointedTable))
-      }
+			innerStmt := fmt.Sprintf(`
+				table: %s
+				where:
+					id = %s
+				`, fkd.PointedTable, v)
+
+			toCheckRows, err := innerSearch(projName, innerStmt)
+			if err != nil {
+				return nil, err
+			}
+			if len(*toCheckRows) == 0 {
+				return nil,  errors.New(fmt.Sprintf("The data with id '%s' does not exist in table '%s'", v, fkd.PointedTable))
+			}
     }
   }
 
+	// validate unique groups
 	for _, ug := range tableStruct.UniqueGroups {
     wherePartFragment := ""
 
