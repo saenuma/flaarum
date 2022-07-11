@@ -116,13 +116,16 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 	if len(stmtStruct.WhereOptions) == 0 {
 		dataF1Path := filepath.Join(tablePath, "data.flaa1")
-	  elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
-	  if err != nil {
-			return nil, errors.Wrap(err, "ioutil error.")
-	  }
 
-		for k, _ := range elemsMap {
-			retIds = append(retIds, k)
+		if flaarum_shared.DoesPathExists(dataF1Path) {
+			elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
+			if err != nil {
+				return nil, err
+			}
+
+			for k, _ := range elemsMap {
+				retIds = append(retIds, k)
+			}
 		}
 
 	} else {
