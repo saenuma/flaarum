@@ -7,8 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
-	"math/rand"
-	"time"
   "fmt"
   "strconv"
   arrayOperations "github.com/adam-hanna/arrayOperations"
@@ -173,18 +171,6 @@ func DoesTableExists(projName, tableName string) bool {
   } else {
     return true
   }
-}
-
-
-func UntestedRandomString(length int) string {
-  var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
-  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-
-  b := make([]byte, length)
-  for i := range b {
-    b[i] = charset[seededRand.Intn(len(charset))]
-  }
-  return string(b)
 }
 
 
