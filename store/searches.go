@@ -1419,7 +1419,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 			return nil, err
 		}
 
-		rowMap, err := ParseEncodedRowData(rawRowData)
+		rowMap, err := flaarum_shared.ParseEncodedRowData(rawRowData)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -1444,7 +1444,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 					return nil, err
 				}
 
-				rowMap2, err := ParseEncodedRowData(rawRowData2)
+				rowMap2, err := flaarum_shared.ParseEncodedRowData(rawRowData2)
 				if err != nil {
 					fmt.Println(err)
 					continue

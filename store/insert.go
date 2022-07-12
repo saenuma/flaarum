@@ -341,7 +341,7 @@ func saveRowData(projName, tableName, rowId string, toWrite map[string]string) e
   tablePath := getTablePath(projName, tableName)
 
 	dataLumpPath := filepath.Join(tablePath, "data.flaa2")
-	dataForCurrentRow := EncodeRowData(projName, tableName, toWrite)
+	dataForCurrentRow := flaarum_shared.EncodeRowData(projName, tableName, toWrite)
 	var begin int64
 	var end int64
 	if doesPathExists(dataLumpPath) {
