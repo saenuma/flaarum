@@ -9,7 +9,6 @@ import (
 	"path/filepath"
   "fmt"
   "strconv"
-  arrayOperations "github.com/adam-hanna/arrayOperations"
   "github.com/saenuma/zazabul"
 	// "math"
 	"sort"
@@ -274,80 +273,6 @@ func GetFieldType(projName, tableName, fieldName string) string {
 
 
 	return fieldNamesToFieldTypes[fieldName]
-}
-
-
-func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
-	// make exact search indexes
-  dataPath, _ := GetDataPath()
-	indexesF1Path := filepath.Join(dataPath, projName, tableName, fieldName + "_indexes.flaa1")
-  indexesF2Path := filepath.Join(dataPath, projName, tableName, fieldName + "_indexes.flaa2")
-
-	var begin int64
-	var end int64
-	if ! DoesPathExists(indexesF1Path) {
-		begin = 0
-		err := os.WriteFile(indexesF2Path, []byte(rowId + ","), 0777)
-		if err != nil {
-			return errors.Wrap(err, "os error")
-		}
-		end = int64(len([]byte(rowId + ",")))
-	} else {
-		elemsMap, err := ParseDataF1File(indexesF1Path)
-		if err != nil {
-			return err
-		}
-
-		elem, ok := elemsMap[newData]
-		var newDataToWrite string
-		if ! ok {
-			newDataToWrite = rowId + ","
-		} else {
-			readBytes, err := ReadPortionF2File(projName, tableName, fieldName + "_indexes", elem.DataBegin, elem.DataEnd)
-			if err != nil {
-				return err
-			}
-			previousEntries := strings.Split(string(readBytes), ",")
-			newEntries := arrayOperations.Union(previousEntries, []string{rowId})
-			newDataToWrite = strings.Join(newEntries, ",") + ","
-		}
-
-		f2IndexesHandle, err := os.OpenFile(indexesF2Path,	os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
-		if err != nil {
-			return errors.Wrap(err, "os error")
-		}
-		defer f2IndexesHandle.Close()
-
-		stat, err := f2IndexesHandle.Stat()
-		if err != nil {
-			return errors.Wrap(err, "os error")
-		}
-
-		size := stat.Size()
-		f2IndexesHandle.Write([]byte(newDataToWrite))
-		begin = size
-		end = int64(len([]byte(newDataToWrite))) + size
-	}
-
-	elem := DataF1Elem{newData, begin, end}
-	err := AppendDataF1File(projName, tableName, fieldName + "_indexes", elem)
-	if err != nil {
-		return errors.Wrap(err, "os error")
-	}
-
-  return nil
-}
-
-
-func IsNotIndexedFieldVersioned(projName, tableName, fieldName, version string) bool {
-	versionInt, _ := strconv.Atoi(version)
-	ts, _ := GetTableStructureParsed(projName, tableName, versionInt)
-	for _, fd := range ts.Fields {
-		if fd.FieldName == fieldName && fd.NotIndexed == true {
-			return true
-		}
-	}
-	return false
 }
 
 

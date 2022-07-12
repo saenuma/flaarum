@@ -77,7 +77,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
       if ok {
         newRow[k] = v
       } else {
-        if ! isNotIndexedFieldVersioned(projName, tableName, k, row["_version"]) {
+        if ! IsNotIndexedFieldVersioned(projName, tableName, k, row["_version"]) {
           err = deleteIndex(projName, tableName, k, v, row["id"], row["_version"])
           if err != nil {
             printError(w, err)
@@ -116,26 +116,26 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
         continue
       }
 
-      if isNotIndexedField(projName, tableName, fieldName) {
-        continue
+      if ! isNotIndexedField(projName, tableName, fieldName) {
+        allOldRows := *rows
+        oldRow := allOldRows[i]
+
+        oldData, ok := oldRow[fieldName]
+        if ok && oldData != newData {
+          err = deleteIndex(projName, tableName, fieldName, oldData, row["id"], (*rows)[i]["_version"])
+          if err != nil {
+            printError(w, err)
+            return
+          }
+          err = MakeIndex(projName, tableName, fieldName, newData, row["id"])
+          if err != nil {
+            printError(w, err)
+            return
+          }
+        }
+
       }
 
-      allOldRows := *rows
-      oldRow := allOldRows[i]
-
-      oldData, ok := oldRow[fieldName]
-      if ok && oldData != newData {
-        err = deleteIndex(projName, tableName, fieldName, oldData, row["id"], (*rows)[i]["_version"])
-        if err != nil {
-          printError(w, err)
-          return
-        }
-        err = makeIndex(projName, tableName, fieldName, newData, row["id"])
-        if err != nil {
-          printError(w, err)
-          return
-        }
-      }
     }
 
     // write data

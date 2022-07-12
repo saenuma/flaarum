@@ -286,7 +286,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
   if ! doesPathExists(dataF1Path) {
     nextId = 1
   } else {
-		elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
+		elemsMap, err := ParseDataF1File(dataF1Path)
 		if err != nil {
 			printError(w, err)
 			return
@@ -322,7 +322,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
   // create indexes
   for k, v := range toInsert {
     if ! isNotIndexedField(projName, tableName, k) {
-      err := makeIndex(projName, tableName, k, v, nextIdStr)
+      err := MakeIndex(projName, tableName, k, v, nextIdStr)
       if err != nil {
         printError(w, err)
         return
@@ -341,7 +341,7 @@ func saveRowData(projName, tableName, rowId string, toWrite map[string]string) e
   tablePath := getTablePath(projName, tableName)
 
 	dataLumpPath := filepath.Join(tablePath, "data.flaa2")
-	dataForCurrentRow := flaarum_shared.EncodeRowData(projName, tableName, toWrite)
+	dataForCurrentRow := EncodeRowData(projName, tableName, toWrite)
 	var begin int64
 	var end int64
 	if doesPathExists(dataLumpPath) {
@@ -370,16 +370,11 @@ func saveRowData(projName, tableName, rowId string, toWrite map[string]string) e
 		end = int64(len([]byte(dataForCurrentRow)))
 	}
 
-	elem := flaarum_shared.DataF1Elem{rowId, begin, end}
-	err := flaarum_shared.AppendDataF1File(projName, tableName, "data", elem)
+	elem := DataF1Elem{rowId, begin, end}
+	err := AppendDataF1File(projName, tableName, "data", elem)
 	if err != nil {
     return errors.Wrap(err, "os error")
   }
 
   return nil
-}
-
-
-func makeIndex(projName, tableName, fieldName, newData, rowId string) error {
-  return flaarum_shared.MakeIndex(projName, tableName, fieldName, newData, rowId)
 }

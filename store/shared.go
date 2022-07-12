@@ -69,11 +69,6 @@ func createTableMutexIfNecessary(projName, tableName string) {
 }
 
 
-func makeSafeIndexValue(val string) string {
-	return strings.ReplaceAll(val, "/", "~~ab~~")
-}
-
-
 func confirmFieldType(projName, tableName, fieldName, fieldType, version string) bool {
 	versionInt, _ := strconv.Atoi(version)
   tableStruct, err := getTableStructureParsed(projName, tableName, versionInt)
@@ -105,27 +100,4 @@ func MakeHash(data string) string {
 func getTablePath(projName, tableName string) string {
   dataPath, _ := GetDataPath()
   return filepath.Join(dataPath, projName, tableName)
-}
-
-
-func isNotIndexedField(projName, tableName, fieldName string) bool {
-	ts, _ := getCurrentTableStructureParsed(projName, tableName)
-  for _, fd := range ts.Fields {
-    if fd.FieldName == fieldName && fd.NotIndexed == true {
-      return true
-    }
-  }
-
-	for _, fd := range ts.Fields {
-		if fd.FieldName == fieldName && fd.FieldType == "text" {
-			return true
-		}
-	}
-
-  return false
-}
-
-
-func isNotIndexedFieldVersioned(projName, tableName, fieldName, version string) bool {
-	return flaarum_shared.IsNotIndexedFieldVersioned(projName, tableName, fieldName, version)
 }

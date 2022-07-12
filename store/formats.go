@@ -1,4 +1,4 @@
-package flaarum_shared
+package main
 
 import (
   "os"
@@ -7,6 +7,7 @@ import (
   "fmt"
   "strconv"
   "path/filepath"
+  "github.com/saenuma/flaarum/flaarum_shared"
 )
 
 type DataF1Elem struct {
@@ -24,7 +25,7 @@ func ParseDataF1File(path string) (map[string]DataF1Elem, error) {
   }
 
 
-  nl := GetNewline()
+  nl := flaarum_shared.GetNewline()
   partsOfRawF1File := strings.Split(string(rawF1File), nl + nl)
   for _, part := range partsOfRawF1File {
     innerParts := strings.Split(strings.TrimSpace(part), nl)
@@ -82,7 +83,7 @@ func AppendDataF1File(projName, tableName, name string, elem DataF1Elem) error {
   }
   defer dataF1Handle.Close()
 
-  nl := GetNewline()
+  nl := flaarum_shared.GetNewline()
   out := fmt.Sprintf("data_key: %s%sdata_begin: %d%sdata_end:%d%s%s", elem.DataKey, nl,
     elem.DataBegin, nl, elem.DataEnd, nl, nl)
 
@@ -118,7 +119,7 @@ func RewriteF1File(projName, tableName, name string, elems map[string]DataF1Elem
   dataPath, _ := GetDataPath()
   path := filepath.Join(dataPath, projName, tableName, name + ".flaa1")
 
-  nl := GetNewline()
+  nl := flaarum_shared.GetNewline()
   out := nl
   for _, elem := range elems {
     out += fmt.Sprintf("data_key: %s%sdata_begin: %d%sdata_end:%d%s%s", elem.DataKey, nl,
@@ -136,7 +137,7 @@ func RewriteF1File(projName, tableName, name string, elems map[string]DataF1Elem
 
 func ParseEncodedRowData(rawData []byte) (map[string]string, error) {
   ret := make(map[string]string)
-  nl := GetNewline()
+  nl := flaarum_shared.GetNewline()
 
   partsOfRawData := strings.Split(string(rawData), nl)
   for _, line := range partsOfRawData {
@@ -186,10 +187,10 @@ func ParseDataFormat(path string) (map[string]string, error) {
 
 
 func EncodeRowData(projName, tableName string, toWrite map[string]string) string {
-  nl := GetNewline()
+  nl := flaarum_shared.GetNewline()
   out := nl
   for k, v := range toWrite {
-    ft := GetFieldType(projName, tableName, k)
+    ft := flaarum_shared.GetFieldType(projName, tableName, k)
     if ft == "text" {
     out += fmt.Sprintf("%s:%s%s%s%s:%s", k, nl, v, nl, k, nl)
     } else {
