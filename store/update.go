@@ -78,11 +78,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
         newRow[k] = v
       } else {
         if ! IsNotIndexedFieldVersioned(projName, tableName, k, row["_version"]) {
-          err = deleteIndex(projName, tableName, k, v, row["id"], row["_version"])
-          if err != nil {
-            printError(w, err)
-            return
-          }
+          deleteIndex(projName, tableName, k, v, row["id"], row["_version"])
         }
       }
     }
@@ -91,7 +87,6 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
     }
     patchedRows = append(patchedRows, newRow)
   }
-
 
 
   // validation

@@ -83,6 +83,13 @@ func IsNotIndexedFieldVersioned(projName, tableName, fieldName, version string) 
 			return true
 		}
 	}
+
+  for _, fd := range ts.Fields {
+    if fd.FieldName == fieldName && fd.FieldType == "text" {
+      return true
+    }
+  }
+  
 	return false
 }
 
@@ -144,6 +151,7 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
     readBytes, err := ReadPortionF2File(projName, tableName, fieldName + "_indexes",
       elem.DataBegin, elem.DataEnd)
     if err != nil {
+      fmt.Println("Bad indexes file")
       fmt.Printf("%+v\n", err)
     }
     similarIds := strings.Split(string(readBytes), ",")
