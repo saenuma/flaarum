@@ -146,19 +146,19 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 				}
 			}
 
-			if fieldNamesToFieldTypes[whereStruct.FieldName] == "string" || fieldNamesToFieldTypes[whereStruct.FieldName] == "text" ||
-				fieldNamesToFieldTypes[whereStruct.FieldName] == "bool" || fieldNamesToFieldTypes[whereStruct.FieldName] == "ipaddr" ||
-				fieldNamesToFieldTypes[whereStruct.FieldName] == "email" || fieldNamesToFieldTypes[whereStruct.FieldName] == "url" {
+			ft := fieldNamesToFieldTypes[whereStruct.FieldName]
 
-					if whereStruct.Relation == ">" || whereStruct.Relation == ">=" || whereStruct.Relation == "<" || whereStruct.Relation == "<=" {
-						return nil, errors.New(fmt.Sprintf("Invalid statement: The type '%s' does not support the query relation '%s'",
-							fieldNamesToFieldTypes[whereStruct.FieldName], whereStruct.Relation))
-					}
+			if ft == "string" || ft == "text" || ft == "bool" || ft == "ipaddr" || ft == "email" || ft == "url" {
 
+				if whereStruct.Relation == ">" || whereStruct.Relation == ">=" || whereStruct.Relation == "<" || whereStruct.Relation == "<=" {
+					return nil, errors.New(fmt.Sprintf("Invalid statement: The type '%s' does not support the query relation '%s'",
+						ft, whereStruct.Relation))
 				}
 
-			if fieldNamesToFieldTypes[whereStruct.FieldName] != "string" && whereStruct.Relation == "like" {
-				return nil, errors.New(fmt.Sprintf("The field type '%s' does not support the query relation 'like'", fieldNamesToFieldTypes[whereStruct.FieldName]))
+			}
+
+			if (ft == "int" || ft == "float" || ft == "date" || ft == "datetime") && whereStruct.Relation == "has" {
+				return nil, errors.New(fmt.Sprintf("The field type '%s' does not support the query relation 'has'", ft))
 			}
 
 			if whereStruct.FieldName == "id" {
@@ -166,10 +166,11 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 					return nil, errors.New(fmt.Sprintf("Invalid statement: The 'id' field does not support the query relation '%s'",
 						whereStruct.Relation))
 				}
-				if whereStruct.Relation == "like" {
-					return nil, errors.New("Invalid statment: the 'id' field does not support the query relation 'like'")
+				if whereStruct.Relation == "has" {
+					return nil, errors.New("Invalid statment: the 'id' field does not support the query relation 'has'")
 				}
 			}
+
 			if fieldNamesToNotIndexedStatus[whereStruct.FieldName] == true {
 				return nil, errors.New(fmt.Sprintf("The field '%s' is not searchable because it has the 'nindex' attribute",
 					whereStruct.FieldName))
@@ -315,6 +316,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 						}
 						beforeFilter = append(beforeFilter, stringIds)
 					}
+
 				}
 
       } else if whereStruct.Relation == ">" || whereStruct.Relation == ">=" {
@@ -1258,7 +1260,70 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
         beforeFilter = append(beforeFilter, stringIds)
 
-      }
+      } else if whereStruct.Relation == "has" {
+
+				if strings.Contains(whereStruct.FieldName, ".") {
+
+					trueWhereValues := make([]string, 0)
+					parts := strings.Split(whereStruct.FieldName, ".")
+
+					pTbl, ok := expDetails[parts[0]]
+					if ! ok {
+						continue
+					}
+
+					otherTableindexesF1Path := filepath.Join(getTablePath(projName, pTbl), parts[1] + "_indexes.flaa1")
+
+					if doesPathExists(otherTableindexesF1Path) {
+						elemsMap, err := ParseDataF1File(otherTableindexesF1Path)
+						if err != nil {
+							return nil, err
+						}
+						for k, elem := range elemsMap {
+							if strings.Contains(strings.ToLower(k), strings.ToLower(whereStruct.FieldValue)) {
+								readBytes, err := ReadPortionF2File(projName, pTbl,
+									parts[1] + "_indexes", elem.DataBegin, elem.DataEnd)
+								if err != nil {
+									fmt.Printf("%+v\n", err)
+								}
+								trueWhereValues = append(trueWhereValues, strings.Split(string(readBytes), ",")...)
+							}
+						}
+
+					}
+
+					stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+					if err != nil {
+						return nil, err
+					}
+					beforeFilter = append(beforeFilter, stringIds)
+
+				} else {
+					indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName + "_indexes.flaa1")
+
+					if doesPathExists(indexesF1Path) {
+						elemsMap, err := ParseDataF1File(indexesF1Path)
+						if err != nil {
+							return nil, err
+						}
+
+						stringIds := make([]string, 0)
+						for k, elem := range elemsMap {
+							if strings.Contains(strings.ToLower(k), strings.ToLower(whereStruct.FieldValue)) {
+								readBytes, err := ReadPortionF2File(projName, tableName,
+									whereStruct.FieldName + "_indexes", elem.DataBegin, elem.DataEnd)
+								if err != nil {
+									fmt.Printf("%+v\n", err)
+								}
+								stringIds = append(stringIds, strings.Split(string(readBytes), ",")...)
+							}
+						}
+						beforeFilter = append(beforeFilter, stringIds)
+					}
+
+				}
+
+			}
 
 		}
 

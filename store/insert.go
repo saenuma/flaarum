@@ -48,7 +48,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 				if len(v) > 220 {
 					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is longer than 220 characters", v, k))
 				}
-				if strings.Contains(v, "\n") {
+				if strings.Contains(v, "\n") || strings.Contains(v, "\r\n") {
 					return nil, errors.New(fmt.Sprintf("The value of field '%s' contains new line.", k))
 				}
 			}

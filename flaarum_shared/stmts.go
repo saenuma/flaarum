@@ -297,19 +297,15 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 			var whereStruct WhereStruct
 			if len(whereStructs) == 0 {
 				whereStruct = WhereStruct{FieldName: parts[0], Relation: parts[1],}
-				if whereStruct.Relation == "in" || whereStruct.Relation == "nin" {
+				if whereStruct.Relation == "in" {
 					whereStruct.FieldValues = parts[2:]
-				} else if whereStruct.Relation == "isnull" || whereStruct.Relation == "notnull" {
-
 				} else {
 					whereStruct.FieldValue = parts[2]
 				}
 			} else {
 				whereStruct = WhereStruct{Joiner: parts[0], FieldName: parts[1], Relation: parts[2],}
-				if whereStruct.Relation == "in" || whereStruct.Relation == "nin" {
+				if whereStruct.Relation == "in" {
 					whereStruct.FieldValues = parts[3:]
-				} else if whereStruct.Relation == "isnull" || whereStruct.Relation == "notnull" {
-
 				} else {
 					whereStruct.FieldValue = parts[3]
 				}
