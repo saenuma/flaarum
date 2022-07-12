@@ -81,6 +81,23 @@ func findIdsContainingTrueWhereValues(projName, tableName, field string, trueWhe
 }
 
 
+func doHasCheck(storedStr, qStr string) bool {
+	qStrParts := strings.Split(qStr, " ")
+
+	countOfTrue := 0
+	for _, qStrPart := range qStrParts {
+		if strings.Contains(strings.ToLower(storedStr), strings.ToLower(qStrPart)) {
+			countOfTrue += 1
+		}
+	}
+
+	if countOfTrue == len(qStrParts) {
+		return true
+	}
+	return false
+}
+
+
 func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 	stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
 	if err != nil {
@@ -1280,7 +1297,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 							return nil, err
 						}
 						for k, elem := range elemsMap {
-							if strings.Contains(strings.ToLower(k), strings.ToLower(whereStruct.FieldValue)) {
+							if doHasCheck(k, whereStruct.FieldValue) {
 								readBytes, err := ReadPortionF2File(projName, pTbl,
 									parts[1] + "_indexes", elem.DataBegin, elem.DataEnd)
 								if err != nil {
@@ -1309,7 +1326,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 						stringIds := make([]string, 0)
 						for k, elem := range elemsMap {
-							if strings.Contains(strings.ToLower(k), strings.ToLower(whereStruct.FieldValue)) {
+							if doHasCheck(k, whereStruct.FieldValue) {
 								readBytes, err := ReadPortionF2File(projName, tableName,
 									whereStruct.FieldName + "_indexes", elem.DataBegin, elem.DataEnd)
 								if err != nil {
