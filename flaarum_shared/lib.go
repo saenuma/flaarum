@@ -3,27 +3,28 @@
 package flaarum_shared
 
 import (
-	"strings"
-	"github.com/pkg/errors"
+	"fmt"
 	"os"
 	"path/filepath"
-  "fmt"
-  "strconv"
-  "github.com/saenuma/zazabul"
+	"strconv"
+	"strings"
+
+	"github.com/pkg/errors"
+	"github.com/saenuma/zazabul"
+
 	// "math"
-	"sort"
 	"runtime"
+	"sort"
 )
 
-
 const (
-  DATE_FORMAT = "2006-01-02"
-  DATETIME_FORMAT = "2006-01-02T15:04 MST"
-  STRING_MAX_LENGTH = 100
-  BACKUP_EXT = "flaa3"
-  PORT = 22318
-	TEXT_INTR_DELIM = "~~~"
-	FLAARUM_PATH = "/var/lib/flaarum"
+	DATE_FORMAT       = "2006-01-02"
+	DATETIME_FORMAT   = "2006-01-02T15:04 MST"
+	STRING_MAX_LENGTH = 100
+	BACKUP_EXT        = "flaa3"
+	PORT              = 22318
+	TEXT_INTR_DELIM   = "~~~"
+	FLAARUM_PATH      = "/var/lib/flaarum"
 )
 
 var RootConfigTemplate = `// debug can be set to either false or true
@@ -48,27 +49,26 @@ func DoesPathExists(p string) bool {
 	return true
 }
 
-
 func G(objectName string) string {
-  homeDir, err := os.UserHomeDir()
-  if err != nil {
-    panic(err)
-  }
-  folders := make([]string, 0)
-  folders = append(folders, filepath.Join(homeDir, "p", "flaarum", "store"))
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+	folders := make([]string, 0)
+	folders = append(folders, filepath.Join(homeDir, "p", "flaarum", "store"))
 	folders = append(folders, "C:\\Program Files (x86)\\Flaarum\\")
 	folders = append(folders, "/opt/saenuma/flaarum/bin/")
-  folders = append(folders, "/opt/saenuma/flaarum/")
+	folders = append(folders, "/opt/saenuma/flaarum/")
 
-  for _, dir := range folders {
-    testPath := filepath.Join(dir, objectName)
-    if DoesPathExists(testPath) {
-      return testPath
-    }
-  }
+	for _, dir := range folders {
+		testPath := filepath.Join(dir, objectName)
+		if DoesPathExists(testPath) {
+			return testPath
+		}
+	}
 
 	fmt.Println("Could not find: ", objectName)
-  panic("Improperly configured.")
+	panic("Improperly configured.")
 }
 
 func GetConfigPath() (string, error) {
@@ -86,15 +86,13 @@ func GetConfigPath() (string, error) {
 	return dd, nil
 }
 
-
 func GetCtlConfigPath() (string, error) {
-  confPath, err := GetConfigPath()
-  if err != nil {
-    return "", err
-  }
-  return strings.Replace(confPath, "flaarum.zconf", "flaarumctl.zconf", 1), nil
+	confPath, err := GetConfigPath()
+	if err != nil {
+		return "", err
+	}
+	return strings.Replace(confPath, "flaarum.zconf", "flaarumctl.zconf", 1), nil
 }
-
 
 func GetDataPath() (string, error) {
 	var dd string
@@ -116,22 +114,20 @@ func GetDataPath() (string, error) {
 	return dd, nil
 }
 
-
 func GetSetting(settingName string) string {
 	confPath, err := GetConfigPath()
 	if err != nil {
-    fmt.Println("%+v", err)
-    return ""
+		fmt.Printf("%+v\n", err)
+		return ""
 	}
 
-  conf, err := zazabul.LoadConfigFile(confPath)
-  if err != nil {
-    fmt.Println("%+v", err)
-  }
+	conf, err := zazabul.LoadConfigFile(confPath)
+	if err != nil {
+		fmt.Printf("%+v\n", err)
+	}
 
-  return conf.Get(settingName)
+	return conf.Get(settingName)
 }
-
 
 func GetKeyStrPath() string {
 	dataPath, err := GetDataPath()
@@ -141,17 +137,15 @@ func GetKeyStrPath() string {
 	return filepath.Join(dataPath, "flaarum.keyfile")
 }
 
-
 func GetFlaarumPath(fileName string) (string, error) {
-  hd, err := os.UserHomeDir()
-  if err != nil {
-    return "", errors.Wrap(err, "os error")
-  }
+	hd, err := os.UserHomeDir()
+	if err != nil {
+		return "", errors.Wrap(err, "os error")
+	}
 
-  dd := filepath.Join(hd, "Flaarum", fileName)
-  return dd, nil
+	dd := filepath.Join(hd, "Flaarum", fileName)
+	return dd, nil
 }
-
 
 func FindIn(container []string, elem string) int {
 	for i, o := range container {
@@ -162,16 +156,14 @@ func FindIn(container []string, elem string) int {
 	return -1
 }
 
-
 func DoesTableExists(projName, tableName string) bool {
-  dataPath, _ := GetDataPath()
-  if _, err := os.Stat(filepath.Join(dataPath, projName, tableName)); os.IsNotExist(err) {
-    return false
-  } else {
-    return true
-  }
+	dataPath, _ := GetDataPath()
+	if _, err := os.Stat(filepath.Join(dataPath, projName, tableName)); os.IsNotExist(err) {
+		return false
+	} else {
+		return true
+	}
 }
-
 
 func GetCurrentVersionNum(projName, tableName string) (int, error) {
 	dataPath, _ := GetDataPath()
@@ -197,21 +189,19 @@ func GetCurrentVersionNum(projName, tableName string) (int, error) {
 	}
 
 	sort.Ints(versionNumbers)
-	currentVersionNum := versionNumbers[len(versionNumbers) - 1]
+	currentVersionNum := versionNumbers[len(versionNumbers)-1]
 	return currentVersionNum, nil
 }
 
-
 func GetTableStructureParsed(projName, tableName string, versionNum int) (TableStruct, error) {
-  dataPath, _ := GetDataPath()
-  raw, err := os.ReadFile(filepath.Join(dataPath, projName, tableName, fmt.Sprintf("structure%d.txt", versionNum)))
-  if err != nil {
-    return TableStruct{}, errors.Wrap(err, "ioutil error")
-  }
+	dataPath, _ := GetDataPath()
+	raw, err := os.ReadFile(filepath.Join(dataPath, projName, tableName, fmt.Sprintf("structure%d.txt", versionNum)))
+	if err != nil {
+		return TableStruct{}, errors.Wrap(err, "ioutil error")
+	}
 
-  return ParseTableStructureStmt(string(raw))
+	return ParseTableStructureStmt(string(raw))
 }
-
 
 func GetFieldType(projName, tableName, fieldName string) string {
 	versionNum, _ := GetCurrentVersionNum(projName, tableName)
@@ -228,42 +218,42 @@ func GetFieldType(projName, tableName, fieldName string) string {
 	}
 
 	if strings.HasSuffix(fieldName, "_year") {
-		genFieldName := fieldName[0 : len(fieldName) - len("_year")]
+		genFieldName := fieldName[0 : len(fieldName)-len("_year")]
 		ans, ok := fieldNamesToFieldTypes[genFieldName]
 
 		if ok && (ans == "datetime" || ans == "date") {
 			return "int"
 		}
 	} else if strings.HasSuffix(fieldName, "_month") {
-		genFieldName := fieldName[0 : len(fieldName) - len("_month")]
+		genFieldName := fieldName[0 : len(fieldName)-len("_month")]
 		ans, ok := fieldNamesToFieldTypes[genFieldName]
 
 		if ok && (ans == "datetime" || ans == "date") {
 			return "int"
 		}
 	} else if strings.HasSuffix(fieldName, "_day") {
-		genFieldName := fieldName[0 : len(fieldName) - len("_day")]
+		genFieldName := fieldName[0 : len(fieldName)-len("_day")]
 		ans, ok := fieldNamesToFieldTypes[genFieldName]
 
 		if ok && (ans == "datetime" || ans == "date") {
 			return "int"
 		}
 	} else if strings.HasSuffix(fieldName, "_hour") {
-		genFieldName := fieldName[0 : len(fieldName) - len("_hour")]
+		genFieldName := fieldName[0 : len(fieldName)-len("_hour")]
 		ans, ok := fieldNamesToFieldTypes[genFieldName]
 
 		if ok && ans == "datetime" {
 			return "int"
 		}
 	} else if strings.HasSuffix(fieldName, "_date") {
-		genFieldName := fieldName[0 : len(fieldName) - len("_date")]
+		genFieldName := fieldName[0 : len(fieldName)-len("_date")]
 		ans, ok := fieldNamesToFieldTypes[genFieldName]
 
 		if ok && ans == "datetime" {
 			return "date"
 		}
 	} else if strings.HasSuffix(fieldName, "_tzname") {
-		genFieldName := fieldName[0 : len(fieldName) - len("_tzname")]
+		genFieldName := fieldName[0 : len(fieldName)-len("_tzname")]
 		ans, ok := fieldNamesToFieldTypes[genFieldName]
 
 		if ok && ans == "datetime" {
@@ -271,10 +261,8 @@ func GetFieldType(projName, tableName, fieldName string) string {
 		}
 	}
 
-
 	return fieldNamesToFieldTypes[fieldName]
 }
-
 
 // Platform independent newline
 func GetNewline() string {

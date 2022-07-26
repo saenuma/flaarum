@@ -2,20 +2,21 @@
 package main
 
 import (
-	"os"
-	"fmt"
-	"strings"
-	"strconv"
 	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
-	"net/http"
+	"strconv"
+	"strings"
 	"time"
-	"io"
+
 	"github.com/gookit/color"
-	"github.com/tidwall/pretty"
 	"github.com/saenuma/flaarum"
 	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/tidwall/pretty"
 )
 
 const VersionFormat = "20060102T150405MST"
@@ -47,7 +48,7 @@ func main() {
 		}
 	}
 
-	if hnv == true {
+	if hnv {
 		color.Red.Println("flaarum has an update")
 		color.Red.Println("Visit https://sae.ng/flaarumtuts/ for update instructions.")
 		color.Red.Println()
@@ -64,7 +65,7 @@ func main() {
 		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
 		os.Exit(1)
 	}
-	if inProd == "true"{
+	if inProd == "true" {
 		keyStrPath := flaarum_shared.GetKeyStrPath()
 		raw, err := os.ReadFile(keyStrPath)
 		if err != nil {
@@ -167,7 +168,7 @@ Table Search Commands:
 			color.Red.Println(err)
 			os.Exit(1)
 		}
-		fmt.Println("Projects List:\n")
+		fmt.Println("Projects List:")
 		for _, proj := range projects {
 			fmt.Printf("  %s\n", proj)
 		}
@@ -561,7 +562,7 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
-    prettyJson := pretty.Pretty(jsonBytes)
+		prettyJson := pretty.Pretty(jsonBytes)
 
 		if runtime.GOOS == "windows" {
 			fmt.Println(string(prettyJson))
@@ -577,7 +578,7 @@ Table Search Commands:
 			}
 		}
 
-  case "rc":
+	case "rc":
 		if len(os.Args) != 4 {
 			color.Red.Println("'rc' expects a project and a file containing the search statment.")
 			os.Exit(1)
