@@ -22,36 +22,40 @@ import (
 const VersionFormat = "20060102T150405MST"
 
 func main() {
-	newVersionStr := ""
-	resp, err := http.Get("https://sae.ng/static/wapps/flaarum.txt")
-	if err != nil {
-		fmt.Println(err)
-	}
-	if err == nil {
-		defer resp.Body.Close()
-		body, err := io.ReadAll(resp.Body)
-		if err == nil && resp.StatusCode == 200 {
-			newVersionStr = string(body)
+	if runtime.GOOS == "windows" {
+
+		newVersionStr := ""
+		resp, err := http.Get("https://sae.ng/static/wapps/flaarum.txt")
+		if err != nil {
+			fmt.Println(err)
 		}
-	}
-
-	newVersionStr = strings.TrimSpace(newVersionStr)
-	currentVersionStr = strings.TrimSpace(currentVersionStr)
-
-	hnv := false
-	if newVersionStr != "" && newVersionStr != currentVersionStr {
-		time1, err1 := time.Parse(VersionFormat, newVersionStr)
-		time2, err2 := time.Parse(VersionFormat, currentVersionStr)
-
-		if err1 == nil && err2 == nil && time2.Before(time1) {
-			hnv = true
+		if err == nil {
+			defer resp.Body.Close()
+			body, err := io.ReadAll(resp.Body)
+			if err == nil && resp.StatusCode == 200 {
+				newVersionStr = string(body)
+			}
 		}
-	}
 
-	if hnv {
-		color.Red.Println("flaarum has an update")
-		color.Red.Println("Visit https://sae.ng/flaarumtuts/ for update instructions.")
-		color.Red.Println()
+		newVersionStr = strings.TrimSpace(newVersionStr)
+		currentVersionStr = strings.TrimSpace(currentVersionStr)
+
+		hnv := false
+		if newVersionStr != "" && newVersionStr != currentVersionStr {
+			time1, err1 := time.Parse(VersionFormat, newVersionStr)
+			time2, err2 := time.Parse(VersionFormat, currentVersionStr)
+
+			if err1 == nil && err2 == nil && time2.Before(time1) {
+				hnv = true
+			}
+		}
+
+		if hnv {
+			color.Red.Println("flaarum has an update")
+			color.Red.Println("Visit https://sae.ng/flaarumtuts/ for update instructions.")
+			color.Red.Println()
+		}
+
 	}
 
 	if len(os.Args) < 2 {
