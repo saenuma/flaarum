@@ -6,25 +6,20 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/saenuma/zazabul"
-
-	// "math"
-	"runtime"
-	"sort"
 )
 
 const (
 	DATE_FORMAT       = "2006-01-02"
 	DATETIME_FORMAT   = "2006-01-02T15:04 MST"
 	STRING_MAX_LENGTH = 100
-	BACKUP_EXT        = "flaa3"
 	PORT              = 22318
-	TEXT_INTR_DELIM   = "~~~"
-	FLAARUM_PATH      = "/var/lib/flaarum"
 )
 
 var RootConfigTemplate = `// debug can be set to either false or true
@@ -59,6 +54,7 @@ func G(objectName string) string {
 	folders = append(folders, "C:\\Program Files (x86)\\Flaarum\\")
 	folders = append(folders, "/opt/saenuma/flaarum/bin/")
 	folders = append(folders, "/opt/saenuma/flaarum/")
+	folders = append(folders, os.Getenv("SNAP"))
 
 	for _, dir := range folders {
 		testPath := filepath.Join(dir, objectName)
@@ -71,47 +67,31 @@ func G(objectName string) string {
 	panic("Improperly configured.")
 }
 
-func GetConfigPath() (string, error) {
-	var dd string
-	if runtime.GOOS == "windows" {
-		hd, err := os.UserHomeDir()
-		if err != nil {
-			return "", errors.Wrap(err, "os error")
-		}
-		dd = filepath.Join(hd, "Flaarum", "flaarum.zconf")
-	} else {
-		dd = filepath.Join(FLAARUM_PATH, "flaarum.zconf")
-	}
-
-	return dd, nil
-}
-
-func GetCtlConfigPath() (string, error) {
-	confPath, err := GetConfigPath()
-	if err != nil {
-		return "", err
-	}
-	return strings.Replace(confPath, "flaarum.zconf", "flaarumctl.zconf", 1), nil
-}
-
-func GetDataPath() (string, error) {
-	var dd string
-	if runtime.GOOS == "windows" {
-		hd, err := os.UserHomeDir()
-		if err != nil {
-			return "", errors.Wrap(err, "os error")
-		}
-		dd = filepath.Join(hd, "Flaarum")
-	} else {
-		dd = FLAARUM_PATH
-	}
-
-	err := os.MkdirAll(dd, 0777)
+func GetRootPath() (string, error) {
+	hd, err := os.UserHomeDir()
 	if err != nil {
 		return "", errors.Wrap(err, "os error")
 	}
 
+	var dd string
+	if runtime.GOOS == "windows" {
+		dd = filepath.Join(hd, "Flaarum")
+		os.MkdirAll(dd, 0777)
+
+	} else {
+
+		dd = os.Getenv("SNAP_COMMON")
+		if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
+			dd = filepath.Join(hd, "Flaarum")
+			os.MkdirAll(dd, 0777)
+		}
+	}
+
 	return dd, nil
+}
+
+func GetDataPath() (string, error) {
+	return GetRootPath()
 }
 
 func GetSetting(settingName string) string {
@@ -129,21 +109,42 @@ func GetSetting(settingName string) string {
 	return conf.Get(settingName)
 }
 
+func GetConfigPath() (string, error) {
+	rootPath, err := GetRootPath()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(rootPath, "flaarum.zconf"), nil
+}
+
 func GetKeyStrPath() string {
-	dataPath, err := GetDataPath()
+	rootPath, err := GetRootPath()
 	if err != nil {
 		panic(err)
 	}
-	return filepath.Join(dataPath, "flaarum.keyfile")
+	return filepath.Join(rootPath, "flaarum.keyfile")
 }
 
+// this function is used to get input paths to flaarum
 func GetFlaarumPath(fileName string) (string, error) {
+	var dd string
 	hd, err := os.UserHomeDir()
 	if err != nil {
 		return "", errors.Wrap(err, "os error")
 	}
 
-	dd := filepath.Join(hd, "Flaarum", fileName)
+	if runtime.GOOS == "windows" {
+		dd = filepath.Join(hd, "Flaarum", fileName)
+	} else {
+		dd = os.Getenv("SNAP_USER_COMMON")
+		if strings.HasPrefix(dd, filepath.Join(hd, "snap", "go")) || dd == "" {
+			dd = filepath.Join(hd, "Flaarum", fileName)
+		} else {
+			dd = filepath.Join(dd, fileName)
+		}
+	}
+
 	return dd, nil
 }
 
