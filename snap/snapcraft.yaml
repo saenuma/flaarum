@@ -5,7 +5,7 @@ summary: A database that enforces structures # 79 char long summary
 description: |
   Flaarum is a database that enforces structures. It is a strict database.
 
-  Its distince features include table expansion (a more comfortable form of joins),
+  Its distinct features include table expansion (a more comfortable form of joins),
   supports any change to its table structure and autoindexing.
 
   It also supports a query language though not SQL.
