@@ -264,12 +264,3 @@ func GetFieldType(projName, tableName, fieldName string) string {
 
 	return fieldNamesToFieldTypes[fieldName]
 }
-
-// Platform independent newline
-func GetNewline() string {
-	if runtime.GOOS == "windows" {
-		return "\r\n"
-	} else {
-		return "\n"
-	}
-}
