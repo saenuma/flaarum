@@ -1,11 +1,11 @@
-root = "C:\\\\Users\\Bankole Ojo\\p\\flaarum"
+root = "~/p/flaarum"
 testdata_dir = "testdata"
 tmp_dir = "tmp"
 
 [build]
   args_bin = []
-  bin = "tmp\\main.exe"
-  cmd = "go build -o ./tmp/main.exe ."
+  bin = "./tmp/main"
+  cmd = "go build -o ./tmp/main ."
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_file = []

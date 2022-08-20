@@ -18,7 +18,7 @@ func ParseDataFormat(path string) (map[string]string, error) {
 func ParseEncodedRowData(rawData []byte) (map[string]string, error) {
 	ret := make(map[string]string)
 
-	cleanedRawData := strings.ReplaceAll(string(rawData), "\r", "")
+	cleanedRawData := strings.ReplaceAll(string(rawData), "\r\n", "\n")
 	partsOfRawData := strings.Split(cleanedRawData, "\n")
 	for _, line := range partsOfRawData {
 		var colonIndex int
@@ -43,7 +43,7 @@ func ParseEncodedRowData(rawData []byte) (map[string]string, error) {
 	rawDataStr := string(rawData)
 	for k, v := range ret {
 		if strings.TrimSpace(v) == "" {
-			firstIndex := strings.Index(rawDataStr, fmt.Sprintf("%s\n:", k))
+			firstIndex := strings.Index(rawDataStr, fmt.Sprintf("\n%s:", k))
 			lastIndex := strings.LastIndex(rawDataStr, fmt.Sprintf("\n%s:", k))
 			padding := len(fmt.Sprintf("\n%s:", k))
 			if firstIndex != lastIndex {
