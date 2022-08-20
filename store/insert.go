@@ -105,7 +105,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 
 		}
 
-		if ok && fd.Required {
+		if !ok && fd.Required {
 			return nil, errors.New(fmt.Sprintf("The field '%s' is required.", k))
 		}
 
