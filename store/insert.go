@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -278,31 +277,17 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 	defer tablesMutexes[fullTableName].Unlock()
 
 	var nextId int64
-	dataF1Path := filepath.Join(tablePath, "data.flaa1")
-	if !doesPathExists(dataF1Path) {
+	lastIdPath := filepath.Join(tablePath, "lastId.txt")
+
+	if !doesPathExists(lastIdPath) {
 		nextId = 1
 	} else {
-		elemsMap, err := ParseDataF1File(dataF1Path)
+		raw, err := os.ReadFile(lastIdPath)
 		if err != nil {
 			printError(w, err)
 			return
 		}
-
-		elemsKeys := make([]int64, 0, len(elemsMap))
-		for k := range elemsMap {
-			elemKey, err := strconv.ParseInt(k, 10, 64)
-			if err != nil {
-				printError(w, err)
-				continue
-			}
-			elemsKeys = append(elemsKeys, elemKey)
-		}
-
-		sort.Slice(elemsKeys, func(i, j int) bool {
-			return elemsKeys[i] < elemsKeys[j]
-		})
-
-		lastId := elemsKeys[len(elemsKeys)-1]
+		lastId, _ := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
 
 		nextId = lastId + 1
 	}
@@ -314,6 +299,8 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 		printError(w, err)
 		return
 	}
+
+	os.WriteFile(lastIdPath, []byte(nextIdStr), 0777)
 
 	// create indexes
 	for k, v := range toInsert {
