@@ -106,6 +106,14 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 }
 
 func innerDelete(projName, tableName string, rows *[]map[string]string) error {
+	dataPath, _ := GetDataPath()
+	dataF1Path := filepath.Join(dataPath, projName, tableName, "data.flaa1")
+	// update flaa1 file by rewriting it.
+	elemsMap, err := ParseDataF1File(dataF1Path)
+	if err != nil {
+		return err
+	}
+
 	for _, row := range *rows {
 		// delete index
 		for f, d := range row {
@@ -118,20 +126,12 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
 			}
 		}
 
-		dataPath, _ := GetDataPath()
-		dataF1Path := filepath.Join(dataPath, projName, tableName, "data.flaa1")
-		// update flaa1 file by rewriting it.
-		elemsMap, err := ParseDataF1File(dataF1Path)
-		if err != nil {
-			return err
-		}
-
 		delete(elemsMap, row["id"])
+	}
 
-		err = RewriteF1File(projName, tableName, "data", elemsMap)
-		if err != nil {
-			return err
-		}
+	err = RewriteF1File(projName, tableName, "data", elemsMap)
+	if err != nil {
+		return err
 	}
 
 	return nil
