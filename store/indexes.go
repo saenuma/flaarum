@@ -146,52 +146,67 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
 	}
 
 	if elem, ok := elemsMap[data]; ok {
-		readBytes, err := ReadPortionF2File(projName, tableName, fieldName+"_indexes.flaa2",
+		readBytes, err := ReadPortionF2File(projName, tableName, fieldName+"_indexes",
 			elem.DataBegin, elem.DataEnd)
 		if err != nil {
 			fmt.Println("Bad indexes file")
 			fmt.Printf("%+v\n", err)
 		}
 		similarIds := strings.Split(string(readBytes), ",")
-		toWriteIds := arrayOperations.Difference([]string{rowId}, similarIds)
-
-		tablePath := getTablePath(projName, tableName)
-		indexesF2Path := filepath.Join(tablePath, fieldName+"_indexes.flaa2")
-		toWriteData := strings.Join(toWriteIds, ",")
-
-		var begin int64
-		var end int64
-		if doesPathExists(indexesF2Path) {
-			indexesF2Handle, err := os.OpenFile(indexesF2Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
-			if err != nil {
-				return errors.Wrap(err, "os error")
+		toWriteIds := make([]string, 0)
+		for _, oldId := range similarIds {
+			if oldId != rowId {
+				toWriteIds = append(toWriteIds, oldId)
 			}
-			defer indexesF2Handle.Close()
+		}
 
-			stat, err := indexesF2Handle.Stat()
+		if len(toWriteIds) == 0 {
+			delete(elemsMap, data)
+			err = RewriteF1File(projName, tableName, fieldName+"_indexes", elemsMap)
 			if err != nil {
-				return errors.Wrap(err, "os error")
+				return err
 			}
 
-			size := stat.Size()
-			indexesF2Handle.Write([]byte(toWriteData))
-			begin = size
-			end = int64(len([]byte(toWriteData))) + size
 		} else {
-			err := os.WriteFile(indexesF2Path, []byte(toWriteData), 0777)
+			tablePath := getTablePath(projName, tableName)
+			indexesF2Path := filepath.Join(tablePath, fieldName+"_indexes.flaa2")
+			toWriteData := strings.Join(toWriteIds, ",")
+
+			var begin int64
+			var end int64
+			if doesPathExists(indexesF2Path) {
+				indexesF2Handle, err := os.OpenFile(indexesF2Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+				if err != nil {
+					return errors.Wrap(err, "os error")
+				}
+				defer indexesF2Handle.Close()
+
+				stat, err := indexesF2Handle.Stat()
+				if err != nil {
+					return errors.Wrap(err, "os error")
+				}
+
+				size := stat.Size()
+				indexesF2Handle.Write([]byte(toWriteData))
+				begin = size
+				end = int64(len([]byte(toWriteData))) + size
+			} else {
+				err := os.WriteFile(indexesF2Path, []byte(toWriteData), 0777)
+				if err != nil {
+					return errors.Wrap(err, "os error")
+				}
+
+				begin = 0
+				end = int64(len([]byte(toWriteData)))
+			}
+
+			elem := DataF1Elem{data, begin, end}
+			err = AppendDataF1File(projName, tableName, fieldName+"_indexes", elem)
 			if err != nil {
 				return errors.Wrap(err, "os error")
 			}
-
-			begin = 0
-			end = int64(len([]byte(toWriteData)))
 		}
 
-		elem := DataF1Elem{data, begin, end}
-		err = AppendDataF1File(projName, tableName, fieldName+"_indexes", elem)
-		if err != nil {
-			return errors.Wrap(err, "os error")
-		}
 	}
 
 	return nil

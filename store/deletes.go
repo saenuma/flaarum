@@ -125,7 +125,6 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
 				deleteIndex(projName, tableName, f, d, row["id"], row["_version"])
 			}
 		}
-
 		delete(elemsMap, row["id"])
 	}
 

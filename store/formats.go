@@ -115,7 +115,7 @@ func RewriteF1File(projName, tableName, name string, elems map[string]DataF1Elem
 
 	out := "\n"
 	for _, elem := range elems {
-		out = fmt.Sprintf("data_key: %s\ndata_begin: %d\ndata_end:%d\n\n", elem.DataKey,
+		out += fmt.Sprintf("data_key: %s\ndata_begin: %d\ndata_end:%d\n\n", elem.DataKey,
 			elem.DataBegin, elem.DataEnd)
 	}
 
