@@ -109,6 +109,8 @@ Table Data Commands:
         file generated from the 'bur' command.
 
   dr    Delete Row: Expects one or more project, table and id combo eg. 'first_proj/users/31'
+  
+  drs   Delete Rows From Search: Expects a project and a file containing search statements
 
   vr    View Row: Expects a project, table and id combo eg. 'first_proj/users/31'
 
@@ -269,7 +271,7 @@ Table Search Commands:
 
 		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
 		if err != nil {
-			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
+			color.Red.Println("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
 		}
 		raw, err := os.ReadFile(inputPath)
@@ -293,7 +295,7 @@ Table Search Commands:
 
 		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
 		if err != nil {
-			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
+			color.Red.Println("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
 		}
 		raw, err := os.ReadFile(inputPath)
@@ -340,7 +342,7 @@ Table Search Commands:
 		outName := "bir-" + strings.ToLower(flaarum_shared.UntestedRandomString(10)) + ".txt"
 		outPath, err := flaarum_shared.GetFlaarumPath(outName)
 		if err != nil {
-			color.Red.Println("The supplied path '%s' does not exits.\n", outPath)
+			color.Red.Println("The supplied path '%s' does not exists.\n", outPath)
 			os.Exit(1)
 		}
 
@@ -357,7 +359,7 @@ Table Search Commands:
 
 		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
 		if err != nil {
-			color.Red.Printf("The supplied path '%s' does not exits.\n", inputPath)
+			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
 		}
 
@@ -411,7 +413,7 @@ Table Search Commands:
 		outName := "bur-" + strings.ToLower(flaarum_shared.UntestedRandomString(10)) + ".txt"
 		outPath, err := flaarum_shared.GetFlaarumPath(outName)
 		if err != nil {
-			color.Red.Println("The supplied path '%s' does not exits.\n", outPath)
+			color.Red.Println("The supplied path '%s' does not exists.\n", outPath)
 			os.Exit(1)
 		}
 
@@ -428,7 +430,7 @@ Table Search Commands:
 
 		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
 		if err != nil {
-			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
+			color.Red.Println("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
 		}
 
@@ -474,6 +476,29 @@ Table Search Commands:
 			}
 		}
 
+	case "drs":
+		if len(os.Args) != 4 {
+			color.Red.Println("'dr' command expects one or more project, table and id combo eg. 'first_proj/users/31'")
+			os.Exit(1)
+		}
+
+		cl.ProjName = os.Args[2]
+
+		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
+		if err != nil {
+			color.Red.Println("The supplied path '%s' does not exists.\n", inputPath)
+			os.Exit(1)
+		}
+
+		rawStmt, _ := os.ReadFile(inputPath)
+		err = cl.DeleteRows(string(rawStmt))
+		if err != nil {
+			color.Red.Printf("Error deleting with statement: \n'%s'.\nError: %s\n", string(rawStmt), err)
+			os.Exit(1)
+		}
+
+		fmt.Println("done")
+
 	case "vr":
 		if len(os.Args) != 3 {
 			color.Red.Println("'vr' command expects a project, table and id combo eg. 'first_proj/users/31'")
@@ -506,7 +531,7 @@ Table Search Commands:
 
 		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
 		if err != nil {
-			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
+			color.Red.Println("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
 		}
 		raw, err := os.ReadFile(inputPath)
@@ -552,7 +577,7 @@ Table Search Commands:
 
 		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
 		if err != nil {
-			color.Red.Println("The supplied path '%s' does not exits.\n", inputPath)
+			color.Red.Println("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
 		}
 		raw, err := os.ReadFile(inputPath)
