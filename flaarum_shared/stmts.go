@@ -309,9 +309,6 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 		stmtStruct.WhereOptions = whereStructs
 	}
 
-	if stmtStruct.Limit == 0 {
-		stmtStruct.Limit = 300
-	}
 	return stmtStruct, nil
 }
 

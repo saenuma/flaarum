@@ -207,3 +207,27 @@ func (cl *Client) DeleteTable(tableName string) error {
 		return ServerError{string(body)}
 	}
 }
+
+// TrimTable is needed because deletion and update of rows are not deep but fast.
+// Should be ran after a while on a table that have used lots of deletions and updates
+// TrimTable could also be called FullDelete and FullUpdate
+func (cl *Client) TrimTable(tableName string) error {
+	urlValues := url.Values{}
+	urlValues.Set("key-str", cl.KeyStr)
+
+	resp, err := httpCl.PostForm(cl.Addr+"trim-table/"+cl.ProjName+"/"+tableName, urlValues)
+	if err != nil {
+		return ConnError{err.Error()}
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ConnError{err.Error()}
+	}
+
+	if resp.StatusCode == 200 {
+		return nil
+	} else {
+		return ServerError{string(body)}
+	}
+}
