@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -47,42 +46,6 @@ func validateTableStruct(projName string, tableStruct flaarum_shared.TableStruct
 
 }
 
-func formatTableStruct(tableStruct flaarum_shared.TableStruct) string {
-	stmt := "table: " + tableStruct.TableName + "\n"
-	stmt += "fields:\n"
-	for _, fieldStruct := range tableStruct.Fields {
-		stmt += "  " + fieldStruct.FieldName + " " + fieldStruct.FieldType
-		if fieldStruct.Required {
-			stmt += " required"
-		}
-		if fieldStruct.Unique {
-			stmt += " unique"
-		}
-		if fieldStruct.NotIndexed {
-			stmt += " nindex"
-		}
-		stmt += "\n"
-	}
-	stmt += "::\n"
-	if len(tableStruct.ForeignKeys) > 0 {
-		stmt += "foreign_keys:\n"
-		for _, fks := range tableStruct.ForeignKeys {
-			stmt += "  " + fks.FieldName + " " + fks.PointedTable + " " + fks.OnDelete + "\n"
-		}
-		stmt += "::\n"
-	}
-
-	if len(tableStruct.UniqueGroups) > 0 {
-		stmt += "unique_groups:\n"
-		for _, ug := range tableStruct.UniqueGroups {
-			stmt += "  " + strings.Join(ug, " ") + "\n"
-		}
-		stmt += "::\n"
-	}
-
-	return stmt
-}
-
 func createTable(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	projName := vars["proj"]
@@ -117,7 +80,7 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	formattedStmt := formatTableStruct(tableStruct)
+	formattedStmt := flaarum_shared.FormatTableStruct(tableStruct)
 	err = os.WriteFile(filepath.Join(dataPath, projName, tableStruct.TableName, "structure1.txt"),
 		[]byte(formattedStmt), 0777)
 	if err != nil {
@@ -169,7 +132,7 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	formattedStmt := formatTableStruct(tableStruct)
+	formattedStmt := flaarum_shared.FormatTableStruct(tableStruct)
 	if formattedStmt != string(oldFormattedStmt) {
 		nextVersionNumber := currentVersionNum + 1
 		newStructurePath := filepath.Join(tablePath, fmt.Sprintf("structure%d.txt", nextVersionNumber))

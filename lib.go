@@ -2,54 +2,52 @@
 package flaarum
 
 import (
-	"net/http"
 	"crypto/tls"
-	"io"
-	"github.com/saenuma/flaarum/flaarum_shared"
-	"time"
-	"net/url"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"time"
+
+	"github.com/saenuma/flaarum/flaarum_shared"
 )
 
-
 type ConnError struct {
-  msg string // description of error
+	msg string // description of error
 }
 
 func (e ConnError) Error() string {
-	return e.msg
+	return "connection Error: " + e.msg
 }
 
-
 type ValidationError struct {
-  msg string // description of error
+	msg string // description of error
 }
 
 func (e ValidationError) Error() string {
-	return e.msg
+	return "validation Error: " + e.msg
 }
 
-
 type ServerError struct {
-  msg string // description of error
+	msg string // description of error
 }
 
 func (e ServerError) Error() string {
-	return e.msg
+	return "server Error: " + e.msg
 }
 
 var httpCl *http.Client
 
 func init() {
-	config := &tls.Config { InsecureSkipVerify: true}
+	config := &tls.Config{InsecureSkipVerify: true}
 	tr := &http.Transport{TLSClientConfig: config}
 
 	httpCl = &http.Client{Transport: tr}
 }
 
 type Client struct {
-	Addr string
-	KeyStr string
+	Addr     string
+	KeyStr   string
 	ProjName string
 }
 
@@ -57,23 +55,24 @@ func NewClient(ip, keyStr, projName string) Client {
 	return Client{"https://" + ip + ":22318/", keyStr, projName}
 }
 
-
 // Used whenever you changed the default port
 func NewClientCustomPort(ip, keyStr, projName string, port int) Client {
 	return Client{"https://" + ip + fmt.Sprintf(":%d/", port), keyStr, projName}
 }
 
-
 func (cl *Client) Ping() error {
-  urlValues := url.Values{}
-  urlValues.Set("key-str", cl.KeyStr)
+	urlValues := url.Values{}
+	urlValues.Set("key-str", cl.KeyStr)
 
-	resp, err := httpCl.PostForm(cl.Addr + "is-flaarum", urlValues)
+	resp, err := httpCl.PostForm(cl.Addr+"is-flaarum", urlValues)
 	if err != nil {
 		return ConnError{err.Error()}
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ConnError{err.Error()}
+	}
 
 	if resp.StatusCode == 200 {
 		if string(body) == "yeah-flaarum" {

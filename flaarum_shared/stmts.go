@@ -1,56 +1,53 @@
 package flaarum_shared
 
 import (
-	"strings"
 	"fmt"
 	"strconv"
+	"strings"
+
 	"github.com/pkg/errors"
 )
 
-
 func NameValidate(name string) error {
-  if strings.Contains(name, ".") || strings.Contains(name, " ") || strings.Contains(name, "\t") ||
-  strings.Contains(name, "\n") || strings.Contains(name, ":") || strings.Contains(name, "/") ||
-  strings.Contains(name, "~") {
-    return errors.New("object name must not contain space, '.', ':', '/', ~ ")
-  }
+	if strings.Contains(name, ".") || strings.Contains(name, " ") || strings.Contains(name, "\t") ||
+		strings.Contains(name, "\n") || strings.Contains(name, ":") || strings.Contains(name, "/") ||
+		strings.Contains(name, "~") {
+		return errors.New("object name must not contain space, '.', ':', '/', ~ ")
+	}
 
-  return nil
+	return nil
 }
 
-
 type FieldStruct struct {
-	FieldName string
-	FieldType string
-	Required bool
-	Unique bool
+	FieldName  string
+	FieldType  string
+	Required   bool
+	Unique     bool
 	NotIndexed bool
 }
 
 type FKeyStruct struct {
-	FieldName string
+	FieldName    string
 	PointedTable string
-	OnDelete string // expects one of "on_delete_restrict", "on_delete_empty", "on_delete_delete"
+	OnDelete     string // expects one of "on_delete_restrict", "on_delete_empty", "on_delete_delete"
 }
 
 type TableStruct struct {
-	TableName string
-	Fields []FieldStruct
-	ForeignKeys []FKeyStruct
+	TableName    string
+	Fields       []FieldStruct
+	ForeignKeys  []FKeyStruct
 	UniqueGroups [][]string
 }
-
-
 
 func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 	ts := TableStruct{}
 	stmt = strings.TrimSpace(stmt)
-	if ! strings.HasPrefix(stmt, "table:") {
+	if !strings.HasPrefix(stmt, "table:") {
 		return ts, errors.New("Bad Statement: structure statements starts with 'table: '")
 	}
 
 	line1 := strings.Split(stmt, "\n")[0]
-	tableName := strings.TrimSpace(line1[len("table:") :])
+	tableName := strings.TrimSpace(line1[len("table:"):])
 	ts.TableName = tableName
 
 	if err := NameValidate(tableName); err != nil {
@@ -63,11 +60,11 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 	}
 
 	fieldsBeginPart += len("fields:")
-	fieldsEndPart := strings.Index(stmt[fieldsBeginPart: ], "::")
+	fieldsEndPart := strings.Index(stmt[fieldsBeginPart:], "::")
 	if fieldsEndPart == -1 {
 		return ts, errors.New("Bad Statement: fields section must end with a '::'.")
 	}
-	fieldsPart := stmt[fieldsBeginPart: fieldsBeginPart + fieldsEndPart]
+	fieldsPart := stmt[fieldsBeginPart : fieldsBeginPart+fieldsEndPart]
 	fss := make([]FieldStruct, 0)
 	for _, part := range strings.Split(fieldsPart, "\n") {
 		part = strings.TrimSpace(part)
@@ -109,11 +106,11 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 	fkeyPartBegin := strings.Index(stmt, "foreign_keys:")
 	if fkeyPartBegin != -1 {
 		fkeyPartBegin += len("foreign_keys:")
-		fkeyPartEnd := strings.Index(stmt[fkeyPartBegin: ], "::")
+		fkeyPartEnd := strings.Index(stmt[fkeyPartBegin:], "::")
 		if fkeyPartEnd == -1 {
 			return ts, errors.New("Bad Statement: a 'foreign_keys:' section must end with a '::'.")
 		}
-		fkeyPart := stmt[fkeyPartBegin: fkeyPartBegin + fkeyPartEnd]
+		fkeyPart := stmt[fkeyPartBegin : fkeyPartBegin+fkeyPartEnd]
 		fkeyStructs := make([]FKeyStruct, 0)
 		for _, part := range strings.Split(fkeyPart, "\n") {
 			part = strings.TrimSpace(part)
@@ -133,11 +130,11 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 	uniqueGroupPartBegin := strings.Index(stmt, "unique_groups:")
 	if uniqueGroupPartBegin != -1 {
 		uniqueGroupPartBegin += len("unique_groups:")
-		uniqueGroupPartEnd := strings.Index(stmt[uniqueGroupPartBegin: ], "::")
+		uniqueGroupPartEnd := strings.Index(stmt[uniqueGroupPartBegin:], "::")
 		if uniqueGroupPartEnd == -1 {
 			return ts, errors.New("Bad Statement: a 'unique_groups:' section must end with a '::'.")
 		}
-		uniqueGroupPart := stmt[uniqueGroupPartBegin: uniqueGroupPartBegin + uniqueGroupPartEnd]
+		uniqueGroupPart := stmt[uniqueGroupPartBegin : uniqueGroupPartBegin+uniqueGroupPartEnd]
 		uniqueGroups := make([][]string, 0)
 		for _, part := range strings.Split(uniqueGroupPart, "\n") {
 			part = strings.TrimSpace(part)
@@ -174,11 +171,11 @@ func specialSplitLine(line string) ([]string, error) {
 		}
 		ch := chars[index]
 		if ch == "'" {
-			nextQuoteIndex := strings.Index(line[index + 1 :], "'")
+			nextQuoteIndex := strings.Index(line[index+1:], "'")
 			if nextQuoteIndex == -1 {
 				return splits, errors.New(fmt.Sprintf("The line \"%s\" has a quote and no second quote.", line))
 			}
-			tmpWord = line[index + 1: index + nextQuoteIndex + 1]
+			tmpWord = line[index+1 : index+nextQuoteIndex+1]
 			splits = append(splits, tmpWord)
 			tmpWord = ""
 			index += nextQuoteIndex + 2
@@ -198,28 +195,25 @@ func specialSplitLine(line string) ([]string, error) {
 	return splits, nil
 }
 
-
 type WhereStruct struct {
-	FieldName string
-	Relation string // eg. '=', '!=', '<', etc.
-	FieldValue string
-	Joiner string // one of 'and', 'or', 'orf'
+	FieldName   string
+	Relation    string // eg. '=', '!=', '<', etc.
+	FieldValue  string
+	Joiner      string   // one of 'and', 'or', 'orf'
 	FieldValues []string // for 'in' and 'nin' queries
 }
 
-
 type StmtStruct struct {
-	TableName string
-	Fields []string
-	Expand bool
-	Distinct bool
-	StartIndex int64
-	Limit int64
-	OrderBy string
+	TableName      string
+	Fields         []string
+	Expand         bool
+	Distinct       bool
+	StartIndex     int64
+	Limit          int64
+	OrderBy        string
 	OrderDirection string // one of 'asc' or 'desc'
-	WhereOptions []WhereStruct
+	WhereOptions   []WhereStruct
 }
-
 
 func ParseSearchStmt(stmt string) (StmtStruct, error) {
 	stmt = strings.TrimSpace(stmt)
@@ -231,7 +225,7 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 		}
 
 		if strings.HasPrefix(part, "table:") {
-			parts := strings.Fields(part[len("table:"): ])
+			parts := strings.Fields(part[len("table:"):])
 			if len(parts) == 0 {
 				return stmtStruct, errors.New("The 'table:' part is required and accepts a table name followed by two optional words")
 			}
@@ -246,9 +240,9 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 				}
 			}
 		} else if strings.HasPrefix(part, "fields:") {
-			stmtStruct.Fields = strings.Fields(part[len("fields:") :])
+			stmtStruct.Fields = strings.Fields(part[len("fields:"):])
 		} else if strings.HasPrefix(part, "start_index:") {
-			startIndexStr := strings.TrimSpace(part[len("start_index:") :])
+			startIndexStr := strings.TrimSpace(part[len("start_index:"):])
 			startIndex, err := strconv.ParseInt(startIndexStr, 10, 64)
 			if err != nil {
 				return stmtStruct, errors.New(fmt.Sprintf("The data '%s' for the 'start_index:' part is not a number.",
@@ -256,7 +250,7 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 			}
 			stmtStruct.StartIndex = startIndex
 		} else if strings.HasPrefix(part, "limit:") {
-			limitStr := strings.TrimSpace(part[len("limit:") :])
+			limitStr := strings.TrimSpace(part[len("limit:"):])
 			limit, err := strconv.ParseInt(limitStr, 10, 64)
 			if err != nil {
 				return stmtStruct, errors.New(fmt.Sprintf("The data '%s' for the 'limit:' part is not a number.",
@@ -264,7 +258,7 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 			}
 			stmtStruct.Limit = limit
 		} else if strings.HasPrefix(part, "order_by:") {
-			parts := strings.Fields(part[len("order_by:") :])
+			parts := strings.Fields(part[len("order_by:"):])
 			if len(parts) != 2 {
 				return stmtStruct, errors.New("The words for 'order_by:' part must be two: a field and either of 'asc' or 'desc'")
 			}
@@ -280,7 +274,7 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 	wherePartBegin := strings.Index(stmt, "where:")
 	if wherePartBegin != -1 {
 		whereStructs := make([]WhereStruct, 0)
-		wherePart := stmt[wherePartBegin + len("where:") :]
+		wherePart := stmt[wherePartBegin+len("where:"):]
 		for _, part := range strings.Split(wherePart, "\n") {
 			part = strings.TrimSpace(part)
 			if part == "" {
@@ -296,14 +290,14 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 			}
 			var whereStruct WhereStruct
 			if len(whereStructs) == 0 {
-				whereStruct = WhereStruct{FieldName: parts[0], Relation: parts[1],}
+				whereStruct = WhereStruct{FieldName: parts[0], Relation: parts[1]}
 				if whereStruct.Relation == "in" {
 					whereStruct.FieldValues = parts[2:]
 				} else {
 					whereStruct.FieldValue = parts[2]
 				}
 			} else {
-				whereStruct = WhereStruct{Joiner: parts[0], FieldName: parts[1], Relation: parts[2],}
+				whereStruct = WhereStruct{Joiner: parts[0], FieldName: parts[1], Relation: parts[2]}
 				if whereStruct.Relation == "in" {
 					whereStruct.FieldValues = parts[3:]
 				} else {
@@ -319,4 +313,40 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 		stmtStruct.Limit = 300
 	}
 	return stmtStruct, nil
+}
+
+func FormatTableStruct(tableStruct TableStruct) string {
+	stmt := "table: " + tableStruct.TableName + "\n"
+	stmt += "fields:\n"
+	for _, fieldStruct := range tableStruct.Fields {
+		stmt += "  " + fieldStruct.FieldName + " " + fieldStruct.FieldType
+		if fieldStruct.Required {
+			stmt += " required"
+		}
+		if fieldStruct.Unique {
+			stmt += " unique"
+		}
+		if fieldStruct.NotIndexed {
+			stmt += " nindex"
+		}
+		stmt += "\n"
+	}
+	stmt += "::\n"
+	if len(tableStruct.ForeignKeys) > 0 {
+		stmt += "foreign_keys:\n"
+		for _, fks := range tableStruct.ForeignKeys {
+			stmt += "  " + fks.FieldName + " " + fks.PointedTable + " " + fks.OnDelete + "\n"
+		}
+		stmt += "::\n"
+	}
+
+	if len(tableStruct.UniqueGroups) > 0 {
+		stmt += "unique_groups:\n"
+		for _, ug := range tableStruct.UniqueGroups {
+			stmt += "  " + strings.Join(ug, " ") + "\n"
+		}
+		stmt += "::\n"
+	}
+
+	return stmt
 }
