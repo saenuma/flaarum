@@ -18,26 +18,6 @@ func NameValidate(name string) error {
 	return nil
 }
 
-type FieldStruct struct {
-	FieldName  string
-	FieldType  string
-	Required   bool
-	Unique     bool
-	NotIndexed bool
-}
-
-type FKeyStruct struct {
-	FieldName    string
-	PointedTable string
-	OnDelete     string // expects one of "on_delete_restrict", "on_delete_empty", "on_delete_delete"
-}
-
-type TableStruct struct {
-	TableName   string
-	Fields      []FieldStruct
-	ForeignKeys []FKeyStruct
-}
-
 func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 	ts := TableStruct{}
 	stmt = strings.TrimSpace(stmt)
@@ -86,9 +66,28 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 			return ts, errors.New(fmt.Sprintf("Bad Statement: the field type '%s' is not allowed in flaarum.", parts[1]))
 		}
 		fs := FieldStruct{FieldName: parts[0], FieldType: parts[1]}
+		fieldCheckObj := FieldCheckStruct{}
 		if len(parts) > 2 {
 			for _, otherPart := range parts[2:] {
-				if otherPart == "required" {
+				if strings.HasPrefix(otherPart, "max_length_") {
+					lengthOfStub := len("max_length_")
+					fieldCheckObj.MaxLength = otherPart[lengthOfStub:]
+				} else if strings.HasPrefix(otherPart, "min_length_") {
+					lengthOfStub := len("min_length_")
+					fieldCheckObj.MinLength = otherPart[lengthOfStub:]
+				} else if strings.HasPrefix(otherPart, "max_value_") {
+					lengthOfStub := len("max_value_")
+					fieldCheckObj.MaxValue = otherPart[lengthOfStub:]
+				} else if strings.HasPrefix(otherPart, "min_value_") {
+					lengthOfStub := len("min_value_")
+					fieldCheckObj.MinValue = otherPart[lengthOfStub:]
+				} else if strings.HasPrefix(otherPart, "max_year_") {
+					lengthOfStub := len("max_year_")
+					fieldCheckObj.MaxYear = otherPart[lengthOfStub:]
+				} else if strings.HasPrefix(otherPart, "min_year_") {
+					lengthOfStub := len("min_year_")
+					fieldCheckObj.MinYear = otherPart[lengthOfStub:]
+				} else if otherPart == "required" {
 					fs.Required = true
 				} else if otherPart == "unique" {
 					fs.Unique = true
@@ -97,7 +96,7 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 				}
 			}
 		}
-
+		fs.FieldCheckObj = fieldCheckObj
 		fss = append(fss, fs)
 	}
 	ts.Fields = fss
@@ -169,26 +168,6 @@ func specialSplitLine(line string) ([]string, error) {
 	}
 
 	return splits, nil
-}
-
-type WhereStruct struct {
-	FieldName   string
-	Relation    string // eg. '=', '!=', '<', etc.
-	FieldValue  string
-	Joiner      string   // one of 'and', 'or', 'orf'
-	FieldValues []string // for 'in' and 'nin' queries
-}
-
-type StmtStruct struct {
-	TableName      string
-	Fields         []string
-	Expand         bool
-	Distinct       bool
-	StartIndex     int64
-	Limit          int64
-	OrderBy        string
-	OrderDirection string // one of 'asc' or 'desc'
-	WhereOptions   []WhereStruct
 }
 
 func ParseSearchStmt(stmt string) (StmtStruct, error) {
