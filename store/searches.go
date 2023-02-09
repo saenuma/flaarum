@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -61,21 +60,31 @@ func searchTable(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func findIdsContainingTrueWhereValues(projName, tableName, field string, trueWhereValues []string) ([]string, error) {
+// this is needed in expanded searches
+func findIdsContainingTrueWhereValues(projName, tableName, fieldName string, trueWhereValues []string) ([]string, error) {
+	dataPath, _ := GetDataPath()
 	retIds := make([]string, 0)
-	for _, tmpId := range trueWhereValues {
-		indexesPath := filepath.Join(getTablePath(projName, tableName), "indexes", field, tmpId)
-		if _, err := os.Stat(indexesPath); os.IsNotExist(err) {
 
-		} else {
-			raw, err := os.ReadFile(indexesPath)
-			if err != nil {
-				return nil, errors.Wrap(err, "read file failed.")
-			}
-			retIds = append(retIds, strings.Split(string(raw), "\n")...)
+	indexesF1Path := filepath.Join(dataPath, projName, tableName, fieldName+"_indexes.flaa1")
+	elemsMap, err := ParseDataF1File(indexesF1Path)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, tmpId := range trueWhereValues {
+		elemHandle, ok := elemsMap[tmpId]
+		if !ok {
+			continue
 		}
 
+		readBytes, err := ReadPortionF2File(projName, tableName,
+			fieldName+"_indexes", elemHandle.DataBegin, elemHandle.DataEnd)
+		if err != nil {
+			fmt.Printf("%+v\n", err)
+		}
+		retIds = append(retIds, strings.Split(string(readBytes), ",")...)
 	}
+
 	return retIds, nil
 }
 
@@ -107,6 +116,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 	tablesMutexes[fullTableName].RLock()
 	defer tablesMutexes[fullTableName].RUnlock()
 
+	// map of fieldName to pointed_table
 	expDetails := make(map[string]string)
 
 	tableStruct, err := getCurrentTableStructureParsed(projName, stmtStruct.TableName)
