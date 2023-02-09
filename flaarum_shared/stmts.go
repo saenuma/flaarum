@@ -33,10 +33,9 @@ type FKeyStruct struct {
 }
 
 type TableStruct struct {
-	TableName    string
-	Fields       []FieldStruct
-	ForeignKeys  []FKeyStruct
-	UniqueGroups [][]string
+	TableName   string
+	Fields      []FieldStruct
+	ForeignKeys []FKeyStruct
 }
 
 func ParseTableStructureStmt(stmt string) (TableStruct, error) {
@@ -125,29 +124,6 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 			fkeyStructs = append(fkeyStructs, fks)
 		}
 		ts.ForeignKeys = fkeyStructs
-	}
-
-	uniqueGroupPartBegin := strings.Index(stmt, "unique_groups:")
-	if uniqueGroupPartBegin != -1 {
-		uniqueGroupPartBegin += len("unique_groups:")
-		uniqueGroupPartEnd := strings.Index(stmt[uniqueGroupPartBegin:], "::")
-		if uniqueGroupPartEnd == -1 {
-			return ts, errors.New("Bad Statement: a 'unique_groups:' section must end with a '::'.")
-		}
-		uniqueGroupPart := stmt[uniqueGroupPartBegin : uniqueGroupPartBegin+uniqueGroupPartEnd]
-		uniqueGroups := make([][]string, 0)
-		for _, part := range strings.Split(uniqueGroupPart, "\n") {
-			part = strings.TrimSpace(part)
-			if part == "" {
-				continue
-			}
-			parts := strings.Fields(part)
-			if len(parts) == 1 {
-				return ts, errors.New("Bad Statement: a unique group definition must be two or more words.")
-			}
-			uniqueGroups = append(uniqueGroups, parts)
-		}
-		ts.UniqueGroups = uniqueGroups
 	}
 
 	return ts, nil
@@ -333,14 +309,6 @@ func FormatTableStruct(tableStruct TableStruct) string {
 		stmt += "foreign_keys:\n"
 		for _, fks := range tableStruct.ForeignKeys {
 			stmt += "  " + fks.FieldName + " " + fks.PointedTable + " " + fks.OnDelete + "\n"
-		}
-		stmt += "::\n"
-	}
-
-	if len(tableStruct.UniqueGroups) > 0 {
-		stmt += "unique_groups:\n"
-		for _, ug := range tableStruct.UniqueGroups {
-			stmt += "  " + strings.Join(ug, " ") + "\n"
 		}
 		stmt += "::\n"
 	}

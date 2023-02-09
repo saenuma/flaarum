@@ -110,6 +110,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 
 	}
 
+	// validate unique property
 	for _, fd := range tableStruct.Fields {
 		newValue, ok1 := dataMap[fd.FieldName]
 		if newValue == "" {
@@ -156,76 +157,6 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 				return nil, errors.New(fmt.Sprintf("The data with id '%s' does not exist in table '%s'", v, fkd.PointedTable))
 			}
 		}
-	}
-
-	// validate unique groups
-	for _, ug := range tableStruct.UniqueGroups {
-		wherePartFragment := ""
-
-		for i, fieldName := range ug {
-
-			newValue, ok1 := dataMap[fieldName]
-			var value string
-			if ok1 {
-				value = newValue
-			}
-
-			var relation string
-			if i >= 1 {
-				relation = "and"
-			}
-
-			wherePartFragment += fmt.Sprintf("%s %s = '%s' \n", relation, fieldName, value)
-		}
-
-		if oldValues == nil {
-			// run this during inserts
-			innerStmt := fmt.Sprintf(`
-      	table: %s
-      	where:
-      		%s
-      	`, tableName, wherePartFragment)
-			toCheckRows, err := innerSearch(projName, innerStmt)
-			if err != nil {
-				return nil, err
-			}
-
-			if len(*toCheckRows) > 0 {
-				return nil, errors.New(
-					fmt.Sprintf("The fields '%s' form a unique group and their data taken together is not unique.",
-						strings.Join(ug, ", ")))
-			}
-
-		} else {
-			// run this during updates
-			uniqueGroupFieldsEqualityStatus := true
-
-			for _, fieldName := range ug {
-				if dataMap[fieldName] != oldValues[fieldName] {
-					uniqueGroupFieldsEqualityStatus = false
-					break
-				}
-			}
-
-			if !uniqueGroupFieldsEqualityStatus {
-				innerStmt := fmt.Sprintf(`
-					table: %s
-					where:
-					%s
-					`, tableName, wherePartFragment)
-				toCheckRows, err := innerSearch(projName, innerStmt)
-				if err != nil {
-					return nil, err
-				}
-
-				if len(*toCheckRows) > 0 {
-					return nil, errors.New(
-						fmt.Sprintf("The fields '%s' form a unique group and their data taken together is not unique.",
-							strings.Join(ug, ", ")))
-				}
-			}
-		}
-
 	}
 
 	return dataMap, nil
