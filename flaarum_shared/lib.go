@@ -148,6 +148,15 @@ func GetFlaarumPath(fileName string) (string, error) {
 	return dd, nil
 }
 
+// used to get the path to the config file of a control instance.
+func GetCtlConfigPath() (string, error) {
+	confPath, err := GetConfigPath()
+	if err != nil {
+		return "", err
+	}
+	return strings.Replace(confPath, "flaarum.zconf", "flaarumctl.zconf", 1), nil
+}
+
 func FindIn(container []string, elem string) int {
 	for i, o := range container {
 		if o == elem {
