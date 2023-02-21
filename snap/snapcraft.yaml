@@ -32,8 +32,11 @@ parts:
       set -xe
       go mod download
       go build -o $SNAPCRAFT_PART_INSTALL/bin/cli ./cli
+      go build -o $SNAPCRAFT_PART_INSTALL/bin/gcpasr ./gcpasr
+      go build -o $SNAPCRAFT_PART_INSTALL/bin/gcpl ./gcpl
       go build -o $SNAPCRAFT_PART_INSTALL/bin/prod ./prod
       go build -o $SNAPCRAFT_PART_INSTALL/bin/store ./store
+      go build -o $SNAPCRAFT_PART_INSTALL/bin/statsr ./statsr
 
       cp $SNAPCRAFT_PART_SRC/store/https-server.crt $SNAPCRAFT_PART_INSTALL/https-server.crt
       cp $SNAPCRAFT_PART_SRC/store/https-server.key $SNAPCRAFT_PART_INSTALL/https-server.key
@@ -45,6 +48,18 @@ apps:
     plugs:
       - network
 
+  gcpasr:
+    command: bin/gcpasr
+    daemon: simple
+    restart-condition: on-abnormal
+    plugs:
+      - network
+
+  gcpl:
+    command: bin/gcpl
+    plugs:
+      - network
+      
   prod:
     command: bin/prod
 
@@ -56,3 +71,10 @@ apps:
       - network
       - network-bind
 
+  statsr:
+    command: bin/statsr
+    daemon: simple
+    restart-condition: on-abnormal
+    plugs:
+      - network
+      - network-bind
