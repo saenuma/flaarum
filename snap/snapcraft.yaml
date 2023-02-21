@@ -62,7 +62,9 @@ apps:
       
   prod:
     command: bin/prod
-
+    plugs:
+      - network
+      
   store:
     command: bin/store
     daemon: simple
