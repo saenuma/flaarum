@@ -307,10 +307,6 @@ machine_class: e2
 // 10 is the minimum.
 disk_size: 10
 
-// The resize_frequency is the number of minutes before the flaarum control server resizes the flaarum data
-// server. You can set it to a lower value to test if the autoscaling works perfectly.
-resize_frequency: 30
-
 `
 		configFileName := "las" + time.Now().Format("20060102T150405") + ".zconf"
 
@@ -380,7 +376,6 @@ resize_frequency: 30
 sudo snap install flaarum
 sudo snap start flaarum.store
 sudo flaarum.prod mpr
-sudo snap start flaarum.gcprb
 sudo snap restart flaarum.statsr
 `
 
@@ -505,8 +500,7 @@ sudo snap restart flaarum.statsr
 sudo snap install flaarum
 `
 		startupScriptCtlInstance += "\nsudo flaarum.prod masr " + conf.Get("project") + " " + conf.Get("zone")
-		startupScriptCtlInstance += " " + instanceName + " " + computeAddr.Address + " " + conf.Get("resize_frequency")
-		startupScriptCtlInstance += " " + conf.Get("machine_class") + " \n"
+		startupScriptCtlInstance += " " + instanceName + " " + computeAddr.Address + " " + conf.Get("machine_class") + " \n"
 		startupScriptCtlInstance += `
 sudo snap restart flaarum.gcpasr
 `
