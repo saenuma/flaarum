@@ -4,7 +4,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/gookit/color"
@@ -34,20 +33,6 @@ Supported Commands:
           zone, flaarum_data_instance_name, flaarum_data_instance_ip, machine_class.
 
           Example: sudo flaarum.prod masr project1 us-central1-a flaarum-2sb 192.168.1.31 n2d
-
-    ast   Autoscaling long running tests. The method of test used here is the generation of random inserts.
-
-          The name of the table created is called 'vals'. Please delete the table after tests.
-
-          This program should be ran from the same local network but from a different machine. Keep checking the
-          CPU usage of the flaarum server to see if it passes 70 percent. Autoscaling upwards starts at 70 percent.
-
-          It expects three inputs: the address, the keystring and the number of threads.
-          The number of threads should start from twenty.
-
-          This program must be ran with 'sudo'.
-
-          Example: sudo flaarum.prod ast 127.0.0.1 not-yet-set 50
 
       `)
 
@@ -168,24 +153,6 @@ machine_class: e2
 		if err != nil {
 			panic(err)
 		}
-
-	case "ast":
-
-		if len(os.Args) < 5 {
-			color.Red.Println("Expecting three inputs: the address, the keystring and the number of threads. The number of threads should start from twenty.")
-			return
-		}
-
-		addr := os.Args[2]
-		fks := os.Args[3]
-		numOfThreads, err := strconv.Atoi(os.Args[4])
-		if err != nil {
-			color.Red.Println(err.Error())
-			return
-		}
-
-		fmt.Println("Wait for more than 30 minutes.\nAnd then check if the server resizes.")
-		astCommand(addr, fks, numOfThreads)
 
 	default:
 		color.Red.Println("Unexpected command. Run the Flaarum's prod with --help to find out the supported commands.")
