@@ -1,4 +1,4 @@
-// gcpl is the launcher program for Google Cloud platform
+// lgcp is the launcher program for Google Cloud platform
 package main
 
 import (
@@ -22,7 +22,7 @@ func waitForOperationRegion(project, region string, service *compute.Service, op
 	for {
 		result, err := service.RegionOperations.Get(project, region, op.Name).Context(ctx).Do()
 		if err != nil {
-			return fmt.Errorf("failed retriving operation status: %s", err)
+			return fmt.Errorf("Failed retriving operation status: %s", err)
 		}
 
 		if result.Status == "DONE" {
@@ -31,7 +31,7 @@ func waitForOperationRegion(project, region string, service *compute.Service, op
 				for _, e := range result.Error.Errors {
 					errors = append(errors, e.Message)
 				}
-				return fmt.Errorf("operation failed with error(s): %s", strings.Join(errors, ", "))
+				return fmt.Errorf("Operation failed with error(s): %s", strings.Join(errors, ", "))
 			}
 			break
 		}
@@ -45,7 +45,7 @@ func waitForOperationZone(project, zone string, service *compute.Service, op *co
 	for {
 		result, err := service.ZoneOperations.Get(project, zone, op.Name).Context(ctx).Do()
 		if err != nil {
-			return fmt.Errorf("failed retriving operation status: %s", err)
+			return fmt.Errorf("Failed retriving operation status: %s", err)
 		}
 
 		if result.Status == "DONE" {
@@ -54,7 +54,7 @@ func waitForOperationZone(project, zone string, service *compute.Service, op *co
 				for _, e := range result.Error.Errors {
 					errors = append(errors, e.Message)
 				}
-				return fmt.Errorf("operation failed with error(s): %s", strings.Join(errors, ", "))
+				return fmt.Errorf("Operation failed with error(s): %s", strings.Join(errors, ", "))
 			}
 			break
 		}
@@ -71,7 +71,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "--help", "help", "h":
-		fmt.Println(`gcpl creates and configures a flaarum server on Google Cloud.
+		fmt.Println(`lgcp creates and configures a flaarum server on Google Cloud.
 
 Supported Commands:
 
@@ -197,9 +197,6 @@ sudo snap stop --disable flaarum.statsr
 			Subnetwork:  "regions/" + conf.Get("region") + "/subnetworks/default",
 			Name:        instanceName + "-ip",
 		}).Context(ctx).Do()
-		if err != nil {
-			panic(err)
-		}
 
 		err = waitForOperationRegion(conf.Get("project"), conf.Get("region"), computeService, op)
 		if err != nil {
@@ -398,10 +395,6 @@ sudo snap restart flaarum.statsr
 			Subnetwork:  "regions/" + conf.Get("region") + "/subnetworks/default",
 			Name:        instanceName + "-ip",
 		}).Context(ctx).Do()
-		if err != nil {
-			panic(err)
-		}
-
 		err = waitForOperationRegion(conf.Get("project"), conf.Get("region"), computeService, op)
 		if err != nil {
 			panic(err)
@@ -428,10 +421,6 @@ sudo snap restart flaarum.statsr
 			Type:        prefix + "/zones/" + conf.Get("zone") + "/diskTypes/pd-ssd",
 			Name:        dataDiskName,
 		}).Context(ctx).Do()
-		if err != nil {
-			panic(err)
-		}
-
 		err = waitForOperationZone(conf.Get("project"), conf.Get("zone"), computeService, op)
 		if err != nil {
 			panic(err)
@@ -570,7 +559,7 @@ sudo snap restart flaarum.gcpasr
 		fmt.Println("Flaarum Control Server Name: ", ctlInstanceName)
 
 	default:
-		color.Red.Println("Unexpected command. Run the gcpl with --help to find out the supported commands.")
+		color.Red.Println("Unexpected command. Run the lgcp with --help to find out the supported commands.")
 		os.Exit(1)
 	}
 

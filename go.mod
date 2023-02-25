@@ -10,6 +10,8 @@ require (
 	github.com/mcnijman/go-emailaddress v1.1.0
 	github.com/otiai10/copy v1.9.0
 	github.com/pkg/errors v0.9.1
+	github.com/radovskyb/watcher v1.0.7
+	github.com/saenuma/mof v1.0.1
 	github.com/saenuma/zazabul v1.1.4
 	github.com/shirou/gopsutil/v3 v3.23.1
 	github.com/tidwall/pretty v1.2.0
