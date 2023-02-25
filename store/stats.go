@@ -52,6 +52,6 @@ func getAndDeleteStats(w http.ResponseWriter, r *http.Request) {
 		printError(w, errors.Wrap(err, "json error"))
 		return
 	}
-	fmt.Fprint(w, string(jsonBytes))
+	fmt.Fprintf(w, string(jsonBytes))
 
 }
