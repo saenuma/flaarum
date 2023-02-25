@@ -181,7 +181,6 @@ sudo snap start flaarum.store
 sudo flaarum.prod mpr
 sudo snap restart flaarum.store
 sudo snap stop --disable flaarum.statsr
-sudo snap stop --disable flaarum.gcpasr
 `
 
 		ctx := context.Background()
