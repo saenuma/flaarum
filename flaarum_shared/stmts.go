@@ -66,28 +66,9 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 			return ts, errors.New(fmt.Sprintf("Bad Statement: the field type '%s' is not allowed in flaarum.", parts[1]))
 		}
 		fs := FieldStruct{FieldName: parts[0], FieldType: parts[1]}
-		fieldCheckObj := FieldCheckStruct{}
 		if len(parts) > 2 {
 			for _, otherPart := range parts[2:] {
-				if strings.HasPrefix(otherPart, "max_length_") {
-					lengthOfStub := len("max_length_")
-					fieldCheckObj.MaxLength = otherPart[lengthOfStub:]
-				} else if strings.HasPrefix(otherPart, "min_length_") {
-					lengthOfStub := len("min_length_")
-					fieldCheckObj.MinLength = otherPart[lengthOfStub:]
-				} else if strings.HasPrefix(otherPart, "max_value_") {
-					lengthOfStub := len("max_value_")
-					fieldCheckObj.MaxValue = otherPart[lengthOfStub:]
-				} else if strings.HasPrefix(otherPart, "min_value_") {
-					lengthOfStub := len("min_value_")
-					fieldCheckObj.MinValue = otherPart[lengthOfStub:]
-				} else if strings.HasPrefix(otherPart, "max_year_") {
-					lengthOfStub := len("max_year_")
-					fieldCheckObj.MaxYear = otherPart[lengthOfStub:]
-				} else if strings.HasPrefix(otherPart, "min_year_") {
-					lengthOfStub := len("min_year_")
-					fieldCheckObj.MinYear = otherPart[lengthOfStub:]
-				} else if otherPart == "required" {
+				if otherPart == "required" {
 					fs.Required = true
 				} else if otherPart == "unique" {
 					fs.Unique = true
@@ -96,7 +77,6 @@ func ParseTableStructureStmt(stmt string) (TableStruct, error) {
 				}
 			}
 		}
-		fs.FieldCheckObj = fieldCheckObj
 		fss = append(fss, fs)
 	}
 	ts.Fields = fss

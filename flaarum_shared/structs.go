@@ -1,21 +1,11 @@
 package flaarum_shared
 
-type FieldCheckStruct struct {
-	MinValue  string
-	MaxValue  string
-	MinLength string
-	MaxLength string
-	MinYear   string
-	MaxYear   string
-}
-
 type FieldStruct struct {
-	FieldName     string
-	FieldType     string
-	Required      bool
-	Unique        bool
-	NotIndexed    bool
-	FieldCheckObj FieldCheckStruct
+	FieldName  string
+	FieldType  string
+	Required   bool
+	Unique     bool
+	NotIndexed bool
 }
 
 type FKeyStruct struct {

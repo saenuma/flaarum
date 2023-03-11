@@ -50,79 +50,18 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 				if strings.Contains(v, "\n") || strings.Contains(v, "\r\n") {
 					return nil, errors.New(fmt.Sprintf("The value of field '%s' contains new line.", k))
 				}
-
-				if fd.FieldCheckObj.MaxLength != "" {
-					checkerParsed, err := strconv.Atoi(fd.FieldCheckObj.MaxLength)
-					if err != nil {
-						return nil, errors.New(fmt.Sprintf("The field check 'max_length_%s' is invalid.", fd.FieldCheckObj.MaxLength))
-					}
-					if len(v) > checkerParsed {
-						return nil, errors.New(fmt.Sprintf("The max_length check failed for field '%s'.", fd.FieldName))
-					}
-				}
-
-				if fd.FieldCheckObj.MinLength != "" {
-					checkerParsed, err := strconv.Atoi(fd.FieldCheckObj.MinLength)
-					if err != nil {
-						return nil, errors.New(fmt.Sprintf("The field check 'min_length_%s' is invalid.", fd.FieldCheckObj.MinLength))
-					}
-					if len(v) < checkerParsed {
-						return nil, errors.New(fmt.Sprintf("The min_length check failed for field '%s'.", fd.FieldName))
-					}
-				}
 			}
 
 			if fd.FieldType == "int" {
 
-				valParsed, err := strconv.ParseInt(v, 10, 64)
+				_, err := strconv.ParseInt(v, 10, 64)
 				if err != nil {
 					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not of type 'int'", v, k))
 				}
-
-				if fd.FieldCheckObj.MaxValue != "" {
-					checkerParsed, err := strconv.ParseInt(fd.FieldCheckObj.MaxValue, 10, 64)
-					if err != nil {
-						return nil, errors.New(fmt.Sprintf("The field check 'max_value_%s' is invalid.", fd.FieldCheckObj.MaxValue))
-					}
-					if valParsed > checkerParsed {
-						return nil, errors.New(fmt.Sprintf("The max_value check failed for field '%s'.", fd.FieldName))
-					}
-				}
-
-				if fd.FieldCheckObj.MinValue != "" {
-					checkerParsed, err := strconv.ParseInt(fd.FieldCheckObj.MinValue, 10, 64)
-					if err != nil {
-						return nil, errors.New(fmt.Sprintf("The field check 'min_value_%s' is invalid.", fd.FieldCheckObj.MinValue))
-					}
-					if valParsed < checkerParsed {
-						return nil, errors.New(fmt.Sprintf("The min_value check failed for field '%s'.", fd.FieldName))
-					}
-				}
-
 			} else if fd.FieldType == "float" {
-				valParsed, err := strconv.ParseFloat(v, 64)
+				_, err := strconv.ParseFloat(v, 64)
 				if err != nil {
 					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not of type 'float'", v, k))
-				}
-
-				if fd.FieldCheckObj.MaxValue != "" {
-					checkerParsed, err := strconv.ParseFloat(fd.FieldCheckObj.MaxValue, 64)
-					if err != nil {
-						return nil, errors.New(fmt.Sprintf("The field check 'max_value_%s' is invalid.", fd.FieldCheckObj.MaxValue))
-					}
-					if valParsed > checkerParsed {
-						return nil, errors.New(fmt.Sprintf("The max_value check failed for field '%s'.", fd.FieldName))
-					}
-				}
-
-				if fd.FieldCheckObj.MinValue != "" {
-					checkerParsed, err := strconv.ParseFloat(fd.FieldCheckObj.MinValue, 64)
-					if err != nil {
-						return nil, errors.New(fmt.Sprintf("The field check 'min_value_%s' is invalid.", fd.FieldCheckObj.MinValue))
-					}
-					if valParsed < checkerParsed {
-						return nil, errors.New(fmt.Sprintf("The min_value check failed for field '%s'.", fd.FieldName))
-					}
 				}
 
 			} else if fd.FieldType == "bool" {
@@ -136,26 +75,6 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in date format.", v, k))
 				}
 
-				if fd.FieldCheckObj.MaxYear != "" {
-					checkerParsed, err := strconv.Atoi(fd.FieldCheckObj.MaxYear)
-					if err != nil {
-						return nil, errors.New(fmt.Sprintf("The field check 'max_year_%s' is invalid.", fd.FieldCheckObj.MaxYear))
-					}
-					if valueInTimeType.Year() > checkerParsed {
-						return nil, errors.New(fmt.Sprintf("The max_year check failed for field '%s'.", fd.FieldName))
-					}
-				}
-
-				if fd.FieldCheckObj.MinYear != "" {
-					checkerParsed, err := strconv.Atoi(fd.FieldCheckObj.MinYear)
-					if err != nil {
-						return nil, errors.New(fmt.Sprintf("The field check 'min_year_%s' is invalid.", fd.FieldCheckObj.MinYear))
-					}
-					if valueInTimeType.Year() < checkerParsed {
-						return nil, errors.New(fmt.Sprintf("The min_year check failed for field '%s'.", fd.FieldName))
-					}
-				}
-
 				dataMap[k+"_year"] = strconv.Itoa(valueInTimeType.Year())
 				dataMap[k+"_month"] = strconv.Itoa(int(valueInTimeType.Month()))
 				dataMap[k+"_day"] = strconv.Itoa(valueInTimeType.Day())
@@ -164,26 +83,6 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 				valueInTimeType, err := time.Parse(flaarum_shared.DATETIME_FORMAT, v)
 				if err != nil {
 					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in datetime format.", v, k))
-				}
-
-				if fd.FieldCheckObj.MaxYear != "" {
-					checkerParsed, err := strconv.Atoi(fd.FieldCheckObj.MaxYear)
-					if err != nil {
-						return nil, errors.New(fmt.Sprintf("The field check 'max_year_%s' is invalid.", fd.FieldCheckObj.MaxYear))
-					}
-					if valueInTimeType.Year() > checkerParsed {
-						return nil, errors.New(fmt.Sprintf("The max_year check failed for field '%s'.", fd.FieldName))
-					}
-				}
-
-				if fd.FieldCheckObj.MinYear != "" {
-					checkerParsed, err := strconv.Atoi(fd.FieldCheckObj.MinYear)
-					if err != nil {
-						return nil, errors.New(fmt.Sprintf("The field check 'min_year_%s' is invalid.", fd.FieldCheckObj.MinYear))
-					}
-					if valueInTimeType.Year() < checkerParsed {
-						return nil, errors.New(fmt.Sprintf("The min_year check failed for field '%s'.", fd.FieldName))
-					}
 				}
 
 				dataMap[k+"_year"] = strconv.Itoa(valueInTimeType.Year())
