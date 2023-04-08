@@ -49,11 +49,12 @@ func G(objectName string) string {
 	if err != nil {
 		panic(err)
 	}
+	workingDir, _ := os.Getwd()
+
 	folders := make([]string, 0)
 	folders = append(folders, filepath.Join(homeDir, "p", "flaarum", "store"))
-	folders = append(folders, "C:\\Program Files (x86)\\Flaarum\\")
-	folders = append(folders, "/opt/saenuma/flaarum/bin/")
-	folders = append(folders, "/opt/saenuma/flaarum/")
+	folders = append(folders, workingDir)
+	folders = append(folders, filepath.Join(homeDir, ".flaar312"))
 	folders = append(folders, os.Getenv("SNAP"))
 
 	for _, dir := range folders {
