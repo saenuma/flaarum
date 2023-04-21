@@ -1,7 +1,5 @@
 # flaarum
 
-![Flaarum Logo](https://github.com/saenuma/flaarum/raw/master/flaarum-logo.png "Flaarum logo")
-
 [![GoDoc](https://godoc.org/github.com/saenuma/flaarum?status.svg)](https://godoc.org/github.com/saenuma/flaarum)
 
 A database that enforces structures and features its own query language.
@@ -24,7 +22,7 @@ A database that enforces structures and features its own query language.
 ## Technologies Used.
 
 * Golang
-* Ubuntu
+* Linux
 * HTTPS
 * JSON
 
