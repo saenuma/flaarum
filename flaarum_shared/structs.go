@@ -24,7 +24,7 @@ type WhereStruct struct {
 	FieldName   string
 	Relation    string // eg. '=', '!=', '<', etc.
 	FieldValue  string
-	Joiner      string   // one of 'and', 'or', 'orf'
+	Joiner      string   // one of 'and', 'or'
 	FieldValues []string // for 'in' and 'nin' queries
 }
 
@@ -37,5 +37,26 @@ type StmtStruct struct {
 	Limit          int64
 	OrderBy        string
 	OrderDirection string // one of 'asc' or 'desc'
-	WhereOptions   []WhereStruct
+	EndStruct      any
+}
+
+type EndingStmtStructSingle struct {
+	WhereOptions []WhereStruct
+}
+
+type EndingStmtStructMulti struct {
+	WhereOptions [][]WhereStruct
+	Joiners      string
+}
+
+type ManyWhereStmtStruct struct {
+	TableName      string
+	Fields         []string
+	Expand         bool
+	Distinct       bool
+	StartIndex     int64
+	Limit          int64
+	OrderBy        string
+	OrderDirection string // one of 'asc' or 'desc'
+
 }

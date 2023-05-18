@@ -150,6 +150,43 @@ func specialSplitLine(line string) ([]string, error) {
 	return splits, nil
 }
 
+func parseWhereSubStmt(wherePart string) ([]WhereStruct, error) {
+	whereStructs := make([]WhereStruct, 0)
+	for _, part := range strings.Split(wherePart, "\n") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+
+		parts, err := specialSplitLine(part)
+		if err != nil {
+			return nil, err
+		}
+		if len(parts) < 2 {
+			return nil, errors.New(fmt.Sprintf("The part \"%s\" is not up to two words.", part))
+		}
+		var whereStruct WhereStruct
+		if len(whereStructs) == 0 {
+			whereStruct = WhereStruct{FieldName: parts[0], Relation: parts[1]}
+			if whereStruct.Relation == "in" {
+				whereStruct.FieldValues = parts[2:]
+			} else {
+				whereStruct.FieldValue = parts[2]
+			}
+		} else {
+			whereStruct = WhereStruct{Joiner: parts[0], FieldName: parts[1], Relation: parts[2]}
+			if whereStruct.Relation == "in" {
+				whereStruct.FieldValues = parts[3:]
+			} else {
+				whereStruct.FieldValue = parts[3]
+			}
+		}
+		whereStructs = append(whereStructs, whereStruct)
+	}
+
+	return whereStructs, nil
+}
+
 func ParseSearchStmt(stmt string) (StmtStruct, error) {
 	stmt = strings.TrimSpace(stmt)
 	stmtStruct := StmtStruct{}
@@ -206,42 +243,106 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 		}
 	}
 
-	wherePartBegin := strings.Index(stmt, "where:")
-	if wherePartBegin != -1 {
-		whereStructs := make([]WhereStruct, 0)
-		wherePart := stmt[wherePartBegin+len("where:"):]
-		for _, part := range strings.Split(wherePart, "\n") {
+	haveMulti := strings.Index(stmt, "statements_relation:")
+	if haveMulti != -1 {
+		stmt = strings.TrimSpace(stmt)
+		stmtStruct := StmtStruct{}
+		var statmentRelation string
+		for _, part := range strings.Split(stmt, "\n") {
 			part = strings.TrimSpace(part)
 			if part == "" {
 				continue
 			}
 
-			parts, err := specialSplitLine(part)
+			if strings.HasPrefix(part, "statements_relation:") {
+				opt := part[len("statements_relation:"):]
+				opt = strings.TrimSpace(opt)
+				if opt != "and" && opt != "or" {
+					return stmtStruct, errors.New("statements_relation only accepts either 'and' or 'or'")
+				} else {
+					statmentRelation = opt
+				}
+				break
+			}
+		}
+
+		whereOpts := make([][]WhereStruct, 0)
+		// where1
+		where1PartBegin := strings.Index(stmt, "where1:")
+		where1PartEnd := strings.Index(stmt[where1PartBegin:], "::")
+		if where1PartEnd == -1 {
+			return stmtStruct, errors.New("Every where section must end with '::'")
+		}
+		where1Part := stmt[where1PartBegin : where1PartBegin+where1PartEnd]
+		where1Structs, err := parseWhereSubStmt(where1Part)
+		if err != nil {
+			return stmtStruct, err
+		}
+
+		whereOpts = append(whereOpts, where1Structs)
+
+		// where2
+		where2PartBegin := strings.Index(stmt, "where2:")
+		if where2PartBegin == -1 {
+			return stmtStruct, errors.New("A statement with 'final_stmt:' must have 'where1:' and 'where2:' sections")
+		}
+
+		where2PartEnd := strings.Index(stmt[where2PartBegin:], "::")
+		if where2PartEnd == -1 {
+			return stmtStruct, errors.New("Every where section must end with '::'")
+		}
+		where2Part := stmt[where2PartBegin : where2PartBegin+where2PartEnd]
+		where2Structs, err := parseWhereSubStmt(where2Part)
+		if err != nil {
+			return stmtStruct, err
+		}
+
+		whereOpts = append(whereOpts, where2Structs)
+
+		where3PartBegin := strings.Index(stmt, "where3:")
+		if where3PartBegin != -1 {
+			where3PartEnd := strings.Index(stmt[where3PartBegin:], "::")
+			if where3PartEnd == -1 {
+				return stmtStruct, errors.New("Every where section must end with '::'")
+			}
+			where3Part := stmt[where3PartBegin : where3PartBegin+where3PartEnd]
+			where3Structs, err := parseWhereSubStmt(where3Part)
 			if err != nil {
 				return stmtStruct, err
 			}
-			if len(parts) < 2 {
-				return stmtStruct, errors.New(fmt.Sprintf("The part \"%s\" is not up to two words.", part))
-			}
-			var whereStruct WhereStruct
-			if len(whereStructs) == 0 {
-				whereStruct = WhereStruct{FieldName: parts[0], Relation: parts[1]}
-				if whereStruct.Relation == "in" {
-					whereStruct.FieldValues = parts[2:]
-				} else {
-					whereStruct.FieldValue = parts[2]
-				}
-			} else {
-				whereStruct = WhereStruct{Joiner: parts[0], FieldName: parts[1], Relation: parts[2]}
-				if whereStruct.Relation == "in" {
-					whereStruct.FieldValues = parts[3:]
-				} else {
-					whereStruct.FieldValue = parts[3]
-				}
-			}
-			whereStructs = append(whereStructs, whereStruct)
+
+			whereOpts = append(whereOpts, where3Structs)
 		}
-		stmtStruct.WhereOptions = whereStructs
+
+		where4PartBegin := strings.Index(stmt, "where4:")
+		if where4PartBegin != -1 {
+			where4PartEnd := strings.Index(stmt[where4PartBegin:], "::")
+			if where4PartEnd == -1 {
+				return stmtStruct, errors.New("Every where section must end with '::'")
+			}
+			where4Part := stmt[where4PartBegin : where4PartBegin+where4PartEnd]
+			where4Structs, err := parseWhereSubStmt(where4Part)
+			if err != nil {
+				return stmtStruct, err
+			}
+
+			whereOpts = append(whereOpts, where4Structs)
+		}
+
+		stmtStruct.EndStruct = EndingStmtStructMulti{whereOpts, statmentRelation}
+	} else {
+
+		wherePartBegin := strings.Index(stmt, "where:")
+		if wherePartBegin != -1 {
+			wherePart := stmt[wherePartBegin+len("where:"):]
+			whereStructs, err := parseWhereSubStmt(wherePart)
+			if err != nil {
+				return stmtStruct, err
+			}
+
+			stmtStruct.EndStruct = EndingStmtStructSingle{whereStructs}
+		}
+
 	}
 
 	return stmtStruct, nil
