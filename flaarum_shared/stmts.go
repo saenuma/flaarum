@@ -243,10 +243,9 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 		}
 	}
 
-	haveMulti := strings.Index(stmt, "statements_relation:")
+	haveMulti := strings.Index(stmt, "relation:")
 	if haveMulti != -1 {
 		stmt = strings.TrimSpace(stmt)
-		stmtStruct := StmtStruct{}
 		var statmentRelation string
 		for _, part := range strings.Split(stmt, "\n") {
 			part = strings.TrimSpace(part)
@@ -254,11 +253,11 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 				continue
 			}
 
-			if strings.HasPrefix(part, "statements_relation:") {
-				opt := part[len("statements_relation:"):]
+			if strings.HasPrefix(part, "relation:") {
+				opt := part[len("relation:"):]
 				opt = strings.TrimSpace(opt)
 				if opt != "and" && opt != "or" {
-					return stmtStruct, errors.New("statements_relation only accepts either 'and' or 'or'")
+					return stmtStruct, errors.New("relation only accepts either 'and' or 'or'")
 				} else {
 					statmentRelation = opt
 				}
@@ -273,7 +272,7 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 		if where1PartEnd == -1 {
 			return stmtStruct, errors.New("Every where section must end with '::'")
 		}
-		where1Part := stmt[where1PartBegin : where1PartBegin+where1PartEnd]
+		where1Part := stmt[where1PartBegin+len("where1:") : where1PartBegin+where1PartEnd]
 		where1Structs, err := parseWhereSubStmt(where1Part)
 		if err != nil {
 			return stmtStruct, err
@@ -291,7 +290,7 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 		if where2PartEnd == -1 {
 			return stmtStruct, errors.New("Every where section must end with '::'")
 		}
-		where2Part := stmt[where2PartBegin : where2PartBegin+where2PartEnd]
+		where2Part := stmt[where2PartBegin+len("where2:") : where2PartBegin+where2PartEnd]
 		where2Structs, err := parseWhereSubStmt(where2Part)
 		if err != nil {
 			return stmtStruct, err
@@ -305,7 +304,7 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 			if where3PartEnd == -1 {
 				return stmtStruct, errors.New("Every where section must end with '::'")
 			}
-			where3Part := stmt[where3PartBegin : where3PartBegin+where3PartEnd]
+			where3Part := stmt[where3PartBegin+len("where3:") : where3PartBegin+where3PartEnd]
 			where3Structs, err := parseWhereSubStmt(where3Part)
 			if err != nil {
 				return stmtStruct, err
@@ -320,7 +319,7 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 			if where4PartEnd == -1 {
 				return stmtStruct, errors.New("Every where section must end with '::'")
 			}
-			where4Part := stmt[where4PartBegin : where4PartBegin+where4PartEnd]
+			where4Part := stmt[where4PartBegin+len("where1:") : where4PartBegin+where4PartEnd]
 			where4Structs, err := parseWhereSubStmt(where4Part)
 			if err != nil {
 				return stmtStruct, err
@@ -329,7 +328,10 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 			whereOpts = append(whereOpts, where4Structs)
 		}
 
-		stmtStruct.EndStruct = EndingStmtStructMulti{whereOpts, statmentRelation}
+		stmtStruct.Multi = true
+		stmtStruct.MultiWhereOptions = whereOpts
+		stmtStruct.Relation = statmentRelation
+
 	} else {
 
 		wherePartBegin := strings.Index(stmt, "where:")
@@ -340,7 +342,8 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 				return stmtStruct, err
 			}
 
-			stmtStruct.EndStruct = EndingStmtStructSingle{whereStructs}
+			stmtStruct.Multi = false
+			stmtStruct.WhereOptions = whereStructs
 		}
 
 	}

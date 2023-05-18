@@ -37,26 +37,9 @@ type StmtStruct struct {
 	Limit          int64
 	OrderBy        string
 	OrderDirection string // one of 'asc' or 'desc'
-	EndStruct      any
-}
-
-type EndingStmtStructSingle struct {
-	WhereOptions []WhereStruct
-}
-
-type EndingStmtStructMulti struct {
-	WhereOptions [][]WhereStruct
-	Joiners      string
-}
-
-type ManyWhereStmtStruct struct {
-	TableName      string
-	Fields         []string
-	Expand         bool
-	Distinct       bool
-	StartIndex     int64
-	Limit          int64
-	OrderBy        string
-	OrderDirection string // one of 'asc' or 'desc'
-
+	Multi          bool
+	// variable parts
+	WhereOptions      []WhereStruct
+	MultiWhereOptions [][]WhereStruct
+	Relation          string
 }

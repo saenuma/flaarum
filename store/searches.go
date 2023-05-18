@@ -1385,34 +1385,8 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 	retIds := make([]string, 0)
 
-	endStructSingle, ok := stmtStruct.EndStruct.(flaarum_shared.EndingStmtStructSingle)
-	if ok {
-		if len(endStructSingle.WhereOptions) == 0 {
-			dataF1Path := filepath.Join(tablePath, "data.flaa1")
-
-			if flaarum_shared.DoesPathExists(dataF1Path) {
-				elemsMap, err := ParseDataF1File(dataF1Path)
-				if err != nil {
-					return nil, err
-				}
-
-				for k := range elemsMap {
-					retIds = append(retIds, k)
-				}
-			}
-
-		} else {
-			retIds, err = doOnlyOneSearch(projName, tableName, stmtStruct.Expand, endStructSingle.WhereOptions)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-	}
-
-	endStructMulti, ok := stmtStruct.EndStruct.(flaarum_shared.EndingStmtStructMulti)
-	if ok {
-		if len(endStructMulti.WhereOptions) == 0 {
+	if stmtStruct.Multi {
+		if len(stmtStruct.MultiWhereOptions) == 0 {
 			dataF1Path := filepath.Join(tablePath, "data.flaa1")
 
 			if flaarum_shared.DoesPathExists(dataF1Path) {
@@ -1429,7 +1403,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 		} else {
 			outs := make([][]string, 0)
 
-			for _, whereOpt := range endStructMulti.WhereOptions {
+			for _, whereOpt := range stmtStruct.MultiWhereOptions {
 				tmpIds, err := doOnlyOneSearch(projName, tableName, stmtStruct.Expand, whereOpt)
 				if err != nil {
 					return nil, err
@@ -1438,13 +1412,36 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 				outs = append(outs, tmpIds)
 			}
 
-			if endStructMulti.Joiners == "and" {
+			if stmtStruct.Relation == "and" {
 				retIds = arrayOperations.Intersect(outs...)
-			} else if endStructMulti.Joiners == "or" {
+			} else if stmtStruct.Relation == "or" {
 				retIds = arrayOperations.Union(outs...)
 			}
 
 		}
+
+	} else {
+		if len(stmtStruct.WhereOptions) == 0 {
+			dataF1Path := filepath.Join(tablePath, "data.flaa1")
+
+			if flaarum_shared.DoesPathExists(dataF1Path) {
+				elemsMap, err := ParseDataF1File(dataF1Path)
+				if err != nil {
+					return nil, err
+				}
+
+				for k := range elemsMap {
+					retIds = append(retIds, k)
+				}
+			}
+
+		} else {
+			retIds, err = doOnlyOneSearch(projName, tableName, stmtStruct.Expand, stmtStruct.WhereOptions)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 	}
 
 	// read the whole foundRows using its Id
