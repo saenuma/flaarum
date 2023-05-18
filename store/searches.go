@@ -102,21 +102,9 @@ func doHasCheck(storedStr, qStr string) bool {
 }
 
 func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaarum_shared.WhereStruct) ([]string, error) {
-	// stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	dataPath, _ := GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
-	// tableName := stmtStruct.TableName
 
-	// createTableMutexIfNecessary(projName, stmtStruct.TableName)
-	// fullTableName := projName + ":" + stmtStruct.TableName
-	// tablesMutexes[fullTableName].RLock()
-	// defer tablesMutexes[fullTableName].RUnlock()
-
-	// map of fieldName to pointed_table
 	expDetails := make(map[string]string)
 
 	tableStruct, err := getCurrentTableStructureParsed(projName, tableName)
@@ -1412,9 +1400,9 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 				outs = append(outs, tmpIds)
 			}
 
-			if stmtStruct.Relation == "and" {
+			if stmtStruct.Joiner == "and" {
 				retIds = arrayOperations.Intersect(outs...)
-			} else if stmtStruct.Relation == "or" {
+			} else if stmtStruct.Joiner == "or" {
 				retIds = arrayOperations.Union(outs...)
 			}
 

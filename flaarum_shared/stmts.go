@@ -184,6 +184,21 @@ func parseWhereSubStmt(wherePart string) ([]WhereStruct, error) {
 		whereStructs = append(whereStructs, whereStruct)
 	}
 
+	foundAnd := false
+	foundOr := false
+	for _, whereStruct := range whereStructs {
+		if whereStruct.Joiner == "and" {
+			foundAnd = true
+		}
+		if whereStruct.Joiner == "or" {
+			foundOr = true
+		}
+
+		if foundAnd && foundOr {
+			return whereStructs, errors.New("Cannot use both 'and' and 'or' in a where section.")
+		}
+	}
+
 	return whereStructs, nil
 }
 
@@ -243,23 +258,23 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 		}
 	}
 
-	haveMulti := strings.Index(stmt, "relation:")
+	haveMulti := strings.Index(stmt, "joiner:")
 	if haveMulti != -1 {
 		stmt = strings.TrimSpace(stmt)
-		var statmentRelation string
+		var stmtJoiner string
 		for _, part := range strings.Split(stmt, "\n") {
 			part = strings.TrimSpace(part)
 			if part == "" {
 				continue
 			}
 
-			if strings.HasPrefix(part, "relation:") {
-				opt := part[len("relation:"):]
+			if strings.HasPrefix(part, "joiner:") {
+				opt := part[len("joiner:"):]
 				opt = strings.TrimSpace(opt)
 				if opt != "and" && opt != "or" {
-					return stmtStruct, errors.New("relation only accepts either 'and' or 'or'")
+					return stmtStruct, errors.New("joiner only accepts either 'and' or 'or'")
 				} else {
-					statmentRelation = opt
+					stmtJoiner = opt
 				}
 				break
 			}
@@ -330,7 +345,7 @@ func ParseSearchStmt(stmt string) (StmtStruct, error) {
 
 		stmtStruct.Multi = true
 		stmtStruct.MultiWhereOptions = whereOpts
-		stmtStruct.Relation = statmentRelation
+		stmtStruct.Joiner = stmtJoiner
 
 	} else {
 

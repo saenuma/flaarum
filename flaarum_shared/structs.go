@@ -41,5 +41,5 @@ type StmtStruct struct {
 	// variable parts
 	WhereOptions      []WhereStruct
 	MultiWhereOptions [][]WhereStruct
-	Relation          string
+	Joiner            string
 }
