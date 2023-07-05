@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Flaarum Web Admin</title>
+    <script src="/gs/jquery-3.6.0.min.js"></script>
+    <script src="/gs/autosize.min.js"></script>
+    <style>
+      body {
+        font-family: arial, sans-serif;
+      }
+      #sidebar {
+        width: 250px;
+        float: left;
+        background-color: #E5E5DF;
+        padding: 10px;
+        height: 90vh;
+      }
+
+      #sidebar * {
+        margin-bottom: 10px;
+        display: block;
+      }
+      #main {
+        width: calc(100% - 300px);
+        margin-left: 300px;
+      }
+      
+      h1, h2, h3 {
+        margin: 0px;
+      }
+
+      #topbar {
+        width: fit-content;
+        margin: 0 auto;
+      }
+
+      dialog textarea, dialog input {
+        width: 400px;
+      }
+      dialog input[type=submit] {
+        width: auto;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      table thead {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #04AA6D;
+        color: white;
+      }
+      tr:nth-child(even){background-color: #f2f2f2;}
+
+      tbody tr:hover {background-color: #ddd;}
+    </style>
+
+    <script>
+      $(document).ready(function() {
+        autosize($("textarea"))
+
+        $("#new_project_btn").click(function(e) {
+          const newProjectDialog = document.getElementById('new_project_diag');
+          newProjectDialog.showModal();
+        });
+
+        $("#projects_switch").on("change", function(e) {
+          window.location.href = "/?project=" + $("#projects_switch").val()
+        })
+
+        $("#new_table_btn").click(function(e) {
+          const newTableDialog = document.getElementById('new_table_diag');
+          newTableDialog.showModal();
+        });
+
+        $(".load_table_href").click(function(e) {
+          e.preventDefault()
+
+          $.get("/load_table?table=" + $(e.target).text() + "&project=" + $("#projects_switch").val(), function(data, status) {
+            $("#main").html(data)
+
+            $("#insert_row_btn").click(function(e) {
+              const addr = "/load_insert_frag?table=" + $(e.target).data("table") +  "&project=" + $("#projects_switch").val()
+              $.get(addr, function(data, status) {
+                $("#insert_row_diag_inputs").html(data)
+                const insertRowDialog = document.getElementById('insert_row_diag');
+                insertRowDialog.showModal();
+              })
+            });
+
+            $("#view_table_structure_btn").click(function(e) {
+              $("#view_table_structure_diag h3").text("View Table Structure of " + $(e.target).data("table"))
+              const addr = "/load_table_structure?table=" + $(e.target).data("table") +  "&project=" + $("#projects_switch").val()
+              $.get(addr, function(data, status) {
+                $("#view_table_structure_diag div").html("<pre>" + data + "</pre>")
+                const viewTableStructureDialog = document.getElementById('view_table_structure_diag');
+                viewTableStructureDialog.showModal()
+              })
+            })
+
+            $("#edit_table_structure_btn").click(function(e) {
+              $("#edit_table_structure_diag h3").text("Update Table Structure of " + $(e.target).data("table"))
+              const addr = "/load_table_structure?table=" + $(e.target).data("table") +  "&project=" + $("#projects_switch").val()
+              $.get(addr, function(data, status) {
+                $("#edit_table_structure_diag textarea").text(data)
+                const editTableStructureDialog = document.getElementById('edit_table_structure_diag');
+                editTableStructureDialog.showModal()
+              })
+            })
+          })
+        })
+
+        $("#insert_row_diag input[type=submit]").click(function(e) {
+          e.preventDefault()
+
+          var data = $("#insert_row_diag form").serialize()
+
+          $.post("/insert_row", data, function(data, status, xhr) {
+            const insertRowDialog = document.getElementById('insert_row_diag');
+
+            if (xhr.status == 200) {
+              insertRowDialog.close()
+            } else {
+              $("#insert_row_diag").append(data)
+            }
+
+            location.reload()
+          })
+
+        })
+
+        $("#edit_table_structure_diag input[type=submit]").click(function(e) {
+          e.preventDefault()
+
+          var data = $("#edit_table_structure_diag form").serialize()
+
+          $.post("/update_table_structure", data, function(data, status, xhr) {
+            const tsDialog = document.getElementById('edit_table_structure_diag');
+
+            if (xhr.status == 200) {
+              tsDialog.close()
+            } else {
+              $("#edit_table_structure_diag").append(data)
+            }
+
+            location.reload()
+          })
+
+        })
+
+        // load the first table in view
+        var tablesHrefs = $("#sidebar a")
+        if (tablesHrefs.length > 0) {
+          $("#sidebar a:first").click()
+        }
+      })
+
+    </script>
+  </head>
+  <body>
+    <div id="topbar">
+      <span style="font-size: 1.5em;">Flaarum Web Admin</span>
+      &nbsp;&nbsp;
+      <select id="projects_switch" >
+        {{range .Projects}}
+          {{if eq $.CurrentProject .}}
+            <option selected="selected">{{.}}</option>
+          {{else}}
+            <option>{{.}}</option>
+          {{end}}
+        {{end}}
+      </select>
+      &nbsp;&nbsp;
+      <button id="new_project_btn">New Project</button>
+      &nbsp;&nbsp;
+      <button id="refresh_btn">Refresh</button>
+      &nbsp;&nbsp;
+      <button id="new_table_btn">New Table</button>
+    </div>
+    <hr>
+    <div id="container">
+      <div id="sidebar">
+        <h3>Tables</h3>
+        {{range .TablesOfCurrentProject}}
+          <a href="#" class="load_table_href" id="id_tbl_{{.}}" >{{.}}</a>
+        {{end}}
+      </div>
+      <div id="main">
+
+      </div>
+    </div>
+
+    <dialog id="new_project_diag">
+      <h3>New Project</h3>
+      <br>
+      <form method="post" action="/new_project">
+        <div>
+          <label>Project Name</label><br>
+          <input type="text" name="name" />
+        </div>
+        <br>
+        <div>
+          <input type="submit" name="Create" />
+        </div>
+        <br>
+        <i>Press ESC to dismiss</i>
+      </form>
+    </dialog>
+
+    <dialog id="new_table_diag">
+      <h3>New Table</h3>
+      <p style="color: #aaa;">
+        View tutorial at 
+        <a target="_blank" href="https://sae.ng/flaarumtuts/tables">sae.ng</a>
+      </p>
+      <form method="post" action="/new_table">
+        <input type="hidden" name="current_project" value="{{.CurrentProject}}" />
+        <div>
+          <label>Table Definition Statement</label><br>
+          <textarea name="stmt"></textarea>
+        </div>
+        <br>
+        <div>
+          <input type="submit" name="Create" />
+        </div>
+        <br>
+        <i>Press ESC to dismiss</i>
+      </form>
+    </dialog>
+
+    <dialog id="insert_row_diag">
+      <h3>New Table</h3>
+      <br>
+      <form method="post" action="/insert_row">
+        <input type="hidden" name="current_project" value="{{.CurrentProject}}" />
+        <div id="insert_row_diag_inputs">
+
+        </div>
+        <br>
+        <div>
+          <input type="submit" name="Insert" />
+        </div>
+        <br>
+        <i>Press ESC to dismiss</i>
+      </form>
+    </dialog>
+
+    <dialog id="view_table_structure_diag">
+      <h3></h3>
+      <div>
+
+      </div>
+      <br>
+      <i>Press ESC to dismiss</i>
+    </dialog>
+
+    <dialog id="edit_table_structure_diag">
+      <h3></h3>
+      <form action="/update_table_structure" method="post">
+        <input type="hidden" name="current_project" value="{{.CurrentProject}}" />
+
+        <div>
+          <textarea name="stmt"></textarea>
+        </div>
+        <br>
+        <div>
+          <input type="submit" name="Create" />
+        </div>
+      </form>
+      <br>
+      <i>Press ESC to dismiss</i>
+    </dialog>
+  </body>
+</html>
