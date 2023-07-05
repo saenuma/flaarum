@@ -110,6 +110,18 @@
                 editTableStructureDialog.showModal()
               })
             })
+
+            $(".delete_row_btn").click(function(e) {
+              e.preventDefault()
+              var data = {"table": $(e.target).data("table"), "id": $(e.target).data("id"), 
+                "current_project": $("#projects_switch").val() }
+              console.log(data);
+              $.post("/delete_row", data, function(data, status, xhr) {
+                location.reload();
+              })
+
+            })
+
           })
         })
 

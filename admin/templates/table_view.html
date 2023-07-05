@@ -19,6 +19,7 @@
         {{range .Fields}}
           <td>{{.}}</td>
         {{end}}
+        <td>Actions</td>
       </tr>
     </thead>
     <tbody>
@@ -27,6 +28,12 @@
           {{range .}}
             <td>{{.}}</td>
           {{end}}
+
+          {{$id := index . 0}}
+          <td>
+            <button data-id="{{$id}}" data-table="{{$.Table}}" class="edit_row_btn">edit</button>
+            <button data-id="{{$id}}" data-table="{{$.Table}}" class="delete_row_btn">delete</button>
+          </td>
         </tr>
       {{end}}
     </tbody>

@@ -108,9 +108,12 @@ func main() {
 	r.HandleFunc("/new_table", newTableHandler)
 	r.HandleFunc("/load_table", loadTableHandler)
 	r.HandleFunc("/load_insert_frag", loadInsertForm)
-	r.HandleFunc("/insert_row", inserRowHandler)
 	r.HandleFunc("/load_table_structure", loadTableStructureHandler)
 	r.HandleFunc("/update_table_structure", updateTableStructureHandler)
+
+	// tables handlers
+	r.HandleFunc("/insert_row", insertRowHandler)
+	r.HandleFunc("/delete_row", deleteRowHandler)
 
 	http.ListenAndServe(":31314", r)
 }

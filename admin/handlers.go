@@ -130,7 +130,7 @@ func loadInsertForm(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, html)
 }
 
-func inserRowHandler(w http.ResponseWriter, r *http.Request) {
+func insertRowHandler(w http.ResponseWriter, r *http.Request) {
 	cl := getFlaarumClient()
 	cl.ProjName = r.FormValue("_project")
 	tableName := r.FormValue("_table")
@@ -167,6 +167,23 @@ func updateTableStructureHandler(w http.ResponseWriter, r *http.Request) {
 	cl.ProjName = r.FormValue("current_project")
 
 	err := cl.UpdateTableStructure(r.FormValue("stmt"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, err.Error())
+	}
+
+	fmt.Fprint(w, "ok")
+}
+
+func deleteRowHandler(w http.ResponseWriter, r *http.Request) {
+	cl := getFlaarumClient()
+	cl.ProjName = r.FormValue("current_project")
+
+	err := cl.DeleteRows(fmt.Sprintf(`
+		table: %s
+		where:
+			id = %s
+		`, r.FormValue("table"), r.FormValue("id")))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, err.Error())
