@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+
+	"github.com/saenuma/flaarum/flaarum_shared"
 )
 
 func newProjectHandler(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +31,8 @@ func newTableHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/?project="+r.FormValue("current_project"), http.StatusTemporaryRedirect)
+	stmtParsed, _ := flaarum_shared.ParseTableStructureStmt(r.FormValue("stmt"))
+	http.Redirect(w, r, "/table/"+cl.ProjName+"/"+stmtParsed.TableName, http.StatusTemporaryRedirect)
 }
 
 func loadTableHandler(w http.ResponseWriter, r *http.Request) {

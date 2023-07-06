@@ -78,7 +78,7 @@
 
       });
     </script>
-    
+
     {{block "scripts" .}} {{end}}
 
   </head>
@@ -138,7 +138,7 @@
         <a target="_blank" href="https://sae.ng/flaarumtuts/tables">sae.ng</a>
       </p>
       <form method="post" action="/new_table">
-        <input type="hidden" name="current_project" value="{{.CurrentProject}}" />
+        <input type="hidden" name="current_project" value="{{$.CurrentProject}}" />
         <div>
           <label>Table Definition Statement</label><br>
           <textarea name="stmt"></textarea>
