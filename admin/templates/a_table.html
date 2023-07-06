@@ -31,6 +31,38 @@
       })
     })
 
+    $("#insert_row_diag input[type=submit]").click(function(e) {
+      e.preventDefault()
+
+      var data = $("#insert_row_diag form").serialize()
+      $.post("/insert_row", data, function(data, status, xhr) {
+        const insertRowDialog = document.getElementById('insert_row_diag');
+
+        if (xhr.status == 200) {
+          insertRowDialog.close()
+        } else {
+          $("#insert_row_diag").append(data)
+        }
+
+        location.reload()
+      });
+    });
+
+    $("#edit_table_structure_diag input[type=submit]").click(function(e) {
+      e.preventDefault()
+      var data = $("#edit_table_structure_diag form").serialize()
+      $.post("/update_table_structure", data, function(data, status, xhr) {
+        const tsDialog = document.getElementById('edit_table_structure_diag');
+        if (xhr.status == 200) {
+          tsDialog.close()
+        } else {
+          $("#edit_table_structure_diag").append(data)
+        }
+
+        location.reload()
+      });
+    });
+
     $(".delete_row_btn").click(function(e) {
       e.preventDefault()
       var data = {"table": $(e.target).data("table"), "id": $(e.target).data("id"), 
@@ -41,7 +73,7 @@
       });
 
     });
-    
+
   });
  
 
