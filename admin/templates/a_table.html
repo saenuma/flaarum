@@ -67,9 +67,22 @@
       e.preventDefault()
       var data = {"table": $(e.target).data("table"), "id": $(e.target).data("id"), 
         "current_project": $("#projects_switch").val() }
-      console.log(data);
       $.post("/delete_row", data, function(data, status, xhr) {
         location.reload();
+      });
+
+    });
+
+    $("#delete_table_btn").click(function(e) {
+      const deleteTableDialog = document.getElementById('delete_table_diag');
+      deleteTableDialog.showModal();
+    });
+
+    $("#delete_table_diag button").click(function(e) {
+      var data = {"table": $(e.target).data("table"), "current_project": $("#projects_switch").val() }
+
+      $.post("/delete_table", data, function(data, status, xhr) {
+        location.href = "/project/" + $("#projects_switch").val() 
       });
 
     });
@@ -83,7 +96,7 @@
 {{define "main"}}
   <div class="a_table">
     <div class="a_table_bar">
-      <span id="table_name">{{.CurrentTable}}</span>
+      Table: <b id="table_name">{{.CurrentTable}}</b>
       &nbsp;&nbsp;
       <span>Version: {{.CurrentVersion}}</span>
       &nbsp;&nbsp;
@@ -94,6 +107,8 @@
       <button id="view_table_structure_btn" data-table="{{.CurrentTable}}">View Table Structure</button>
       &nbsp;&nbsp;
       <button id="edit_table_structure_btn" data-table="{{.CurrentTable}}">Update Table Structure</button>
+      &nbsp;&nbsp;
+      <button id="delete_table_btn" data-table="{{.CurrentTable}}">Delete Table</button>
     </div>
     <br>
     <table>
@@ -154,7 +169,7 @@
   </dialog>
 
   <dialog id="edit_table_structure_diag">
-    <h3></h3>
+    <h3>Edit Table Structure</h3>
     <form action="/update_table_structure" method="post">
       <input type="hidden" name="current_project" value="{{.CurrentProject}}" />
 
@@ -168,6 +183,17 @@
     </form>
     <br>
     <i>Press ESC to dismiss</i>
+  </dialog>
+
+  <dialog id="delete_table_diag">
+    <h3>Delete Table Confirmation</h3>
+    <p>Are you sure you want to delete Table <b>{{$.CurrentTable}}</b></p>
+    <p>Rows Count : {{.AllRowsCount}}</p>
+    
+    <button data-table="{{$.CurrentTable}}" type="button">Confirm Deletion</button>
+    <br><br>
+    <i>Press ESC to dismiss</i>
+
   </dialog>
 {{end}}
 
