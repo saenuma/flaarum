@@ -75,18 +75,63 @@ func main() {
 	})
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		cl.ProjName = "first_proj"
+
+		tables, err := cl.ListTables()
+		if err != nil {
+			ErrorPage(w, err)
+			return
+		}
+
+		if len(tables) == 0 {
+			http.Redirect(w, r, "/project/first_proj", http.StatusTemporaryRedirect)
+		} else {
+			http.Redirect(w, r, "/project/first_proj/"+tables[0], http.StatusTemporaryRedirect)
+		}
+	})
+
+	r.HandleFunc("/project/{project}", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
 		projects, err := cl.ListProjects()
 		if err != nil {
 			ErrorPage(w, err)
 			return
 		}
 
-		var currentProject string
-		if r.FormValue("project") == "" {
-			currentProject = projects[0]
-		} else {
-			currentProject = r.FormValue("project")
+		currentProject := vars["project"]
+
+		cl.ProjName = currentProject
+		tables, err := cl.ListTables()
+		if err != nil {
+			ErrorPage(w, err)
+			return
 		}
+
+		if len(tables) > 0 {
+			http.Redirect(w, r, "/table/"+currentProject+"/"+tables[0], http.StatusTemporaryRedirect)
+			return
+		}
+
+		type Context struct {
+			Projects               []string
+			TablesOfCurrentProject []string
+			CurrentProject         string
+		}
+		tmpl := template.Must(template.ParseFS(content, "templates/base.html", "templates/empty_project.html"))
+		tmpl.Execute(w, Context{projects, tables, currentProject})
+	})
+
+	r.HandleFunc("/table/{project}/{table}", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		projects, err := cl.ListProjects()
+		if err != nil {
+			ErrorPage(w, err)
+			return
+		}
+
+		currentProject := vars["project"]
 
 		cl.ProjName = currentProject
 
@@ -96,14 +141,56 @@ func main() {
 			return
 		}
 
+		currentTable := vars["table"]
+
+		rows, err := cl.Search(fmt.Sprintf(`
+		table: %s
+		limit: 100
+		order_by: id asc
+	`, currentTable))
+		if err != nil {
+			ErrorPage(w, err)
+			return
+		}
+
+		vnum, _ := cl.GetCurrentTableVersionNum(currentTable)
+		tableDefnParsed, _ := cl.GetTableStructureParsed(currentTable, vnum)
+
+		fields := make([]string, 0)
+		innerFields := make([]string, 0)
+		fields = append(fields, "id[int]")
+		fields = append(fields, "_version[int]")
+
+		innerFields = append(innerFields, []string{"id", "_version"}...)
+		for _, fieldStruct := range tableDefnParsed.Fields {
+			fields = append(fields, fieldStruct.FieldName+"["+fieldStruct.FieldType+"]")
+			innerFields = append(innerFields, fieldStruct.FieldName)
+		}
+
+		retRows := make([][]any, 0)
+		for _, row := range *rows {
+			reportedRowSlice := make([]any, 0)
+			for _, field := range innerFields {
+				reportedRowSlice = append(reportedRowSlice, row[field])
+			}
+			retRows = append(retRows, reportedRowSlice)
+		}
+
+		count, _ := cl.AllRowsCount(currentTable)
 		type Context struct {
 			Projects               []string
 			TablesOfCurrentProject []string
 			CurrentProject         string
+			CurrentTable           string
+			Fields                 []string
+			Rows                   [][]any
+			AllRowsCount           int64
+			CurrentVersion         int
 		}
-		tmpl := template.Must(template.ParseFS(content, "templates/app.html"))
-		tmpl.Execute(w, Context{projects, tables, currentProject})
+		tmpl := template.Must(template.ParseFS(content, "templates/base.html", "templates/a_table.html"))
+		tmpl.Execute(w, Context{projects, tables, currentProject, currentTable, fields, retRows, count, int(vnum)})
 	})
+
 	r.HandleFunc("/new_project", newProjectHandler)
 	r.HandleFunc("/new_table", newTableHandler)
 	r.HandleFunc("/load_table", loadTableHandler)
