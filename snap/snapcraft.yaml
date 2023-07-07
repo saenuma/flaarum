@@ -31,7 +31,6 @@ parts:
     override-build: |
       set -xe
       go mod download
-      go build -o $SNAPCRAFT_PART_INSTALL/bin/admin ./admin
       go build -o $SNAPCRAFT_PART_INSTALL/bin/cli ./cli
       go build -o $SNAPCRAFT_PART_INSTALL/bin/prod ./prod
       go build -o $SNAPCRAFT_PART_INSTALL/bin/store ./store
@@ -41,15 +40,6 @@ parts:
 
 
 apps:
-  admin:
-    command: bin/admin
-    daemon: simple
-    restart-condition: on-abnormal
-    plugs:
-      - network
-      - network-bind
-
-
   cli:
     command: bin/cli
     plugs:
