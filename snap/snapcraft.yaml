@@ -26,16 +26,10 @@ parts:
     # See 'snapcraft plugins'
     plugin: go
     source: .
-    build-packages:
+    stage-packages:
     - openssl
     build-snaps:
     - go
-    override-build: |
-      craftctl default
-
-      openssl req -x509 -newkey rsa:4096 -keyout https-server.key -out https-server.crt -sha256 -days 3650 -nodes -subj "/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname"
-      cp $CRAFT_PART_BUILD/https-server.crt $CRAFT_PART_INSTALL/https-server.crt
-      cp $CRAFT_PART_BUILD/https-server.key $CRAFT_PART_INSTALL/https-server.key
 
 
 apps:
@@ -44,6 +38,9 @@ apps:
     plugs:
       - network
 
+  genssl:
+    command: bin/genssl
+  
   prod:
     command: bin/prod
 

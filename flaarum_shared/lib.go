@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -52,7 +51,7 @@ func G(objectName string) string {
 
 	folders := make([]string, 0)
 	folders = append(folders, filepath.Join(homeDir, "Flaarum"))
-	folders = append(folders, os.Getenv("SNAP"))
+	folders = append(folders, os.Getenv("SNAP_COMMON"))
 
 	for _, dir := range folders {
 		testPath := filepath.Join(dir, objectName)
@@ -72,17 +71,10 @@ func GetRootPath() (string, error) {
 	}
 
 	var dd string
-	if runtime.GOOS == "windows" {
+	dd = os.Getenv("SNAP_COMMON")
+	if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
 		dd = filepath.Join(hd, "Flaarum")
 		os.MkdirAll(dd, 0777)
-
-	} else {
-
-		dd = os.Getenv("SNAP_COMMON")
-		if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
-			dd = filepath.Join(hd, "Flaarum")
-			os.MkdirAll(dd, 0777)
-		}
 	}
 
 	return dd, nil
@@ -126,14 +118,19 @@ func GetKeyStrPath() string {
 
 // this function is used to get input paths to flaarum
 func GetFlaarumPath(fileName string) (string, error) {
-	var dd string
 	hd, err := os.UserHomeDir()
 	if err != nil {
 		return "", errors.Wrap(err, "os error")
 	}
 
-	dd = filepath.Join(hd, "Flaarum", fileName)
-	return dd, nil
+	var dd string
+	dd = os.Getenv("SNAP_USER_COMMON")
+	if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
+		dd = filepath.Join(hd, "Flaarum")
+		os.MkdirAll(dd, 0777)
+	}
+
+	return filepath.Join(dd, fileName), nil
 }
 
 func FindIn(container []string, elem string) int {
