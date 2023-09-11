@@ -7,9 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"time"
-
-	"github.com/saenuma/flaarum/flaarum_shared"
 )
 
 type ConnError struct {
@@ -83,14 +80,4 @@ func (cl *Client) Ping() error {
 	} else {
 		return ConnError{string(body)}
 	}
-}
-
-// Converts a time.Time to the date format expected in flaarum
-func RightDateFormat(d time.Time) string {
-	return d.Format(flaarum_shared.DATE_FORMAT)
-}
-
-// Converts a time.Time to the datetime format expected in flaarum
-func RightDateTimeFormat(d time.Time) string {
-	return d.Format(flaarum_shared.DATETIME_FORMAT)
 }

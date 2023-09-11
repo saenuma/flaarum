@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/saenuma/flaarum/flaarum_shared"
 )
@@ -73,9 +72,6 @@ func (cl *Client) convertInterfaceMapToStringMap(tableName string, oldMap map[st
 		case int64:
 			vInStr := strconv.FormatInt(vInType, 10)
 			newMap[k] = vInStr
-		case float64:
-			vInStr := strconv.FormatFloat(vInType, 'g', -1, 64)
-			newMap[k] = vInStr
 		case bool:
 			var vInStr string
 			if vInType {
@@ -84,17 +80,6 @@ func (cl *Client) convertInterfaceMapToStringMap(tableName string, oldMap map[st
 				vInStr = "f"
 			}
 			newMap[k] = vInStr
-		case time.Time:
-			ft, ok := fieldNamesToFieldTypes[k]
-			if !ok {
-				return nil, fmt.Errorf("the field '%s' is not in the structure of table '%s' of project '%s'",
-					k, tableName, cl.ProjName)
-			}
-			if ft == "date" {
-				newMap[k] = RightDateFormat(vInType)
-			} else if ft == "datetime" {
-				newMap[k] = RightDateTimeFormat(vInType)
-			}
 		case string:
 			newMap[k] = vInType
 		}
@@ -146,7 +131,7 @@ func (cl *Client) ParseRow(rowStr map[string]string, tableStruct flaarum_shared.
 		if v == "" {
 			tmpRow[k] = nil
 		} else if ok {
-			if fieldType == "text" || fieldType == "string" || fieldType == "url" || fieldType == "email" || fieldType == "ipaddr" {
+			if fieldType == "text" || fieldType == "string" {
 				tmpRow[k] = v
 			} else if fieldType == "int" {
 				vInt, err := strconv.ParseInt(v, 10, 64)
@@ -154,30 +139,12 @@ func (cl *Client) ParseRow(rowStr map[string]string, tableStruct flaarum_shared.
 					return nil, fmt.Errorf("the value '%s' to field '%s' is not of type 'int'", v, k)
 				}
 				tmpRow[k] = vInt
-			} else if fieldType == "float" {
-				vFloat, err := strconv.ParseFloat(v, 64)
-				if err != nil {
-					return nil, fmt.Errorf("the value '%s' to field '%s' is not of type 'float'", v, k)
-				}
-				tmpRow[k] = vFloat
 			} else if fieldType == "bool" {
 				if v == "t" {
 					tmpRow[k] = true
 				} else {
 					tmpRow[k] = false
 				}
-			} else if fieldType == "date" {
-				vTime1, err1 := time.Parse(flaarum_shared.DATE_FORMAT, v)
-				if err1 != nil {
-					return nil, fmt.Errorf("the value '%s' to field '%s' is not in date format", v, k)
-				}
-				tmpRow[k] = vTime1
-			} else if fieldType == "datetime" {
-				vTime1, err1 := time.Parse(flaarum_shared.DATETIME_FORMAT, v)
-				if err1 != nil {
-					return nil, fmt.Errorf("the value '%s' to field '%s' is not in datetime format", v, k)
-				}
-				tmpRow[k] = vTime1
 			}
 
 		}
@@ -387,12 +354,10 @@ func (cl Client) AllRowsCount(tableName string) (int64, error) {
 	}
 }
 
-// Sums the fields of a row and returns int64 if it is an int field or float64
-// if it a float field.
-func (cl Client) SumRows(stmt, toSumField string) (interface{}, error) {
+// Sums the fields of a row and returns int64 if it is an int field
+func (cl Client) SumRows(stmt string) (interface{}, error) {
 	urlValues := url.Values{}
 	urlValues.Add("stmt", stmt)
-	urlValues.Add("tosum", toSumField)
 	urlValues.Add("key-str", cl.KeyStr)
 
 	resp, err := httpCl.PostForm(fmt.Sprintf("%ssum-rows/%s", cl.Addr, cl.ProjName), urlValues)
@@ -407,36 +372,13 @@ func (cl Client) SumRows(stmt, toSumField string) (interface{}, error) {
 	}
 
 	if resp.StatusCode == 200 {
-		stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
-		if err != nil {
-			return nil, ValidationError{err.Error()}
-		}
-
-		tableStruct, err := cl.GetCurrentTableStructureParsed(stmtStruct.TableName)
-		if err != nil {
-			return nil, err
-		}
-		var toSumFieldType string
-		for _, fd := range tableStruct.Fields {
-			if fd.FieldName == toSumField {
-				toSumFieldType = fd.FieldType
-			}
-		}
-
 		r := string(body)
-		if toSumFieldType == "int" {
-			trueR, err := strconv.ParseInt(r, 10, 64)
-			if err != nil {
-				return 0, ConnError{"strconv error\n" + err.Error()}
-			}
-			return trueR, nil
-		} else {
-			trueR, err := strconv.ParseFloat(r, 64)
-			if err != nil {
-				return 0, ConnError{"strconv error\n" + err.Error()}
-			}
-			return trueR, nil
+		trueR, err := strconv.ParseInt(r, 10, 64)
+		if err != nil {
+			return 0, ConnError{"strconv error\n" + err.Error()}
 		}
+		return trueR, nil
+
 	} else {
 		return 0, ServerError{string(body)}
 	}

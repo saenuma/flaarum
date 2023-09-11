@@ -2,17 +2,13 @@ package main
 
 import (
 	"fmt"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/mcnijman/go-emailaddress"
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/flaarum_shared"
 )
@@ -43,7 +39,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 		v, ok := dataMap[k]
 
 		if ok && v != "" {
-			if fd.FieldType == "string" || fd.FieldType == "email" || fd.FieldType == "url" || fd.FieldType == "ipaddr" {
+			if fd.FieldType == "string" {
 				if len(v) > 220 {
 					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is longer than 220 characters", v, k))
 				}
@@ -58,59 +54,12 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 				if err != nil {
 					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not of type 'int'", v, k))
 				}
-			} else if fd.FieldType == "float" {
-				_, err := strconv.ParseFloat(v, 64)
-				if err != nil {
-					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not of type 'float'", v, k))
-				}
-
 			} else if fd.FieldType == "bool" {
 				if v != "t" && v != "f" {
 					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in the short bool format.", v, k))
 				}
 
-			} else if fd.FieldType == "date" {
-				valueInTimeType, err := time.Parse(flaarum_shared.DATE_FORMAT, v)
-				if err != nil {
-					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in date format.", v, k))
-				}
-
-				dataMap[k+"_year"] = strconv.Itoa(valueInTimeType.Year())
-				dataMap[k+"_month"] = strconv.Itoa(int(valueInTimeType.Month()))
-				dataMap[k+"_day"] = strconv.Itoa(valueInTimeType.Day())
-
-			} else if fd.FieldType == "datetime" {
-				valueInTimeType, err := time.Parse(flaarum_shared.DATETIME_FORMAT, v)
-				if err != nil {
-					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in datetime format.", v, k))
-				}
-
-				dataMap[k+"_year"] = strconv.Itoa(valueInTimeType.Year())
-				dataMap[k+"_month"] = strconv.Itoa(int(valueInTimeType.Month()))
-				dataMap[k+"_day"] = strconv.Itoa(valueInTimeType.Day())
-				dataMap[k+"_hour"] = strconv.Itoa(valueInTimeType.Hour())
-				dataMap[k+"_date"] = valueInTimeType.Format(flaarum_shared.DATE_FORMAT)
-				dataMap[k+"_tzname"], _ = valueInTimeType.Zone()
-
-			} else if fd.FieldType == "email" {
-				_, err := emailaddress.Parse(v)
-				if err != nil {
-					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in email format.", v, k))
-				}
-
-			} else if fd.FieldType == "ipaddr" {
-				ipType := net.ParseIP(v)
-				if ipType != nil {
-					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not an ip address.", v, k))
-				}
-
-			} else if fd.FieldType == "url" {
-				_, err := url.Parse(v)
-				if err != nil {
-					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not a valid url.", v, k))
-				}
 			}
-
 		}
 
 		if !ok && fd.Required {
