@@ -125,7 +125,7 @@ func GetFlaarumPath(fileName string) (string, error) {
 
 	var dd string
 	dd = os.Getenv("SNAP_USER_COMMON")
-	if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
+	if strings.HasPrefix(dd, hd) || dd == "" {
 		dd = filepath.Join(hd, "Flaarum")
 		os.MkdirAll(dd, 0777)
 	}
