@@ -15,10 +15,7 @@ import (
 )
 
 const (
-	DATE_FORMAT       = "2006-01-02"
-	DATETIME_FORMAT   = "2006-01-02T15:04 MST"
-	STRING_MAX_LENGTH = 100
-	PORT              = 22318
+	PORT = 22318
 )
 
 var RootConfigTemplate = `// debug can be set to either false or true
@@ -201,50 +198,6 @@ func GetFieldType(projName, tableName, fieldName string) string {
 
 	for _, fieldStruct := range tableStruct.Fields {
 		fieldNamesToFieldTypes[fieldStruct.FieldName] = fieldStruct.FieldType
-	}
-
-	if strings.HasSuffix(fieldName, "_year") {
-		genFieldName := fieldName[0 : len(fieldName)-len("_year")]
-		ans, ok := fieldNamesToFieldTypes[genFieldName]
-
-		if ok && (ans == "datetime" || ans == "date") {
-			return "int"
-		}
-	} else if strings.HasSuffix(fieldName, "_month") {
-		genFieldName := fieldName[0 : len(fieldName)-len("_month")]
-		ans, ok := fieldNamesToFieldTypes[genFieldName]
-
-		if ok && (ans == "datetime" || ans == "date") {
-			return "int"
-		}
-	} else if strings.HasSuffix(fieldName, "_day") {
-		genFieldName := fieldName[0 : len(fieldName)-len("_day")]
-		ans, ok := fieldNamesToFieldTypes[genFieldName]
-
-		if ok && (ans == "datetime" || ans == "date") {
-			return "int"
-		}
-	} else if strings.HasSuffix(fieldName, "_hour") {
-		genFieldName := fieldName[0 : len(fieldName)-len("_hour")]
-		ans, ok := fieldNamesToFieldTypes[genFieldName]
-
-		if ok && ans == "datetime" {
-			return "int"
-		}
-	} else if strings.HasSuffix(fieldName, "_date") {
-		genFieldName := fieldName[0 : len(fieldName)-len("_date")]
-		ans, ok := fieldNamesToFieldTypes[genFieldName]
-
-		if ok && ans == "datetime" {
-			return "date"
-		}
-	} else if strings.HasSuffix(fieldName, "_tzname") {
-		genFieldName := fieldName[0 : len(fieldName)-len("_tzname")]
-		ans, ok := fieldNamesToFieldTypes[genFieldName]
-
-		if ok && ans == "datetime" {
-			return "string"
-		}
 	}
 
 	return fieldNamesToFieldTypes[fieldName]
