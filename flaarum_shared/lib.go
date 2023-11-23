@@ -48,6 +48,7 @@ func G(objectName string) string {
 
 	folders := make([]string, 0)
 	folders = append(folders, filepath.Join(homeDir, "Flaarum"))
+	folders = append(folders, filepath.Join(homeDir, ".flaar312"))
 	folders = append(folders, os.Getenv("SNAP_COMMON"))
 
 	for _, dir := range folders {
