@@ -4,67 +4,20 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 
-	"github.com/gookit/color"
 	"github.com/otiai10/copy"
-	"github.com/saenuma/flaarum"
 	"github.com/saenuma/flaarum/flaarum_shared"
 )
 
-func reindex(projName, tableName string) {
-
-	if len(os.Args) < 2 {
-		color.Red.Println("expected a command. Open help to view commands.")
-		os.Exit(1)
-	}
-
-	var keyStr string
-	inProd := flaarum_shared.GetSetting("in_production")
-	if inProd == "" {
-		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
-		os.Exit(1)
-	}
-	if inProd == "true" {
-		keyStrPath := flaarum_shared.GetKeyStrPath()
-		raw, err := os.ReadFile(keyStrPath)
-		if err != nil {
-			color.Red.Println(err)
-			os.Exit(1)
-		}
-		keyStr = string(raw)
-	} else {
-		keyStr = "not-yet-set"
-	}
-	port := flaarum_shared.GetSetting("port")
-	if port == "" {
-		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
-		os.Exit(1)
-	}
-	var cl flaarum.Client
-
-	portInt, err := strconv.Atoi(port)
-	if err != nil {
-		color.Red.Println("Invalid port setting.")
-		os.Exit(1)
-	}
-
-	if portInt != flaarum_shared.PORT {
-		cl = flaarum.NewClientCustomPort("127.0.0.1", keyStr, projName, portInt)
-	} else {
-		cl = flaarum.NewClient("127.0.0.1", keyStr, projName)
-	}
-
-	err = cl.Ping()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+func reindex(projName, tableName, eventPath string) {
+	cl := getFlaarumCLIClient()
 
 	if !flaarum_shared.DoesTableExists(projName, tableName) {
 		P(fmt.Errorf("table '%s' of project '%s' does not exists", tableName, projName))
 		return
 	}
+
+	cl.ProjName = projName
 
 	stmt := fmt.Sprintf(`
 		table: %s
@@ -105,5 +58,5 @@ func reindex(projName, tableName string) {
 	}
 
 	os.RemoveAll(tmpTablePath)
-
+	os.RemoveAll(eventPath)
 }

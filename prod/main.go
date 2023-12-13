@@ -15,6 +15,7 @@ import (
 )
 
 func main() {
+	dataPath, _ := flaarum_shared.GetDataPath()
 	if len(os.Args) < 2 {
 		color.Red.Println("expected a command. Open help to view commands.")
 		os.Exit(1)
@@ -22,22 +23,26 @@ func main() {
 
 	switch os.Args[1] {
 	case "--help", "help", "h":
-		fmt.Println(`Flaarum's prod makes a flaarum instance production ready.
+		fmt.Printf(`Flaarum's prod makes a flaarum instance production ready.
 
 Supported Commands:
 
-    r         Read the current key string used
+  r         Read the current key string used
 
-    c         Creates / Updates and prints a new key string
+  c         Creates / Updates and prints a new key string
 
-    mpr       Make production ready. It also creates a key string.
+  mpr       Make production ready. It also creates a key string.
 
-    ifa       Is flaarum free check. Used to know if a long running task is ongoing. 
+  ifa       Is flaarum free check. Used to know if a long running task is ongoing. 
 
-    reindex   Run the long running task to reindex a table. It expects
-              a project name and table name.
+  reindex   Run the long running task to reindex a table. It expects
+            a project name and table name.
 
-      `)
+  export    Run the long running task to export a table. It expects
+            a project name and table name.
+            The export would be stored in '%s' and of type 'json'.
+      `, dataPath)
+		fmt.Println()
 
 	case "r":
 		keyPath := flaarum_shared.GetKeyStrPath()
@@ -107,6 +112,32 @@ Supported Commands:
 
 		instrData := map[string]string{
 			"cmd":     "reindex",
+			"project": os.Args[2],
+			"table":   os.Args[3],
+		}
+
+		dataPath, _ := flaarum_shared.GetDataPath()
+
+		outCommandInstr := filepath.Join(dataPath, flaarum_shared.UntestedRandomString(5)+".instr_json")
+		hasLongRunningTaskActive := isLongRunningTaskActive()
+		if hasLongRunningTaskActive {
+			color.Red.Println("Wait for long running task(s) to be completed.")
+			os.Exit(1)
+		}
+
+		rawJson, _ := json.Marshal(instrData)
+		os.WriteFile(outCommandInstr, rawJson, 0777)
+
+		fmt.Println("Wait for operation to finish before using the database.")
+
+	case "export":
+		if len(os.Args) < 4 {
+			color.Red.Println("Expecting the name of the project and the table name in order.")
+			os.Exit(1)
+		}
+
+		instrData := map[string]string{
+			"cmd":     "export",
 			"project": os.Args[2],
 			"table":   os.Args[3],
 		}
