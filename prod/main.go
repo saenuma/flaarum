@@ -32,6 +32,8 @@ Supported Commands:
 
     mpr       Make production ready. It also creates a key string.
 
+    ifa       Is flaarum free check. Used to know if a long running task is ongoing. 
+
     reindex   Run the long running task to reindex a table. It expects
               a project name and table name.
 
@@ -122,6 +124,14 @@ Supported Commands:
 		os.WriteFile(outCommandInstr, rawJson, 0777)
 
 		fmt.Println("Wait for operation to finish before using the database.")
+
+	case "ifa":
+		status := isLongRunningTaskActive()
+		if status {
+			color.Red.Println("A long running task is running.")
+		} else {
+			fmt.Println("No long running task is running.")
+		}
 
 	default:
 		color.Red.Println("Unexpected command. Run the Flaarum's prod with --help to find out the supported commands.")
