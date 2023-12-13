@@ -52,3 +52,9 @@ apps:
       - network
       - network-bind
 
+  tasks:
+    command: bin/tasks
+    daemon: simple
+    restart-condition: on-abnormal
+    plugs:
+      - network
