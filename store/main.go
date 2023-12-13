@@ -67,7 +67,6 @@ func main() {
 	r.HandleFunc("/get-table-structure/{proj}/{tbl}/{vnum}", getTableStructureHTTP)
 	r.HandleFunc("/list-tables/{proj}", listTables)
 	r.HandleFunc("/delete-table/{proj}/{tbl}", deleteTable)
-	r.HandleFunc("/trim-table/{proj}/{tbl}", trimTable)
 
 	// rows
 	r.HandleFunc("/insert-row/{proj}/{tbl}", insertRow)

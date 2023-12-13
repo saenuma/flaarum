@@ -3,11 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 
 	"github.com/gorilla/mux"
-	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/flaarum_shared"
 )
@@ -136,82 +134,4 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
 	}
 
 	return nil
-}
-
-func trimTable(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
-	tableName := vars["table"]
-
-	if !doesTableExists(projName, tableName) {
-		printError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
-		return
-	}
-
-	stmt := fmt.Sprintf(`
-		table: %s
-	`, tableName)
-
-	rows, err := innerSearch(projName, stmt)
-	if err != nil {
-		printError(w, err)
-		return
-	}
-
-	fullTableName := projName + ":" + tableName
-	tablesMutexes[fullTableName].Lock()
-	defer tablesMutexes[fullTableName].Unlock()
-
-	tmpTableName := ".tmp_table_" + flaarum_shared.UntestedRandomString(5)
-	dataPath, _ := GetDataPath()
-	tablePath := filepath.Join(dataPath, projName, tableName)
-	tmpTablePath := filepath.Join(dataPath, projName, tmpTableName)
-
-	os.Rename(tablePath, tmpTablePath) // move the old contents to temporary directory
-	os.MkdirAll(tablePath, 0777)
-
-	// copy structures from tmpTablePath back to tablePath
-	index := 1
-	for {
-		testedStructurePath := filepath.Join(tmpTablePath, fmt.Sprintf("structure%d.txt", index))
-		newStructurePath := filepath.Join(tablePath, fmt.Sprintf("structure%d.txt", index))
-		if doesPathExists(testedStructurePath) {
-			copy.Copy(testedStructurePath, newStructurePath)
-		} else {
-			break
-		}
-	}
-
-	// begin insertion
-	lastIdPath := filepath.Join(tablePath, "lastId.txt")
-	var lastIdStr string
-	for _, toInsert := range *rows {
-		err = saveRowData(projName, tableName, toInsert["id"], toInsert)
-		if err != nil {
-			printError(w, err)
-			return
-		}
-
-		lastIdStr = toInsert["id"]
-
-		// create indexes
-		for k, v := range toInsert {
-			if isNotIndexedField(projName, tableName, k) {
-				continue
-			}
-
-			err := MakeIndex(projName, tableName, k, v, toInsert["id"])
-			if err != nil {
-				printError(w, err)
-				return
-			}
-
-		}
-
-	}
-
-	os.WriteFile(lastIdPath, []byte(lastIdStr), 0777)
-	os.RemoveAll(tmpTablePath)
-
-	fmt.Fprintf(w, "ok")
 }
