@@ -2,107 +2,154 @@
 package main
 
 import (
-  "github.com/saenuma/flaarum/flaarum_shared"
-  "fmt"
-  "os"
-  "github.com/gookit/color"
-  "github.com/saenuma/zazabul"
-  "time"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/gookit/color"
+	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/saenuma/zazabul"
 )
 
-
 func main() {
-  if len(os.Args) < 2 {
-    color.Red.Println("expected a command. Open help to view commands.")
-    os.Exit(1)
-  }
+	if len(os.Args) < 2 {
+		color.Red.Println("expected a command. Open help to view commands.")
+		os.Exit(1)
+	}
 
-  switch os.Args[1] {
-  case "--help", "help", "h":
-    fmt.Println(`Flaarum's prod makes a flaarum instance production ready.
+	switch os.Args[1] {
+	case "--help", "help", "h":
+		fmt.Println(`Flaarum's prod makes a flaarum instance production ready.
 
 Supported Commands:
 
-    r     Read the current key string used
+    r         Read the current key string used
 
-    c     Creates / Updates and prints a new key string
+    c         Creates / Updates and prints a new key string
 
-    mpr   Make production ready. It also creates a key string.
+    mpr       Make production ready. It also creates a key string.
+
+    reindex   Run the long running task to reindex a table. It expects
+              a project name and table name.
 
       `)
 
-  case "r":
-    keyPath := flaarum_shared.GetKeyStrPath()
-    raw, err := os.ReadFile(keyPath)
-    if err != nil {
-      color.Red.Printf("Error reading key string path.\nError:%s\n", err)
-      os.Exit(1)
-    }
-    fmt.Println(string(raw))
+	case "r":
+		keyPath := flaarum_shared.GetKeyStrPath()
+		raw, err := os.ReadFile(keyPath)
+		if err != nil {
+			color.Red.Printf("Error reading key string path.\nError:%s\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(string(raw))
 
-  case "c":
-    keyPath := flaarum_shared.GetKeyStrPath()
-    randomString := flaarum_shared.GenerateSecureRandomString(50)
+	case "c":
+		keyPath := flaarum_shared.GetKeyStrPath()
+		randomString := flaarum_shared.GenerateSecureRandomString(50)
 
-    err := os.WriteFile(keyPath, []byte(randomString), 0777)
-    if err != nil {
-      color.Red.Printf("Error creating key string path.\nError:%s\n", err)
-      os.Exit(1)
-    }
-    fmt.Print(randomString)
+		err := os.WriteFile(keyPath, []byte(randomString), 0777)
+		if err != nil {
+			color.Red.Printf("Error creating key string path.\nError:%s\n", err)
+			os.Exit(1)
+		}
+		fmt.Print(randomString)
 
-  case "mpr":
-    keyPath := flaarum_shared.GetKeyStrPath()
-    if ! doesPathExists(keyPath) {
-      randomString := flaarum_shared.GenerateSecureRandomString(50)
+	case "mpr":
+		keyPath := flaarum_shared.GetKeyStrPath()
+		if !doesPathExists(keyPath) {
+			randomString := flaarum_shared.GenerateSecureRandomString(50)
 
-      err := os.WriteFile(keyPath, []byte(randomString), 0777)
-      if err != nil {
-        color.Red.Printf("Error creating key string path.\nError:%s\n", err)
-        os.Exit(1)
-      }
+			err := os.WriteFile(keyPath, []byte(randomString), 0777)
+			if err != nil {
+				color.Red.Printf("Error creating key string path.\nError:%s\n", err)
+				os.Exit(1)
+			}
 
-    }
+		}
 
-    confPath, err := flaarum_shared.GetConfigPath()
-    if err != nil {
-      panic(err)
-    }
+		confPath, err := flaarum_shared.GetConfigPath()
+		if err != nil {
+			panic(err)
+		}
 
-    var conf zazabul.Config
+		var conf zazabul.Config
 
-    for {
-      conf, err = zazabul.LoadConfigFile(confPath)
-      if err != nil {
-        time.Sleep(3 * time.Second)
-        continue
-      } else {
-        break
-      }
-    }
+		for {
+			conf, err = zazabul.LoadConfigFile(confPath)
+			if err != nil {
+				time.Sleep(3 * time.Second)
+				continue
+			} else {
+				break
+			}
+		}
 
-    conf.Update(map[string]string{
-      "in_production": "true",
-      "debug": "false",
-    })
+		conf.Update(map[string]string{
+			"in_production": "true",
+			"debug":         "false",
+		})
 
-    err = conf.Write(confPath)
-    if err != nil {
-      panic(err)
-    }
+		err = conf.Write(confPath)
+		if err != nil {
+			panic(err)
+		}
 
-  default:
-    color.Red.Println("Unexpected command. Run the Flaarum's prod with --help to find out the supported commands.")
-    os.Exit(1)
-  }
+	case "reindex":
+		if len(os.Args) < 4 {
+			color.Red.Println("Expecting the name of the project and the table name in order.")
+			os.Exit(1)
+		}
 
+		instrData := map[string]string{
+			"cmd":     "reindex",
+			"project": os.Args[2],
+			"table":   os.Args[3],
+		}
+
+		dataPath, _ := flaarum_shared.GetDataPath()
+
+		outCommandInstr := filepath.Join(dataPath, flaarum_shared.UntestedRandomString(5)+".instr_json")
+		hasLongRunningTaskActive := isLongRunningTaskActive()
+		if hasLongRunningTaskActive {
+			color.Red.Println("Wait for long running task(s) to be completed.")
+			os.Exit(1)
+		}
+
+		rawJson, _ := json.Marshal(instrData)
+		os.WriteFile(outCommandInstr, rawJson, 0777)
+
+		fmt.Println("Wait for operation to finish before using the database.")
+
+	default:
+		color.Red.Println("Unexpected command. Run the Flaarum's prod with --help to find out the supported commands.")
+		os.Exit(1)
+	}
 
 }
 
-
 func doesPathExists(p string) bool {
-  if _, err := os.Stat(p); os.IsNotExist(err) {
-    return false
-  }
-  return true
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
+func isLongRunningTaskActive() bool {
+	dataPath, _ := flaarum_shared.GetDataPath()
+	dirFIs, err := os.ReadDir(dataPath)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	for _, dirFI := range dirFIs {
+		if strings.HasSuffix(dirFI.Name(), ".instr_json") {
+			return true
+		}
+	}
+
+	return false
 }

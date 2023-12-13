@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -35,7 +34,6 @@ func main() {
 
 	fmt.Println("Started...")
 
-	watchPath := filepath.Join(dataPath, "flaarum_instrs")
 	// watch for new files
 	w := watcher.New()
 
@@ -43,7 +41,7 @@ func main() {
 		for {
 			select {
 			case event := <-w.Event:
-				if strings.HasSuffix(event.Path, ".json") {
+				if strings.HasSuffix(event.Path, ".instr_json") {
 					// go doIndex(event.Path)
 					// if debugMode {
 					// 	fmt.Println("indexed: " + event.Path)
@@ -64,7 +62,7 @@ func main() {
 		}
 	}()
 
-	if err := w.AddRecursive(watchPath); err != nil {
+	if err := w.Add(dataPath); err != nil {
 		log.Fatalln(err)
 	}
 
