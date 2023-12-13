@@ -4,6 +4,7 @@ package flaarum_shared
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -202,4 +203,14 @@ func GetFieldType(projName, tableName, fieldName string) string {
 	}
 
 	return fieldNamesToFieldTypes[fieldName]
+}
+
+func PrintError(w http.ResponseWriter, err error) {
+	fmt.Printf("%+v\n", err)
+	debug := GetSetting("debug")
+	if debug == "true" {
+		http.Error(w, fmt.Sprintf("%+v", err), http.StatusInternalServerError)
+	} else {
+		http.Error(w, fmt.Sprintf("%s", err), http.StatusInternalServerError)
+	}
 }
