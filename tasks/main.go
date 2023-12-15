@@ -54,8 +54,6 @@ func main() {
 					json.Unmarshal(rawJson, &instrData)
 					if instrData["cmd"] == "reindex" {
 						go reindex(instrData["project"], instrData["table"], event.Path)
-					} else if instrData["cmd"] == "export" {
-						go export(instrData["project"], instrData["table"], event.Path)
 					}
 				}
 

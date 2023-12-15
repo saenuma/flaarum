@@ -214,3 +214,58 @@ func PrintError(w http.ResponseWriter, err error) {
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 	}
 }
+
+func getTablePath(projName, tableName string) string {
+	dataPath, _ := GetDataPath()
+	return filepath.Join(dataPath, projName, tableName)
+}
+
+func GetCurrentTableStructureParsed(projName, tableName string) (TableStruct, error) {
+	currentVersionNum, err := GetCurrentVersionNum(projName, tableName)
+	if err != nil {
+		return TableStruct{}, err
+	}
+	return GetTableStructureParsed(projName, tableName, currentVersionNum)
+}
+
+func SaveRowData(projName, tableName, rowId string, toWrite map[string]string) error {
+	tablePath := getTablePath(projName, tableName)
+
+	dataLumpPath := filepath.Join(tablePath, "data.flaa2")
+	dataForCurrentRow := EncodeRowData(projName, tableName, toWrite)
+	var begin int64
+	var end int64
+	if DoesPathExists(dataLumpPath) {
+		dataLumpHandle, err := os.OpenFile(dataLumpPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+		if err != nil {
+			return errors.Wrap(err, "os error")
+		}
+		defer dataLumpHandle.Close()
+
+		stat, err := dataLumpHandle.Stat()
+		if err != nil {
+			return errors.Wrap(err, "os error")
+		}
+
+		size := stat.Size()
+		dataLumpHandle.Write([]byte(dataForCurrentRow))
+		begin = size
+		end = int64(len([]byte(dataForCurrentRow))) + size
+	} else {
+		err := os.WriteFile(dataLumpPath, []byte(dataForCurrentRow), 0777)
+		if err != nil {
+			return errors.Wrap(err, "os error")
+		}
+
+		begin = 0
+		end = int64(len([]byte(dataForCurrentRow)))
+	}
+
+	elem := DataF1Elem{rowId, begin, end}
+	err := AppendDataF1File(projName, tableName, "data", elem)
+	if err != nil {
+		return errors.Wrap(err, "os error")
+	}
+
+	return nil
+}

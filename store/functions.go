@@ -51,7 +51,7 @@ func allRowsCount(w http.ResponseWriter, r *http.Request) {
 	defer tablesMutexes[fullTableName].RUnlock()
 
 	dataF1Path := filepath.Join(tablePath, "data.flaa1")
-	elemsMap, err := ParseDataF1File(dataF1Path)
+	elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
 	if err != nil {
 		printError(w, err)
 		return

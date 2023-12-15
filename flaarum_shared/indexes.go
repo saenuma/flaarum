@@ -1,4 +1,4 @@
-package main
+package flaarum_shared
 
 import (
 	"fmt"
@@ -9,7 +9,6 @@ import (
 
 	arrayOperations "github.com/adam-hanna/arrayOperations"
 	"github.com/pkg/errors"
-	"github.com/saenuma/flaarum/flaarum_shared"
 )
 
 func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
@@ -20,7 +19,7 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 
 	var begin int64
 	var end int64
-	if !flaarum_shared.DoesPathExists(indexesF1Path) {
+	if !DoesPathExists(indexesF1Path) {
 		begin = 0
 		err := os.WriteFile(indexesF2Path, []byte(rowId+","), 0777)
 		if err != nil {
@@ -75,7 +74,7 @@ func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 
 func IsNotIndexedFieldVersioned(projName, tableName, fieldName, version string) bool {
 	versionInt, _ := strconv.Atoi(version)
-	ts, _ := flaarum_shared.GetTableStructureParsed(projName, tableName, versionInt)
+	ts, _ := GetTableStructureParsed(projName, tableName, versionInt)
 	for _, fd := range ts.Fields {
 		if fd.FieldName == fieldName && fd.NotIndexed {
 			return true
@@ -91,7 +90,7 @@ func IsNotIndexedFieldVersioned(projName, tableName, fieldName, version string) 
 	return false
 }
 
-func deleteIndex(projName, tableName, fieldName, data, rowId, version string) error {
+func DeleteIndex(projName, tableName, fieldName, data, rowId, version string) error {
 	dataPath, _ := GetDataPath()
 
 	indexesF1Path := filepath.Join(dataPath, projName, tableName, fieldName+"_indexes.flaa1")
@@ -130,7 +129,7 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
 
 			var begin int64
 			var end int64
-			if doesPathExists(indexesF2Path) {
+			if DoesPathExists(indexesF2Path) {
 				indexesF2Handle, err := os.OpenFile(indexesF2Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
 				if err != nil {
 					return errors.Wrap(err, "os error")
@@ -168,8 +167,8 @@ func deleteIndex(projName, tableName, fieldName, data, rowId, version string) er
 	return nil
 }
 
-func isNotIndexedField(projName, tableName, fieldName string) bool {
-	ts, _ := getCurrentTableStructureParsed(projName, tableName)
+func IsNotIndexedField(projName, tableName, fieldName string) bool {
+	ts, _ := GetCurrentTableStructureParsed(projName, tableName)
 	for _, fd := range ts.Fields {
 		if fd.FieldName == fieldName && fd.NotIndexed {
 			return true

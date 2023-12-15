@@ -44,7 +44,7 @@ func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (in
 	}
 }
 
-func (cl *Client) convertInterfaceMapToStringMap(tableName string, oldMap map[string]interface{}) (map[string]string, error) {
+func (cl *Client) ConvertInterfaceMapToStringMap(tableName string, oldMap map[string]interface{}) (map[string]string, error) {
 	currentVersionNum, err := cl.GetCurrentTableVersionNum(tableName)
 	if err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ func (cl *Client) convertInterfaceMapToStringMap(tableName string, oldMap map[st
 
 // InsertRowStr inserts a row into a table. It expects the toInsert to be of type map[string]interface{}.
 func (cl *Client) InsertRowAny(tableName string, toInsert map[string]interface{}) (int64, error) {
-	toInsertStr, err := cl.convertInterfaceMapToStringMap(tableName, toInsert)
+	toInsertStr, err := cl.ConvertInterfaceMapToStringMap(tableName, toInsert)
 	if err != nil {
 		return 0, ValidationError{err.Error()}
 	}
@@ -422,7 +422,7 @@ func (cl Client) UpdateRowsAny(stmt string, updateData map[string]interface{}) e
 	if err != nil {
 		return ValidationError{err.Error()}
 	}
-	updateDataStr, err := cl.convertInterfaceMapToStringMap(stmtStruct.TableName, updateData)
+	updateDataStr, err := cl.ConvertInterfaceMapToStringMap(stmtStruct.TableName, updateData)
 	if err != nil {
 		return ValidationError{err.Error()}
 	}

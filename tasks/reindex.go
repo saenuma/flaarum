@@ -50,12 +50,37 @@ func reindex(projName, tableName, eventPath string) {
 	}
 
 	// begin insertion
+	lastIdPath := filepath.Join(tablePath, "lastId.txt")
+	var lastIdStr string
 	for _, toInsert := range *rows {
-		_, err = cl.InsertRowAny(tableName, toInsert)
+		toInsertStrs, _ := cl.ConvertInterfaceMapToStringMap(tableName, toInsert)
+
+		err = flaarum_shared.SaveRowData(projName, tableName, toInsertStrs["id"], toInsertStrs)
 		if err != nil {
 			P(err)
+			return
 		}
+
+		lastIdStr = toInsert["id"].(string)
+
+		// create indexes
+		for k, v := range toInsertStrs {
+			if flaarum_shared.IsNotIndexedField(projName, tableName, k) {
+				continue
+			}
+
+			err := flaarum_shared.MakeIndex(projName, tableName, k, v, toInsertStrs["id"])
+			if err != nil {
+				P(err)
+				return
+			}
+
+		}
+
 	}
+
+	os.WriteFile(lastIdPath, []byte(lastIdStr), 0777)
+	os.RemoveAll(tmpTablePath)
 
 	os.RemoveAll(tmpTablePath)
 	os.RemoveAll(eventPath)

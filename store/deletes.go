@@ -109,7 +109,7 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
 	dataPath, _ := GetDataPath()
 	dataF1Path := filepath.Join(dataPath, projName, tableName, "data.flaa1")
 	// update flaa1 file by rewriting it.
-	elemsMap, err := ParseDataF1File(dataF1Path)
+	elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
 	if err != nil {
 		return err
 	}
@@ -121,14 +121,14 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
 				continue
 			}
 
-			if !isNotIndexedField(projName, tableName, f) {
-				deleteIndex(projName, tableName, f, d, row["id"], row["_version"])
+			if !flaarum_shared.IsNotIndexedField(projName, tableName, f) {
+				flaarum_shared.DeleteIndex(projName, tableName, f, d, row["id"], row["_version"])
 			}
 		}
 		delete(elemsMap, row["id"])
 	}
 
-	err = RewriteF1File(projName, tableName, "data", elemsMap)
+	err = flaarum_shared.RewriteF1File(projName, tableName, "data", elemsMap)
 	if err != nil {
 		return err
 	}
