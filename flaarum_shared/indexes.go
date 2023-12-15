@@ -123,7 +123,7 @@ func DeleteIndex(projName, tableName, fieldName, data, rowId, version string) er
 			}
 
 		} else {
-			tablePath := getTablePath(projName, tableName)
+			tablePath := GetTablePath(projName, tableName)
 			indexesF2Path := filepath.Join(tablePath, fieldName+"_indexes.flaa2")
 			toWriteData := strings.Join(toWriteIds, ",")
 

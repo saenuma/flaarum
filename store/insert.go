@@ -140,16 +140,16 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
 	currentVersionNum, err := getCurrentVersionNum(projName, tableName)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
 	toInsert["_version"] = fmt.Sprintf("%d", currentVersionNum)
 
-	dataPath, _ := GetDataPath()
+	dataPath, _ := flaarum_shared.GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
-	if !doesPathExists(tablePath) {
-		printError(w, errors.New(fmt.Sprintf("Table '%s' of Project '%s' does not exists.", tableName, projName)))
+	if !flaarum_shared.DoesPathExists(tablePath) {
+		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("Table '%s' of Project '%s' does not exists.", tableName, projName)))
 		return
 	}
 
@@ -168,12 +168,12 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 	var nextId int64
 	lastIdPath := filepath.Join(tablePath, "lastId.txt")
 
-	if !doesPathExists(lastIdPath) {
+	if !flaarum_shared.DoesPathExists(lastIdPath) {
 		nextId = 1
 	} else {
 		raw, err := os.ReadFile(lastIdPath)
 		if err != nil {
-			printError(w, err)
+			flaarum_shared.PrintError(w, err)
 			return
 		}
 		lastId, _ := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
@@ -185,7 +185,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
 	err = flaarum_shared.SaveRowData(projName, tableName, nextIdStr, toInsert)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
@@ -196,7 +196,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 		if !flaarum_shared.IsNotIndexedField(projName, tableName, k) {
 			err := flaarum_shared.MakeIndex(projName, tableName, k, v, nextIdStr)
 			if err != nil {
-				printError(w, err)
+				flaarum_shared.PrintError(w, err)
 				return
 			}
 		}

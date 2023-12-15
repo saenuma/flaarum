@@ -18,7 +18,7 @@ var projsMutex *sync.RWMutex // for projects and tables (table data uses differe
 var tablesMutexes map[string]*sync.RWMutex
 
 func init() {
-	dataPath, err := GetDataPath()
+	dataPath, err := flaarum_shared.GetDataPath()
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +38,7 @@ func init() {
 		panic(err)
 	}
 
-	if !doesPathExists(confPath) {
+	if !flaarum_shared.DoesPathExists(confPath) {
 		conf, err := zazabul.ParseConfig(flaarum_shared.RootConfigTemplate)
 		if err != nil {
 			panic(err)

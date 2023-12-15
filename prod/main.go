@@ -66,7 +66,7 @@ Supported Commands:
 
 	case "mpr":
 		keyPath := flaarum_shared.GetKeyStrPath()
-		if !doesPathExists(keyPath) {
+		if !flaarum_shared.DoesPathExists(keyPath) {
 			randomString := flaarum_shared.GenerateSecureRandomString(50)
 
 			err := os.WriteFile(keyPath, []byte(randomString), 0777)
@@ -169,13 +169,6 @@ Supported Commands:
 		os.Exit(1)
 	}
 
-}
-
-func doesPathExists(p string) bool {
-	if _, err := os.Stat(p); os.IsNotExist(err) {
-		return false
-	}
-	return true
 }
 
 func isLongRunningTaskActive() bool {

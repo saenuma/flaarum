@@ -18,20 +18,20 @@ func countRows(w http.ResponseWriter, r *http.Request) {
 	stmt := r.FormValue("stmt")
 	qd, err := flaarum_shared.ParseSearchStmt(stmt)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
 	tableName := qd.TableName
 
 	if !doesTableExists(projName, tableName) {
-		printError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
+		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
 		return
 	}
 
 	rows, err := innerSearch(projName, stmt)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 	fmt.Fprintf(w, "%d", len(*rows))
@@ -42,7 +42,7 @@ func allRowsCount(w http.ResponseWriter, r *http.Request) {
 	projName := vars["proj"]
 	tableName := vars["tbl"]
 
-	dataPath, _ := GetDataPath()
+	dataPath, _ := flaarum_shared.GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 
 	createTableMutexIfNecessary(projName, tableName)
@@ -53,7 +53,7 @@ func allRowsCount(w http.ResponseWriter, r *http.Request) {
 	dataF1Path := filepath.Join(tablePath, "data.flaa1")
 	elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
@@ -67,27 +67,27 @@ func sumRows(w http.ResponseWriter, r *http.Request) {
 	stmt := r.FormValue("stmt")
 	qd, err := flaarum_shared.ParseSearchStmt(stmt)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
 	tableName := qd.TableName
 
 	if !doesTableExists(projName, tableName) {
-		printError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
+		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
 		return
 	}
 
 	rows, err := innerSearch(projName, stmt)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
 	toSumField := r.FormValue("tosum")
 	tableStruct, err := getCurrentTableStructureParsed(projName, tableName)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 	var toSumFieldType string
@@ -100,11 +100,11 @@ func sumRows(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !found {
-		printError(w, errors.New(fmt.Sprintf("The field '%s' does not exist in this table structure", toSumField)))
+		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("The field '%s' does not exist in this table structure", toSumField)))
 		return
 	}
 	if toSumFieldType != "int" && toSumFieldType != "float" {
-		printError(w, errors.New(fmt.Sprintf("The field '%s' is not a summable field.", toSumField)))
+		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("The field '%s' is not a summable field.", toSumField)))
 		return
 	}
 
@@ -114,14 +114,14 @@ func sumRows(w http.ResponseWriter, r *http.Request) {
 		if toSumFieldType == "int" {
 			oneData, err := strconv.ParseInt(row[toSumField], 10, 64)
 			if err != nil {
-				printError(w, errors.Wrap(err, "strconv failed."))
+				flaarum_shared.PrintError(w, errors.Wrap(err, "strconv failed."))
 				return
 			}
 			sumInt += oneData
 		} else {
 			oneData, err := strconv.ParseFloat(row[toSumField], 64)
 			if err != nil {
-				printError(w, errors.Wrap(err, "strconv failed."))
+				flaarum_shared.PrintError(w, errors.Wrap(err, "strconv failed."))
 				return
 			}
 			sumFloat += oneData

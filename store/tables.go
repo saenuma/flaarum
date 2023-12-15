@@ -54,29 +54,29 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 
 	tableStruct, err := flaarum_shared.ParseTableStructureStmt(stmt)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
-	dataPath, _ := GetDataPath()
+	dataPath, _ := flaarum_shared.GetDataPath()
 
 	projsMutex.Lock()
 	defer projsMutex.Unlock()
 
 	err = validateTableStruct(projName, tableStruct)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
-	if doesPathExists(filepath.Join(dataPath, projName, tableStruct.TableName)) {
-		printError(w, errors.New(fmt.Sprintf("Table '%s' of Project '%s' has already being created.", tableStruct.TableName, projName)))
+	if flaarum_shared.DoesPathExists(filepath.Join(dataPath, projName, tableStruct.TableName)) {
+		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("Table '%s' of Project '%s' has already being created.", tableStruct.TableName, projName)))
 		return
 	}
 
 	err = os.MkdirAll(filepath.Join(dataPath, projName, tableStruct.TableName), 0777)
 	if err != nil {
-		printError(w, errors.Wrap(err, "os error."))
+		flaarum_shared.PrintError(w, errors.Wrap(err, "os error."))
 		return
 	}
 
@@ -84,7 +84,7 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 	err = os.WriteFile(filepath.Join(dataPath, projName, tableStruct.TableName, "structure1.txt"),
 		[]byte(formattedStmt), 0777)
 	if err != nil {
-		printError(w, errors.Wrap(err, "ioutil error."))
+		flaarum_shared.PrintError(w, errors.Wrap(err, "ioutil error."))
 		return
 	}
 
@@ -99,36 +99,36 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 
 	tableStruct, err := flaarum_shared.ParseTableStructureStmt(stmt)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
-	dataPath, _ := GetDataPath()
+	dataPath, _ := flaarum_shared.GetDataPath()
 
 	projsMutex.Lock()
 	defer projsMutex.Unlock()
 
 	err = validateTableStruct(projName, tableStruct)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
 	tablePath := filepath.Join(dataPath, projName, tableStruct.TableName)
-	if !doesPathExists(tablePath) {
-		printError(w, errors.New(fmt.Sprintf("Table '%s' of Project '%s' does not exists.", tableStruct.TableName, projName)))
+	if !flaarum_shared.DoesPathExists(tablePath) {
+		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("Table '%s' of Project '%s' does not exists.", tableStruct.TableName, projName)))
 		return
 	}
 
 	currentVersionNum, err := getCurrentVersionNum(projName, tableStruct.TableName)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
 	oldFormattedStmt, err := os.ReadFile(filepath.Join(tablePath, fmt.Sprintf("structure%d.txt", currentVersionNum)))
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
@@ -138,7 +138,7 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 		newStructurePath := filepath.Join(tablePath, fmt.Sprintf("structure%d.txt", nextVersionNumber))
 		err = os.WriteFile(newStructurePath, []byte(formattedStmt), 0777)
 		if err != nil {
-			printError(w, errors.Wrap(err, "ioutil error."))
+			flaarum_shared.PrintError(w, errors.Wrap(err, "ioutil error."))
 			return
 		}
 	}
@@ -172,7 +172,7 @@ func getCurrentVersionNumHTTP(w http.ResponseWriter, r *http.Request) {
 
 	currentVersionNum, err := getCurrentVersionNum(projName, tableName)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
@@ -185,7 +185,7 @@ func getTableStructureHTTP(w http.ResponseWriter, r *http.Request) {
 	tableName := vars["tbl"]
 	versionNum := vars["vnum"]
 
-	dataPath, _ := GetDataPath()
+	dataPath, _ := flaarum_shared.GetDataPath()
 
 	projsMutex.Lock()
 	defer projsMutex.Unlock()
@@ -193,7 +193,7 @@ func getTableStructureHTTP(w http.ResponseWriter, r *http.Request) {
 	tablePath := filepath.Join(dataPath, projName, tableName)
 	stmt, err := os.ReadFile(filepath.Join(tablePath, fmt.Sprintf("structure%s.txt", versionNum)))
 	if err != nil {
-		printError(w, errors.Wrap(err, "ioutil error"))
+		flaarum_shared.PrintError(w, errors.Wrap(err, "ioutil error"))
 		return
 	}
 
@@ -201,7 +201,7 @@ func getTableStructureHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func getExistingTables(projName string) ([]string, error) {
-	dataPath, _ := GetDataPath()
+	dataPath, _ := flaarum_shared.GetDataPath()
 	tablesPath := filepath.Join(dataPath, projName)
 
 	tablesFIs, err := os.ReadDir(tablesPath)
@@ -226,13 +226,13 @@ func listTables(w http.ResponseWriter, r *http.Request) {
 
 	tables, err := getExistingTables(projName)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
 	jsonBytes, err := json.Marshal(tables)
 	if err != nil {
-		printError(w, errors.Wrap(err, "json error."))
+		flaarum_shared.PrintError(w, errors.Wrap(err, "json error."))
 		return
 	}
 
@@ -244,7 +244,7 @@ func deleteTable(w http.ResponseWriter, r *http.Request) {
 	projName := vars["proj"]
 	tableName := vars["tbl"]
 
-	dataPath, _ := GetDataPath()
+	dataPath, _ := flaarum_shared.GetDataPath()
 
 	projsMutex.Lock()
 	defer projsMutex.Unlock()
@@ -255,14 +255,14 @@ func deleteTable(w http.ResponseWriter, r *http.Request) {
 
 	if !doesTableExists(projName, tableName) {
 		tablesMutexes[fullTableName].Unlock()
-		printError(w, errors.New(fmt.Sprintf("Table '%s' does not exist in project '%s'.", tableName, projName)))
+		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("Table '%s' does not exist in project '%s'.", tableName, projName)))
 		return
 	}
 
 	err := os.RemoveAll(filepath.Join(dataPath, projName, tableName))
 	if err != nil {
 		tablesMutexes[fullTableName].Unlock()
-		printError(w, errors.Wrap(err, "delete dir failed."))
+		flaarum_shared.PrintError(w, errors.Wrap(err, "delete dir failed."))
 		return
 	}
 

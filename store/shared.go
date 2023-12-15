@@ -4,8 +4,6 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,10 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/flaarum_shared"
 )
-
-func GetDataPath() (string, error) {
-	return flaarum_shared.GetDataPath()
-}
 
 func nameValidate(name string) error {
 	if strings.Contains(name, ".") || strings.Contains(name, " ") || strings.Contains(name, "\t") ||
@@ -28,10 +22,6 @@ func nameValidate(name string) error {
 	return nil
 }
 
-func printError(w http.ResponseWriter, err error) {
-	flaarum_shared.PrintError(w, err)
-}
-
 func printValError(w http.ResponseWriter, err error) {
 	fmt.Printf("%+v\n", err)
 	debug := flaarum_shared.GetSetting("debug")
@@ -40,13 +30,6 @@ func printValError(w http.ResponseWriter, err error) {
 	} else {
 		http.Error(w, fmt.Sprintf("%s", err), http.StatusBadRequest)
 	}
-}
-
-func doesPathExists(p string) bool {
-	if _, err := os.Stat(p); os.IsNotExist(err) {
-		return false
-	}
-	return true
 }
 
 func createTableMutexIfNecessary(projName, tableName string) {
@@ -81,9 +64,4 @@ func MakeHash(data string) string {
 	h.Write([]byte(data))
 	bs := h.Sum(nil)
 	return fmt.Sprintf("%x", bs)
-}
-
-func getTablePath(projName, tableName string) string {
-	dataPath, _ := GetDataPath()
-	return filepath.Join(dataPath, projName, tableName)
 }

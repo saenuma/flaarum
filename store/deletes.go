@@ -17,25 +17,25 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 	stmt := r.FormValue("stmt")
 	stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
 	tableName := stmtStruct.TableName
 	if !doesTableExists(projName, tableName) {
-		printError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
+		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
 		return
 	}
 
 	rows, err := innerSearch(projName, stmt)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
 	existingTables, err := getExistingTables(projName)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
@@ -43,7 +43,7 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 	for _, tbl := range existingTables {
 		ts, err := getCurrentTableStructureParsed(projName, tbl)
 		if err != nil {
-			printError(w, err)
+			flaarum_shared.PrintError(w, err)
 			return
 		}
 
@@ -64,13 +64,13 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 
 			toCheckRows, err := innerSearch(projName, innerStmt)
 			if err != nil {
-				printError(w, err)
+				flaarum_shared.PrintError(w, err)
 				return
 			}
 
 			if fkd.OnDelete == "on_delete_restrict" {
 				if len(*toCheckRows) > 0 {
-					printError(w, errors.New(fmt.Sprintf("This row with id '%s' is used in table '%s'",
+					flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("This row with id '%s' is used in table '%s'",
 						row["id"], otherTbl)))
 					return
 				}
@@ -81,7 +81,7 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 
 				err := innerDelete(projName, otherTbl, toCheckRows)
 				if err != nil {
-					printError(w, err)
+					flaarum_shared.PrintError(w, err)
 					tablesMutexes[otherTblFullName].Unlock()
 					return
 				}
@@ -98,7 +98,7 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 
 	err = innerDelete(projName, tableName, rows)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
@@ -106,7 +106,7 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 }
 
 func innerDelete(projName, tableName string, rows *[]map[string]string) error {
-	dataPath, _ := GetDataPath()
+	dataPath, _ := flaarum_shared.GetDataPath()
 	dataF1Path := filepath.Join(dataPath, projName, tableName, "data.flaa1")
 	// update flaa1 file by rewriting it.
 	elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)

@@ -215,7 +215,7 @@ func PrintError(w http.ResponseWriter, err error) {
 	}
 }
 
-func getTablePath(projName, tableName string) string {
+func GetTablePath(projName, tableName string) string {
 	dataPath, _ := GetDataPath()
 	return filepath.Join(dataPath, projName, tableName)
 }
@@ -229,7 +229,7 @@ func GetCurrentTableStructureParsed(projName, tableName string) (TableStruct, er
 }
 
 func SaveRowData(projName, tableName, rowId string, toWrite map[string]string) error {
-	tablePath := getTablePath(projName, tableName)
+	tablePath := GetTablePath(projName, tableName)
 
 	dataLumpPath := filepath.Join(tablePath, "data.flaa2")
 	dataForCurrentRow := EncodeRowData(projName, tableName, toWrite)

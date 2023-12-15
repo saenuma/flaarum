@@ -17,7 +17,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 	stmt := r.FormValue("stmt")
 	stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
@@ -29,12 +29,12 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := innerSearch(projName, stmt)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
 	if len(*rows) == 0 {
-		printError(w, errors.New("There is no data to update. The search statement returned nothing."))
+		flaarum_shared.PrintError(w, errors.New("There is no data to update. The search statement returned nothing."))
 		return
 	}
 
@@ -49,14 +49,14 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 
 	currentVersion, err := getCurrentVersionNum(projName, tableName)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 	updatedValues["_version"] = strconv.Itoa(currentVersion)
 
 	tableStruct, err := getCurrentTableStructureParsed(projName, tableName)
 	if err != nil {
-		printError(w, err)
+		flaarum_shared.PrintError(w, err)
 		return
 	}
 
@@ -118,12 +118,12 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 				if ok && oldData != newData {
 					err = flaarum_shared.DeleteIndex(projName, tableName, fieldName, oldData, row["id"], (*rows)[i]["_version"])
 					if err != nil {
-						printError(w, err)
+						flaarum_shared.PrintError(w, err)
 						return
 					}
 					err = flaarum_shared.MakeIndex(projName, tableName, fieldName, newData, row["id"])
 					if err != nil {
-						printError(w, err)
+						flaarum_shared.PrintError(w, err)
 						return
 					}
 				}
@@ -135,7 +135,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 		// write data
 		err = flaarum_shared.SaveRowData(projName, tableName, row["id"], row)
 		if err != nil {
-			printError(w, err)
+			flaarum_shared.PrintError(w, err)
 			return
 		}
 	}
