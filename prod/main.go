@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -26,6 +27,8 @@ func main() {
 		fmt.Printf(`Flaarum's prod makes a flaarum instance production ready.
 
 Supported Commands:
+
+  genssl    Generates the ssl certificates for a flaarum installation
 
   r         Read the current key string used
 
@@ -163,6 +166,16 @@ Supported Commands:
 		} else {
 			fmt.Println("No long running task is running.")
 		}
+
+	case "genssl":
+		rootPath, _ := flaarum_shared.GetRootPath()
+		keyPath := filepath.Join(rootPath, "https-server.key")
+		crtPath := filepath.Join(rootPath, "https-server.crt")
+
+		exec.Command("openssl", "req", "-x509", "-newkey", "rsa:4096", "-keyout", keyPath,
+			"-out", crtPath, "-sha256", "-days", "3650", "-nodes", "-subj",
+			"/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname").Run()
+		fmt.Println("ok")
 
 	default:
 		color.Red.Println("Unexpected command. Run the Flaarum's prod with --help to find out the supported commands.")

@@ -38,9 +38,6 @@ apps:
     plugs:
       - network
 
-  genssl:
-    command: bin/genssl
-  
   prod:
     command: bin/prod
 
