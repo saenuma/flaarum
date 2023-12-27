@@ -43,3 +43,9 @@ type StmtStruct struct {
 	MultiWhereOptions [][]WhereStruct
 	Joiner            string
 }
+
+type DataF1Elem struct {
+	DataKey   string
+	DataBegin int64
+	DataEnd   int64
+}

@@ -10,12 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type DataF1Elem struct {
-	DataKey   string
-	DataBegin int64
-	DataEnd   int64
-}
-
 func ParseDataF1File(path string) (map[string]DataF1Elem, error) {
 	ret := make(map[string]DataF1Elem, 0)
 	rawF1File, err := os.ReadFile(path)

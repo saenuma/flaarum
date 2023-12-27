@@ -44,7 +44,7 @@ func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (in
 	}
 }
 
-func (cl *Client) ConvertInterfaceMapToStringMap(tableName string, oldMap map[string]interface{}) (map[string]string, error) {
+func (cl *Client) ConvertInterfaceMapToStringMap(tableName string, oldMap map[string]any) (map[string]string, error) {
 	currentVersionNum, err := cl.GetCurrentTableVersionNum(tableName)
 	if err != nil {
 		return nil, err
@@ -88,8 +88,8 @@ func (cl *Client) ConvertInterfaceMapToStringMap(tableName string, oldMap map[st
 	return newMap, nil
 }
 
-// InsertRowStr inserts a row into a table. It expects the toInsert to be of type map[string]interface{}.
-func (cl *Client) InsertRowAny(tableName string, toInsert map[string]interface{}) (int64, error) {
+// InsertRowStr inserts a row into a table. It expects the toInsert to be of type map[string]any.
+func (cl *Client) InsertRowAny(tableName string, toInsert map[string]any) (int64, error) {
 	toInsertStr, err := cl.ConvertInterfaceMapToStringMap(tableName, toInsert)
 	if err != nil {
 		return 0, ValidationError{err.Error()}
@@ -99,7 +99,7 @@ func (cl *Client) InsertRowAny(tableName string, toInsert map[string]interface{}
 }
 
 // ParseRow given a TableStruct would convert a map of strings to a map of interfaces.
-func (cl *Client) ParseRow(rowStr map[string]string, tableStruct flaarum_shared.TableStruct) (map[string]interface{}, error) {
+func (cl *Client) ParseRow(rowStr map[string]string, tableStruct flaarum_shared.TableStruct) (map[string]any, error) {
 	fTypeMap := make(map[string]string)
 	for _, fd := range tableStruct.Fields {
 		fTypeMap[fd.FieldName] = fd.FieldType
@@ -125,7 +125,7 @@ func (cl *Client) ParseRow(rowStr map[string]string, tableStruct flaarum_shared.
 		}
 	}
 
-	tmpRow := make(map[string]interface{})
+	tmpRow := make(map[string]any)
 	for k, v := range rowStr {
 		fieldType, ok := fTypeMap[k]
 		if v == "" {
@@ -177,7 +177,7 @@ func (cl *Client) ParseRow(rowStr map[string]string, tableStruct flaarum_shared.
 	return tmpRow, nil
 }
 
-func (cl *Client) Search(stmt string) (*[]map[string]interface{}, error) {
+func (cl *Client) Search(stmt string) (*[]map[string]any, error) {
 	urlValues := url.Values{}
 	urlValues.Set("key-str", cl.KeyStr)
 	urlValues.Set("stmt", stmt)
@@ -200,7 +200,7 @@ func (cl *Client) Search(stmt string) (*[]map[string]interface{}, error) {
 			return nil, ConnError{"json error\n" + err.Error()}
 		}
 
-		ret := make([]map[string]interface{}, 0)
+		ret := make([]map[string]any, 0)
 		stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
 		if err != nil {
 			return nil, err
@@ -228,7 +228,7 @@ func (cl *Client) Search(stmt string) (*[]map[string]interface{}, error) {
 	}
 }
 
-func (cl Client) SearchForOne(stmt string) (*map[string]interface{}, error) {
+func (cl Client) SearchForOne(stmt string) (*map[string]any, error) {
 	urlValues := url.Values{}
 	urlValues.Set("key-str", cl.KeyStr)
 	urlValues.Set("stmt", stmt)
@@ -355,7 +355,7 @@ func (cl Client) AllRowsCount(tableName string) (int64, error) {
 }
 
 // Sums the fields of a row and returns int64 if it is an int field
-func (cl Client) SumRows(stmt string) (interface{}, error) {
+func (cl Client) SumRows(stmt string) (any, error) {
 	urlValues := url.Values{}
 	urlValues.Add("stmt", stmt)
 	urlValues.Add("key-str", cl.KeyStr)
@@ -417,7 +417,7 @@ func (cl Client) UpdateRowsStr(stmt string, updateDataStr map[string]string) err
 	}
 }
 
-func (cl Client) UpdateRowsAny(stmt string, updateData map[string]interface{}) error {
+func (cl Client) UpdateRowsAny(stmt string, updateData map[string]any) error {
 	stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
 	if err != nil {
 		return ValidationError{err.Error()}
