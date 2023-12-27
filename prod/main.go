@@ -106,6 +106,24 @@ Supported Commands:
 			panic(err)
 		}
 
+	case "ifa":
+		status := isLongRunningTaskActive()
+		if status {
+			color.Red.Println("A long running task is running.")
+		} else {
+			fmt.Println("No long running task is running.")
+		}
+
+	case "genssl":
+		rootPath, _ := flaarum_shared.GetRootPath()
+		keyPath := filepath.Join(rootPath, "https-server.key")
+		crtPath := filepath.Join(rootPath, "https-server.crt")
+
+		exec.Command("openssl", "req", "-x509", "-newkey", "rsa:4096", "-keyout", keyPath,
+			"-out", crtPath, "-sha256", "-days", "3650", "-nodes", "-subj",
+			"/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname").Run()
+		fmt.Println("ok")
+
 	case "reindex":
 		if len(os.Args) < 4 {
 			color.Red.Println("Expecting the name of the project and the table name in order.")
@@ -139,7 +157,7 @@ Supported Commands:
 		}
 
 		instrData := map[string]string{
-			"cmd":     "export",
+			"cmd":     "json",
 			"project": os.Args[2],
 			"table":   os.Args[3],
 		}
@@ -158,23 +176,31 @@ Supported Commands:
 
 		fmt.Println("Wait for operation to finish before using the database.")
 
-	case "ifa":
-		status := isLongRunningTaskActive()
-		if status {
-			color.Red.Println("A long running task is running.")
-		} else {
-			fmt.Println("No long running task is running.")
+	case "csv":
+		if len(os.Args) < 4 {
+			color.Red.Println("Expecting the name of the project and the table name in order.")
+			os.Exit(1)
 		}
 
-	case "genssl":
-		rootPath, _ := flaarum_shared.GetRootPath()
-		keyPath := filepath.Join(rootPath, "https-server.key")
-		crtPath := filepath.Join(rootPath, "https-server.crt")
+		instrData := map[string]string{
+			"cmd":     "csv",
+			"project": os.Args[2],
+			"table":   os.Args[3],
+		}
 
-		exec.Command("openssl", "req", "-x509", "-newkey", "rsa:4096", "-keyout", keyPath,
-			"-out", crtPath, "-sha256", "-days", "3650", "-nodes", "-subj",
-			"/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname").Run()
-		fmt.Println("ok")
+		dataPath, _ := flaarum_shared.GetDataPath()
+
+		outCommandInstr := filepath.Join(dataPath, flaarum_shared.UntestedRandomString(5)+".instr_json")
+		hasLongRunningTaskActive := isLongRunningTaskActive()
+		if hasLongRunningTaskActive {
+			color.Red.Println("Wait for long running task(s) to be completed.")
+			os.Exit(1)
+		}
+
+		rawJson, _ := json.Marshal(instrData)
+		os.WriteFile(outCommandInstr, rawJson, 0777)
+
+		fmt.Println("Wait for operation to finish before using the database.")
 
 	default:
 		color.Red.Println("Unexpected command. Run the Flaarum's prod with --help to find out the supported commands.")
