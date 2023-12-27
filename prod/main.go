@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	// dataPath, _ := flaarum_shared.GetDataPath()
+	dataPath, _ := flaarum_shared.GetDataPath()
 	if len(os.Args) < 2 {
 		color.Red.Println("expected a command. Open help to view commands.")
 		os.Exit(1)
@@ -24,7 +24,7 @@ func main() {
 
 	switch os.Args[1] {
 	case "--help", "help", "h":
-		fmt.Println(`Flaarum's prod makes a flaarum instance production ready.
+		fmt.Printf(`Flaarum's prod makes a flaarum instance production ready.
 
 Supported Commands:
 
@@ -41,7 +41,10 @@ Supported Commands:
   reindex   Run the long running task to reindex a table. It expects
             a project name and table name.
 
-      `)
+  json      Export a table as json and the table structures. It would be exported to 
+	          '%s'. It expects a project name and table name.
+
+      `, dataPath)
 
 	case "r":
 		keyPath := flaarum_shared.GetKeyStrPath()
@@ -129,31 +132,31 @@ Supported Commands:
 
 		fmt.Println("Wait for operation to finish before using the database.")
 
-	// case "export":
-	// 	if len(os.Args) < 4 {
-	// 		color.Red.Println("Expecting the name of the project and the table name in order.")
-	// 		os.Exit(1)
-	// 	}
+	case "json":
+		if len(os.Args) < 4 {
+			color.Red.Println("Expecting the name of the project and the table name in order.")
+			os.Exit(1)
+		}
 
-	// 	instrData := map[string]string{
-	// 		"cmd":     "export",
-	// 		"project": os.Args[2],
-	// 		"table":   os.Args[3],
-	// 	}
+		instrData := map[string]string{
+			"cmd":     "export",
+			"project": os.Args[2],
+			"table":   os.Args[3],
+		}
 
-	// 	dataPath, _ := flaarum_shared.GetDataPath()
+		dataPath, _ := flaarum_shared.GetDataPath()
 
-	// 	outCommandInstr := filepath.Join(dataPath, flaarum_shared.UntestedRandomString(5)+".instr_json")
-	// 	hasLongRunningTaskActive := isLongRunningTaskActive()
-	// 	if hasLongRunningTaskActive {
-	// 		color.Red.Println("Wait for long running task(s) to be completed.")
-	// 		os.Exit(1)
-	// 	}
+		outCommandInstr := filepath.Join(dataPath, flaarum_shared.UntestedRandomString(5)+".instr_json")
+		hasLongRunningTaskActive := isLongRunningTaskActive()
+		if hasLongRunningTaskActive {
+			color.Red.Println("Wait for long running task(s) to be completed.")
+			os.Exit(1)
+		}
 
-	// 	rawJson, _ := json.Marshal(instrData)
-	// 	os.WriteFile(outCommandInstr, rawJson, 0777)
+		rawJson, _ := json.Marshal(instrData)
+		os.WriteFile(outCommandInstr, rawJson, 0777)
 
-	// 	fmt.Println("Wait for operation to finish before using the database.")
+		fmt.Println("Wait for operation to finish before using the database.")
 
 	case "ifa":
 		status := isLongRunningTaskActive()
