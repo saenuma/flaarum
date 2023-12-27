@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -21,8 +22,8 @@ func createProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if projName == "first_proj" {
-		flaarum_shared.PrintError(w, errors.New("the name 'first_proj' is by default created."))
+	if isInternalProjectName(projName) {
+		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", projName)))
 		return
 	}
 
@@ -46,7 +47,7 @@ func deleteProject(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	projName := vars["proj"]
 
-	if projName == "keyfile" || projName == "first_proj" {
+	if isInternalProjectName(projName) {
 		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", projName)))
 		return
 	}
@@ -105,10 +106,11 @@ func listProjects(w http.ResponseWriter, r *http.Request) {
 
 	projs := make([]string, 0)
 	for _, fi := range fis {
-		if fi.IsDir() {
+		if fi.IsDir() && !isInternalProjectName(fi.Name()) {
 			projs = append(projs, fi.Name())
 		}
 	}
+	projs = append(projs, "first_proj")
 
 	jsonBytes, err := json.Marshal(projs)
 	if err != nil {
@@ -124,8 +126,13 @@ func renameProject(w http.ResponseWriter, r *http.Request) {
 	projName := vars["proj"]
 	newProjName := vars["nproj"]
 
-	if projName == "keyfile" || projName == "first_proj" {
+	if isInternalProjectName(projName) {
 		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", projName)))
+		return
+	}
+
+	if isInternalProjectName(newProjName) {
+		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", newProjName)))
 		return
 	}
 
@@ -177,4 +184,16 @@ func renameProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "ok")
+}
+
+func isInternalProjectName(projName string) bool {
+	if projName == "keyfile" || projName == "first_proj" {
+		return true
+	}
+
+	if strings.HasPrefix(projName, "flaarum_export_") {
+		return true
+	}
+
+	return false
 }
