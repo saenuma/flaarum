@@ -135,7 +135,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 
 		}
 
-		if (ft == "int" || ft == "bool") && whereStruct.Relation == "has" {
+		if ft == "int" && whereStruct.Relation == "has" {
 			return nil, errors.New(fmt.Sprintf("The field type '%s' does not support the query relation 'has'", ft))
 		}
 

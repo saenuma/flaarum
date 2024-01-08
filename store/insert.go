@@ -54,12 +54,8 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 				if err != nil {
 					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not of type 'int'", v, k))
 				}
-			} else if fd.FieldType == "bool" {
-				if v != "t" && v != "f" {
-					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in the short bool format.", v, k))
-				}
-
 			}
+
 		}
 
 		if !ok && fd.Required {
