@@ -87,6 +87,32 @@ func findIdsContainingTrueWhereValues(projName, tableName, fieldName string, tru
 	return retIds, nil
 }
 
+// read a text field
+func readTextField(projName, tableName, fieldName, lookedForId string) string {
+	dataPath, _ := flaarum_shared.GetDataPath()
+	tablePath := filepath.Join(dataPath, projName, tableName)
+
+	elemsMap, _ := flaarum_shared.ParseDataF1File(filepath.Join(tablePath, "data.flaa1"))
+
+	elem, ok := elemsMap[lookedForId]
+	if !ok {
+		return ""
+	}
+
+	rawRowData, err := flaarum_shared.ReadPortionF2File(projName, tableName, "data",
+		elem.DataBegin, elem.DataEnd)
+	if err != nil {
+		return ""
+	}
+
+	rowMap, err := flaarum_shared.ParseEncodedRowData(rawRowData)
+	if err != nil {
+		return ""
+	}
+
+	return rowMap[fieldName]
+}
+
 func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaarum_shared.WhereStruct) ([]string, error) {
 	dataPath, _ := flaarum_shared.GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
@@ -742,6 +768,47 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 
 			beforeFilter = append(beforeFilter, stringIds)
 
+		} else if whereStruct.Relation == "has" {
+
+			stringIds := make([]string, 0)
+
+			if strings.Contains(whereStruct.FieldName, ".") {
+				trueWhereValues := make([]string, 0)
+				parts := strings.Split(whereStruct.FieldName, ".")
+
+				pTbl, ok := expDetails[parts[0]]
+				if !ok {
+					continue
+				}
+
+				otherTablePath := filepath.Join(dataPath, projName, pTbl)
+				pointedTableElemsMap, _ := flaarum_shared.ParseDataF1File(filepath.Join(otherTablePath, "data.flaa1"))
+
+				for _, elem := range pointedTableElemsMap {
+					aTextToSearch := readTextField(projName, pTbl, whereStruct.FieldName, elem.DataKey)
+					if strings.Contains(aTextToSearch, whereStruct.FieldValue) {
+						trueWhereValues = append(trueWhereValues, elem.DataKey)
+					}
+				}
+
+				stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+				if err != nil {
+					return nil, err
+				}
+				beforeFilter = append(beforeFilter, stringIds)
+
+			} else {
+				elemsMap, _ := flaarum_shared.ParseDataF1File(filepath.Join(tablePath, "data.flaa1"))
+
+				for _, elem := range elemsMap {
+					aTextToSearch := readTextField(projName, tableName, whereStruct.FieldName, elem.DataKey)
+					if strings.Contains(aTextToSearch, whereStruct.FieldValue) {
+						stringIds = append(stringIds, elem.DataKey)
+					}
+				}
+			}
+
+			beforeFilter = append(beforeFilter, stringIds)
 		}
 
 	}
