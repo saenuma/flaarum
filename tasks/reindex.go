@@ -80,7 +80,6 @@ func reindex(projName, tableName, eventPath string) {
 	}
 
 	os.WriteFile(lastIdPath, []byte(lastIdStr), 0777)
-	os.RemoveAll(tmpTablePath)
 
 	os.RemoveAll(tmpTablePath)
 	os.RemoveAll(eventPath)
