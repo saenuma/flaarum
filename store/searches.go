@@ -239,6 +239,8 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 							fmt.Printf("%+v\n", err)
 						}
 						beforeFilter = append(beforeFilter, strings.Split(string(readBytes), ","))
+					} else {
+						beforeFilter = append(beforeFilter, []string{})
 					}
 				}
 			}
