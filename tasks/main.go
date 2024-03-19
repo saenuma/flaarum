@@ -30,11 +30,6 @@ func main() {
 		panic(err)
 	}
 
-	if err != nil {
-		P(err)
-		return
-	}
-
 	fmt.Println("Started...")
 
 	// watch for new files
