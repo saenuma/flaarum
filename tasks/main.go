@@ -73,7 +73,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	if err := w.Start(time.Millisecond * 100); err != nil {
+	if err := w.Start(time.Second); err != nil {
 		log.Fatalln(err)
 	}
 
