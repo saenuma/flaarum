@@ -1037,17 +1037,15 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 	limitedRet2 := make([]map[string]string, 0)
 
-	// enforces a default limit of 1000 per search.
-	rowSearchLimit := stmtStruct.Limit
-	if rowSearchLimit == 0 {
-		rowSearchLimit = 1000
-	}
-
-	for i, toOut := range limitedRet {
-		if int64(i) == rowSearchLimit {
-			break
+	if stmtStruct.Limit != 0 {
+		for i, toOut := range limitedRet {
+			if int64(i) == stmtStruct.Limit {
+				break
+			}
+			limitedRet2 = append(limitedRet2, toOut)
 		}
-		limitedRet2 = append(limitedRet2, toOut)
+	} else {
+		limitedRet2 = limitedRet
 	}
 
 	// selected fields
