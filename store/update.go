@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -103,6 +105,37 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 	tablesMutexes[fullTableName].Lock()
 	defer tablesMutexes[fullTableName].Unlock()
 
+	dataPath, _ := flaarum_shared.GetDataPath()
+	dataF1Path := filepath.Join(dataPath, projName, tableName, "data.flaa1")
+
+	elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
+	if err != nil {
+		flaarum_shared.PrintError(w, err)
+		return
+	}
+
+	// write null data to flaa2 file
+	for _, row := range patchedRows {
+		tablePath := flaarum_shared.GetTablePath(projName, tableName)
+
+		dataLumpPath := filepath.Join(tablePath, "data.flaa2")
+
+		begin := elemsMap[row["id"]].DataBegin
+		end := elemsMap[row["id"]].DataEnd
+
+		nullData := make([]byte, end-begin)
+
+		if flaarum_shared.DoesPathExists(dataLumpPath) {
+			dataLumpHandle, err := os.OpenFile(dataLumpPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			defer dataLumpHandle.Close()
+
+			dataLumpHandle.WriteAt(nullData, begin)
+		}
+	}
 	// create or delete indexes.
 	for i, row := range patchedRows {
 		for fieldName, newData := range row {
