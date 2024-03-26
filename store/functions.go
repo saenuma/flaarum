@@ -90,11 +90,9 @@ func sumRows(w http.ResponseWriter, r *http.Request) {
 		flaarum_shared.PrintError(w, err)
 		return
 	}
-	var toSumFieldType string
 	found := false
 	for _, fd := range tableStruct.Fields {
 		if fd.FieldName == toSumField {
-			toSumFieldType = fd.FieldType
 			found = true
 		}
 	}
@@ -103,34 +101,17 @@ func sumRows(w http.ResponseWriter, r *http.Request) {
 		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("The field '%s' does not exist in this table structure", toSumField)))
 		return
 	}
-	if toSumFieldType != "int" && toSumFieldType != "float" {
-		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("The field '%s' is not a summable field.", toSumField)))
-		return
-	}
 
 	var sumInt int64
-	var sumFloat float64
 	for _, row := range *rows {
-		if toSumFieldType == "int" {
-			oneData, err := strconv.ParseInt(row[toSumField], 10, 64)
-			if err != nil {
-				flaarum_shared.PrintError(w, errors.Wrap(err, "strconv failed."))
-				return
-			}
-			sumInt += oneData
-		} else {
-			oneData, err := strconv.ParseFloat(row[toSumField], 64)
-			if err != nil {
-				flaarum_shared.PrintError(w, errors.Wrap(err, "strconv failed."))
-				return
-			}
-			sumFloat += oneData
+		oneData, err := strconv.ParseInt(row[toSumField], 10, 64)
+		if err != nil {
+			flaarum_shared.PrintError(w, errors.Wrap(err, "strconv failed."))
+			return
 		}
+		sumInt += oneData
+
 	}
 
-	if toSumFieldType == "int" {
-		fmt.Fprintf(w, "%d", sumInt)
-	} else {
-		fmt.Fprintf(w, "%v", sumFloat)
-	}
+	fmt.Fprintf(w, "%d", sumInt)
 }
