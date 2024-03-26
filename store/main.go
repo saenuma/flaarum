@@ -17,16 +17,20 @@ import (
 var projsMutex *sync.RWMutex // for projects and tables (table data uses different mutexes) creation, editing, deletion
 var tablesMutexes map[string]*sync.RWMutex
 
-func init() {
+func main() {
+	// initialize
 	dataPath, err := flaarum_shared.GetDataPath()
 	if err != nil {
 		panic(err)
 	}
 
 	// create default project
-	err = os.MkdirAll(filepath.Join(dataPath, "first_proj"), 0777)
-	if err != nil {
-		panic(err)
+	firstProjPath := filepath.Join(dataPath, "first_proj")
+	if !flaarum_shared.DoesPathExists(firstProjPath) {
+		err = os.MkdirAll(firstProjPath, 0777)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// create mutexes
@@ -45,9 +49,7 @@ func init() {
 		}
 		conf.Write(confPath)
 	}
-}
 
-func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/is-flaarum", func(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +85,7 @@ func main() {
 
 	fmt.Printf("Serving on port: %s\n", port)
 
-	err := http.ListenAndServeTLS(fmt.Sprintf(":%s", port), flaarum_shared.G("https-server.crt"),
+	err = http.ListenAndServeTLS(fmt.Sprintf(":%s", port), flaarum_shared.G("https-server.crt"),
 		flaarum_shared.G("https-server.key"), r)
 	if err != nil {
 		panic(err)
