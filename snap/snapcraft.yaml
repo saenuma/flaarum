@@ -30,11 +30,24 @@ parts:
     - openssl
     build-snaps:
     - go
+    override-build: |
+      set -xe
+      go mod download
+      go build -o $SNAPCRAFT_PART_INSTALL/bin/cli ./cli
+      go build -o $SNAPCRAFT_PART_INSTALL/bin/gcasl ./gcasl
+      go build -o $SNAPCRAFT_PART_INSTALL/bin/prod ./prod
+      go build -o $SNAPCRAFT_PART_INSTALL/bin/store ./store
+      go build -o $SNAPCRAFT_PART_INSTALL/bin/tasks ./tasks
 
 
 apps:
   cli:
     command: bin/cli
+    plugs:
+      - network
+  
+  gcasl:
+    command: bin/gcasl
     plugs:
       - network
 
