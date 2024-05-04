@@ -222,14 +222,14 @@ sudo snap restart flaarum.store
 sudo apt update
 
 # download the files
-wget https://sae.ng/static/flaa103/resizer
-wget https://sae.ng/static/flaa103/resizer.service
-sudo cp resizer.service /etc/systemd/system/resizer.service
+wget https://sae.ng/static/flaa103/gcresizer
+wget https://sae.ng/static/flaa103/gcresizer.service
+sudo cp gcresizer.service /etc/systemd/system/gcresizer.service
 
 # put the files in place
 sudo mkdir -p /opt/flaa103/
-sudo cp resizer /opt/flaa103/resizer
-sudo chmod +x /opt/flaa103/resizer
+sudo cp gcresizer /opt/flaa103/gcresizer
+sudo chmod +x /opt/flaa103/gcresizer
 
 cat > /opt/flaa103/input.txt << EOF
 %s
@@ -243,7 +243,7 @@ EOF
 
 # start the programs
 sudo systemctl daemon-reload
-sudo systemctl start resizer
+sudo systemctl start gcresizer
 
 `, conf.Get("project"), conf.Get("zone"), instanceName, conf.Get("timezone"),
 			conf.Get("machine-type-day"), conf.Get("machine-type-night"),

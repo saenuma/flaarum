@@ -1,12 +1,12 @@
 [Unit]
-Description=Resizes a flaarum instance
+Description=Resizes a flaarum instance on Google Cloud
 Wants=network.target
 After=network.target
 
 [Service]
 Type=simple
 User=root
-ExecStart=/opt/flaa103/resizer
+ExecStart=/opt/flaa103/gcresizer
 Restart=always
 RestartSec=3
 
