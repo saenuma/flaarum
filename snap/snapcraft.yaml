@@ -37,7 +37,6 @@ parts:
       go build -o $SNAPCRAFT_PART_INSTALL/bin/gcasl ./gcasl
       go build -o $SNAPCRAFT_PART_INSTALL/bin/prod ./prod
       go build -o $SNAPCRAFT_PART_INSTALL/bin/store ./store
-      go build -o $SNAPCRAFT_PART_INSTALL/bin/tasks ./tasks
 
 
 apps:
