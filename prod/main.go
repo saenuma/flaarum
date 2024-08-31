@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gookit/color"
@@ -32,6 +33,10 @@ Supported Commands:
   c         Creates / Updates and prints a new key string
 
   mpr       Make production ready. It also creates a key string.
+
+  ejson     Exports a table to json. It expects a project table combo eg. firstproj/users
+
+  ecsv      Exports a table to csv. It expects a project table combo eg. firstproj/users
 
       `)
 
@@ -104,6 +109,24 @@ Supported Commands:
 			"-out", crtPath, "-sha256", "-days", "3650", "-nodes", "-subj",
 			"/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname").Run()
 		fmt.Println("ok")
+
+	case "ejson":
+		if len(os.Args) != 3 {
+			color.Red.Println(`'ejson' command expects a project and table combo eg. 'first_proj/users' `)
+			os.Exit(1)
+		}
+
+		parts := strings.Split(os.Args[2], "/")
+		export(parts[0], parts[1], "json")
+
+	case "ecsv":
+		if len(os.Args) != 3 {
+			color.Red.Println(`'ecsv' command expects a project and table combo eg. 'first_proj/users' `)
+			os.Exit(1)
+		}
+
+		parts := strings.Split(os.Args[2], "/")
+		export(parts[0], parts[1], "csv")
 
 	default:
 		color.Red.Println("Unexpected command. Run the Flaarum's prod with --help to find out the supported commands.")
