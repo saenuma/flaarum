@@ -211,7 +211,9 @@ func getExistingTables(projName string) ([]string, error) {
 
 	tables := make([]string, 0)
 	for _, tfi := range tablesFIs {
-		tables = append(tables, tfi.Name())
+		if tfi.IsDir() {
+			tables = append(tables, tfi.Name())
+		}
 	}
 
 	return tables, nil
