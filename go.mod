@@ -1,6 +1,6 @@
 module github.com/saenuma/flaarum
 
-go 1.18
+go 1.23
 
 require (
 	github.com/adam-hanna/arrayOperations v1.0.1
