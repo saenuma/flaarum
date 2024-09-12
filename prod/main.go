@@ -38,6 +38,8 @@ Supported Commands:
 
   ecsv      Exports a table to csv. It expects a project table combo eg. firstproj/users
 
+  ridx      Reindex a table. This is attimes needed if there has been changes to the table structure.
+            It expects a project table combo eg. firstproj/users
       `)
 
 	case "r":
@@ -127,6 +129,21 @@ Supported Commands:
 
 		parts := strings.Split(os.Args[2], "/")
 		export(parts[0], parts[1], "csv")
+
+	case "ridx":
+		if len(os.Args) != 3 {
+			color.Red.Println(`'ridx' command expects a project and table combo eg. 'first_proj/users' `)
+			os.Exit(1)
+		}
+
+		parts := strings.Split(os.Args[2], "/")
+		err := reIndex(parts[0], parts[1])
+		if err != nil {
+			color.Red.Println("Error reindexing:\n" + err.Error())
+			os.Exit(1)
+		}
+
+		fmt.Println("ok")
 
 	default:
 		color.Red.Println("Unexpected command. Run the Flaarum's prod with --help to find out the supported commands.")
