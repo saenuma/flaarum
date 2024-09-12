@@ -1,4 +1,4 @@
-package flaarum_shared
+package internal
 
 import (
 	"fmt"

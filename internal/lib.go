@@ -1,6 +1,6 @@
 // This package contains functions shared by the programs of this project. Some of these functions is expected to run
 // on the same machine as a flaarum server.
-package flaarum_shared
+package internal
 
 import (
 	"fmt"

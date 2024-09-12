@@ -12,7 +12,7 @@ import (
 
 	"github.com/gookit/color"
 	"github.com/saenuma/flaarum"
-	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/internal"
 	"github.com/tidwall/pretty"
 )
 
@@ -26,13 +26,13 @@ func main() {
 	}
 
 	var keyStr string
-	inProd := flaarum_shared.GetSetting("in_production")
+	inProd := internal.GetSetting("in_production")
 	if inProd == "" {
 		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
 		os.Exit(1)
 	}
 	if inProd == "true" {
-		keyStrPath := flaarum_shared.GetKeyStrPath()
+		keyStrPath := internal.GetKeyStrPath()
 		raw, err := os.ReadFile(keyStrPath)
 		if err != nil {
 			color.Red.Println(err)
@@ -42,7 +42,7 @@ func main() {
 	} else {
 		keyStr = "not-yet-set"
 	}
-	port := flaarum_shared.GetSetting("port")
+	port := internal.GetSetting("port")
 	if port == "" {
 		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
 		os.Exit(1)
@@ -55,7 +55,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if portInt != flaarum_shared.PORT {
+	if portInt != internal.PORT {
 		cl = flaarum.NewClientCustomPort("127.0.0.1", keyStr, "first_proj", portInt)
 	} else {
 		cl = flaarum.NewClient("127.0.0.1", keyStr, "first_proj")
@@ -123,7 +123,7 @@ Table Search Commands:
 			`)
 
 	case "pwd":
-		p, err := flaarum_shared.GetFlaarumPath("")
+		p, err := internal.GetFlaarumPath("")
 		if err != nil {
 			color.Red.Println(err)
 			os.Exit(1)
@@ -269,7 +269,7 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
-		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
+		inputPath, err := internal.GetFlaarumPath(os.Args[3])
 		if err != nil {
 			color.Red.Println("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
@@ -293,7 +293,7 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
-		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
+		inputPath, err := internal.GetFlaarumPath(os.Args[3])
 		if err != nil {
 			color.Red.Println("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
@@ -337,10 +337,10 @@ Table Search Commands:
 		for _, fieldStruct := range tableStructStmt.Fields {
 			inMap[fieldStruct.FieldName] = ""
 		}
-		out := flaarum_shared.EncodeRowData(cl.ProjName, parts[1], inMap)
+		out := internal.EncodeRowData(cl.ProjName, parts[1], inMap)
 
-		outName := "bir-" + strings.ToLower(flaarum_shared.UntestedRandomString(10)) + ".txt"
-		outPath, err := flaarum_shared.GetFlaarumPath(outName)
+		outName := "bir-" + strings.ToLower(internal.UntestedRandomString(10)) + ".txt"
+		outPath, err := internal.GetFlaarumPath(outName)
 		if err != nil {
 			color.Red.Println("The supplied path '%s' does not exists.\n", outPath)
 			os.Exit(1)
@@ -357,13 +357,13 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
-		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
+		inputPath, err := internal.GetFlaarumPath(os.Args[3])
 		if err != nil {
 			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
 		}
 
-		rowData, err := flaarum_shared.ParseDataFormat(inputPath)
+		rowData, err := internal.ParseDataFormat(inputPath)
 		if err != nil {
 			color.Red.Printf("The input file is not valid.\nError: %s\n", err)
 			os.Exit(1)
@@ -408,10 +408,10 @@ Table Search Commands:
 			inMap[k] = fmt.Sprintf("%v", v)
 		}
 
-		out := flaarum_shared.EncodeRowData(cl.ProjName, parts[1], inMap)
+		out := internal.EncodeRowData(cl.ProjName, parts[1], inMap)
 
-		outName := "bur-" + strings.ToLower(flaarum_shared.UntestedRandomString(10)) + ".txt"
-		outPath, err := flaarum_shared.GetFlaarumPath(outName)
+		outName := "bur-" + strings.ToLower(internal.UntestedRandomString(10)) + ".txt"
+		outPath, err := internal.GetFlaarumPath(outName)
 		if err != nil {
 			color.Red.Println("The supplied path '%s' does not exists.\n", outPath)
 			os.Exit(1)
@@ -428,13 +428,13 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
-		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
+		inputPath, err := internal.GetFlaarumPath(os.Args[3])
 		if err != nil {
 			color.Red.Println("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
 		}
 
-		rowData, err := flaarum_shared.ParseDataFormat(inputPath)
+		rowData, err := internal.ParseDataFormat(inputPath)
 		if err != nil {
 			color.Red.Println("The input file is not valid.\nError: %s\n", err)
 			os.Exit(1)
@@ -484,7 +484,7 @@ Table Search Commands:
 
 		cl.ProjName = os.Args[2]
 
-		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
+		inputPath, err := internal.GetFlaarumPath(os.Args[3])
 		if err != nil {
 			color.Red.Println("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
@@ -529,7 +529,7 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
-		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
+		inputPath, err := internal.GetFlaarumPath(os.Args[3])
 		if err != nil {
 			color.Red.Println("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)
@@ -575,7 +575,7 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
-		inputPath, err := flaarum_shared.GetFlaarumPath(os.Args[3])
+		inputPath, err := internal.GetFlaarumPath(os.Args[3])
 		if err != nil {
 			color.Red.Println("The supplied path '%s' does not exists.\n", inputPath)
 			os.Exit(1)

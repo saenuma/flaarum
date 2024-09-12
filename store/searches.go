@@ -12,47 +12,47 @@ import (
 	arrayOperations "github.com/adam-hanna/arrayOperations"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/internal"
 )
 
 func searchTable(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	projName := vars["proj"]
 
-	stmtStruct, err := flaarum_shared.ParseSearchStmt(r.FormValue("stmt"))
+	stmtStruct, err := internal.ParseSearchStmt(r.FormValue("stmt"))
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
-	dataPath, _ := flaarum_shared.GetDataPath()
+	dataPath, _ := internal.GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, stmtStruct.TableName)
-	if !flaarum_shared.DoesPathExists(tablePath) {
-		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("Table '%s' of Project '%s' does not exists.", stmtStruct.TableName, projName)))
+	if !internal.DoesPathExists(tablePath) {
+		internal.PrintError(w, errors.New(fmt.Sprintf("Table '%s' of Project '%s' does not exists.", stmtStruct.TableName, projName)))
 		return
 	}
 
 	rets, err := innerSearch(projName, r.FormValue("stmt"))
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
 	if r.FormValue("query-one") == "t" {
 		if len(*rets) == 0 {
-			flaarum_shared.PrintError(w, errors.New("The search returned nothing."))
+			internal.PrintError(w, errors.New("The search returned nothing."))
 			return
 		}
 		jsonBytes, err := json.Marshal((*rets)[0])
 		if err != nil {
-			flaarum_shared.PrintError(w, errors.Wrap(err, "json error"))
+			internal.PrintError(w, errors.Wrap(err, "json error"))
 			return
 		}
 		fmt.Fprint(w, string(jsonBytes))
 	} else {
 		jsonBytes, err := json.Marshal(rets)
 		if err != nil {
-			flaarum_shared.PrintError(w, errors.Wrap(err, "json error"))
+			internal.PrintError(w, errors.Wrap(err, "json error"))
 			return
 		}
 		fmt.Fprint(w, string(jsonBytes))
@@ -61,11 +61,11 @@ func searchTable(w http.ResponseWriter, r *http.Request) {
 
 // this is needed in expanded searches
 func findIdsContainingTrueWhereValues(projName, tableName, fieldName string, trueWhereValues []string) ([]string, error) {
-	dataPath, _ := flaarum_shared.GetDataPath()
+	dataPath, _ := internal.GetDataPath()
 	retIds := make([]string, 0)
 
 	indexesF1Path := filepath.Join(dataPath, projName, tableName, fieldName+"_indexes.flaa1")
-	elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
+	elemsMap, err := internal.ParseDataF1File(indexesF1Path)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func findIdsContainingTrueWhereValues(projName, tableName, fieldName string, tru
 			continue
 		}
 
-		readBytes, err := flaarum_shared.ReadPortionF2File(projName, tableName,
+		readBytes, err := internal.ReadPortionF2File(projName, tableName,
 			fieldName+"_indexes", elemHandle.DataBegin, elemHandle.DataEnd)
 		if err != nil {
 			fmt.Printf("%+v\n", err)
@@ -89,23 +89,23 @@ func findIdsContainingTrueWhereValues(projName, tableName, fieldName string, tru
 
 // read a text field
 func readTextField(projName, tableName, fieldName, lookedForId string) string {
-	dataPath, _ := flaarum_shared.GetDataPath()
+	dataPath, _ := internal.GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 
-	elemsMap, _ := flaarum_shared.ParseDataF1File(filepath.Join(tablePath, "data.flaa1"))
+	elemsMap, _ := internal.ParseDataF1File(filepath.Join(tablePath, "data.flaa1"))
 
 	elem, ok := elemsMap[lookedForId]
 	if !ok {
 		return ""
 	}
 
-	rawRowData, err := flaarum_shared.ReadPortionF2File(projName, tableName, "data",
+	rawRowData, err := internal.ReadPortionF2File(projName, tableName, "data",
 		elem.DataBegin, elem.DataEnd)
 	if err != nil {
 		return ""
 	}
 
-	rowMap, err := flaarum_shared.ParseEncodedRowData(rawRowData)
+	rowMap, err := internal.ParseEncodedRowData(rawRowData)
 	if err != nil {
 		return ""
 	}
@@ -113,8 +113,8 @@ func readTextField(projName, tableName, fieldName, lookedForId string) string {
 	return rowMap[fieldName]
 }
 
-func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaarum_shared.WhereStruct) ([]string, error) {
-	dataPath, _ := flaarum_shared.GetDataPath()
+func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []internal.WhereStruct) ([]string, error) {
+	dataPath, _ := internal.GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 
 	expDetails := make(map[string]string)
@@ -126,7 +126,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 
 	if expand {
 		for _, fKeyStruct := range tableStruct.ForeignKeys {
-			if !flaarum_shared.DoesPathExists(filepath.Join(dataPath, projName, fKeyStruct.PointedTable)) {
+			if !internal.DoesPathExists(filepath.Join(dataPath, projName, fKeyStruct.PointedTable)) {
 				return nil, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", fKeyStruct.PointedTable, projName))
 			}
 			expDetails[fKeyStruct.FieldName] = fKeyStruct.PointedTable
@@ -199,16 +199,16 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 					continue
 				}
 
-				indexesF1Path := filepath.Join(flaarum_shared.GetTablePath(projName, pTbl), parts[1]+"_indexes.flaa1")
+				indexesF1Path := filepath.Join(internal.GetTablePath(projName, pTbl), parts[1]+"_indexes.flaa1")
 
-				if flaarum_shared.DoesPathExists(indexesF1Path) {
-					elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
+				if internal.DoesPathExists(indexesF1Path) {
+					elemsMap, err := internal.ParseDataF1File(indexesF1Path)
 					if err != nil {
 						return nil, err
 					}
 					elemHandle, ok := elemsMap[whereStruct.FieldValue]
 					if ok {
-						readBytes, err := flaarum_shared.ReadPortionF2File(projName, pTbl, parts[1]+"_indexes",
+						readBytes, err := internal.ReadPortionF2File(projName, pTbl, parts[1]+"_indexes",
 							elemHandle.DataBegin, elemHandle.DataEnd)
 						if err != nil {
 							fmt.Printf("%+v\n", err)
@@ -226,14 +226,14 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 			} else {
 				indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName+"_indexes.flaa1")
 
-				if flaarum_shared.DoesPathExists(indexesF1Path) {
-					elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
+				if internal.DoesPathExists(indexesF1Path) {
+					elemsMap, err := internal.ParseDataF1File(indexesF1Path)
 					if err != nil {
 						return nil, err
 					}
 					elemHandle, ok := elemsMap[whereStruct.FieldValue]
 					if ok {
-						readBytes, err := flaarum_shared.ReadPortionF2File(projName, tableName,
+						readBytes, err := internal.ReadPortionF2File(projName, tableName,
 							whereStruct.FieldName+"_indexes", elemHandle.DataBegin, elemHandle.DataEnd)
 						if err != nil {
 							fmt.Printf("%+v\n", err)
@@ -249,7 +249,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 			if whereStruct.FieldName == "id" {
 				dataF1Path := filepath.Join(tablePath, "data.flaa1")
 
-				elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
+				elemsMap, err := internal.ParseDataF1File(dataF1Path)
 				if err != nil {
 					return nil, err
 				}
@@ -272,16 +272,16 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 					continue
 				}
 
-				otherTableindexesF1Path := filepath.Join(flaarum_shared.GetTablePath(projName, pTbl), parts[1]+"_indexes.flaa1")
+				otherTableindexesF1Path := filepath.Join(internal.GetTablePath(projName, pTbl), parts[1]+"_indexes.flaa1")
 
-				if flaarum_shared.DoesPathExists(otherTableindexesF1Path) {
-					elemsMap, err := flaarum_shared.ParseDataF1File(otherTableindexesF1Path)
+				if internal.DoesPathExists(otherTableindexesF1Path) {
+					elemsMap, err := internal.ParseDataF1File(otherTableindexesF1Path)
 					if err != nil {
 						return nil, err
 					}
 					for k, elem := range elemsMap {
 						if k != whereStruct.FieldValue {
-							readBytes, err := flaarum_shared.ReadPortionF2File(projName, pTbl,
+							readBytes, err := internal.ReadPortionF2File(projName, pTbl,
 								parts[1]+"_indexes", elem.DataBegin, elem.DataEnd)
 							if err != nil {
 								fmt.Printf("%+v\n", err)
@@ -302,8 +302,8 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 
 				indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName+"_indexes.flaa1")
 
-				if flaarum_shared.DoesPathExists(indexesF1Path) {
-					elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
+				if internal.DoesPathExists(indexesF1Path) {
+					elemsMap, err := internal.ParseDataF1File(indexesF1Path)
 					if err != nil {
 						return nil, err
 					}
@@ -311,7 +311,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 					stringIds := make([]string, 0)
 					for k, elem := range elemsMap {
 						if k != whereStruct.FieldValue {
-							readBytes, err := flaarum_shared.ReadPortionF2File(projName, tableName,
+							readBytes, err := internal.ReadPortionF2File(projName, tableName,
 								whereStruct.FieldName+"_indexes", elem.DataBegin, elem.DataEnd)
 							if err != nil {
 								fmt.Printf("%+v\n", err)
@@ -337,9 +337,9 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 
 				resolvedFieldName := parts[1]
 
-				currentFieldType := flaarum_shared.GetFieldType(projName, pTbl, resolvedFieldName)
+				currentFieldType := internal.GetFieldType(projName, pTbl, resolvedFieldName)
 
-				otherTableindexesF1Path := filepath.Join(flaarum_shared.GetTablePath(projName, pTbl), resolvedFieldName+"_indexes.flaa1")
+				otherTableindexesF1Path := filepath.Join(internal.GetTablePath(projName, pTbl), resolvedFieldName+"_indexes.flaa1")
 
 				if currentFieldType == "int" {
 
@@ -349,8 +349,8 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 						return nil, errors.Wrap(err, "strconv error")
 					}
 
-					if flaarum_shared.DoesPathExists(otherTableindexesF1Path) {
-						elemsMap, err := flaarum_shared.ParseDataF1File(otherTableindexesF1Path)
+					if internal.DoesPathExists(otherTableindexesF1Path) {
+						elemsMap, err := internal.ParseDataF1File(otherTableindexesF1Path)
 						if err != nil {
 							return nil, err
 						}
@@ -408,7 +408,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 
 							elem, ok := elemsMap[indexedValueStr]
 							if ok {
-								readBytes, err := flaarum_shared.ReadPortionF2File(projName, pTbl,
+								readBytes, err := internal.ReadPortionF2File(projName, pTbl,
 									resolvedFieldName+"_indexes", elem.DataBegin, elem.DataEnd)
 								if err != nil {
 									fmt.Printf("%+v\n", err)
@@ -432,7 +432,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 
 				indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName+"_indexes.flaa1")
 
-				currentFieldType := flaarum_shared.GetFieldType(projName, tableName, whereStruct.FieldName)
+				currentFieldType := internal.GetFieldType(projName, tableName, whereStruct.FieldName)
 
 				if currentFieldType == "int" {
 					var whereStructFieldValueInt int64
@@ -441,8 +441,8 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 						return nil, errors.Wrap(err, "strconv error")
 					}
 
-					if flaarum_shared.DoesPathExists(indexesF1Path) {
-						elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
+					if internal.DoesPathExists(indexesF1Path) {
+						elemsMap, err := internal.ParseDataF1File(indexesF1Path)
 						if err != nil {
 							return nil, err
 						}
@@ -500,7 +500,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 
 							elem, ok := elemsMap[indexedValueStr]
 							if ok {
-								readBytes, err := flaarum_shared.ReadPortionF2File(projName, tableName,
+								readBytes, err := internal.ReadPortionF2File(projName, tableName,
 									whereStruct.FieldName+"_indexes", elem.DataBegin, elem.DataEnd)
 								if err != nil {
 									fmt.Printf("%+v\n", err)
@@ -528,8 +528,8 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 
 				resolvedFieldName := parts[1]
 
-				currentFieldType := flaarum_shared.GetFieldType(projName, pTbl, resolvedFieldName)
-				otherTableindexesF1Path := filepath.Join(flaarum_shared.GetTablePath(projName, pTbl), parts[1]+"_indexes.flaa1")
+				currentFieldType := internal.GetFieldType(projName, pTbl, resolvedFieldName)
+				otherTableindexesF1Path := filepath.Join(internal.GetTablePath(projName, pTbl), parts[1]+"_indexes.flaa1")
 
 				if currentFieldType == "int" {
 					var whereStructFieldValueInt int64
@@ -538,8 +538,8 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 						return nil, errors.Wrap(err, "strconv error")
 					}
 
-					if flaarum_shared.DoesPathExists(otherTableindexesF1Path) {
-						elemsMap, err := flaarum_shared.ParseDataF1File(otherTableindexesF1Path)
+					if internal.DoesPathExists(otherTableindexesF1Path) {
+						elemsMap, err := internal.ParseDataF1File(otherTableindexesF1Path)
 						if err != nil {
 							return nil, err
 						}
@@ -597,7 +597,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 
 							elem, ok := elemsMap[indexedValueStr]
 							if ok {
-								readBytes, err := flaarum_shared.ReadPortionF2File(projName, pTbl,
+								readBytes, err := internal.ReadPortionF2File(projName, pTbl,
 									resolvedFieldName+"_indexes", elem.DataBegin, elem.DataEnd)
 								if err != nil {
 									fmt.Printf("%+v\n", err)
@@ -618,7 +618,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 			} else {
 				stringIds := make([]string, 0)
 
-				currentFieldType := flaarum_shared.GetFieldType(projName, tableName, whereStruct.FieldName)
+				currentFieldType := internal.GetFieldType(projName, tableName, whereStruct.FieldName)
 				indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName+"_indexes.flaa1")
 
 				if currentFieldType == "int" {
@@ -629,8 +629,8 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 						return nil, errors.Wrap(err, "strconv error")
 					}
 
-					if flaarum_shared.DoesPathExists(indexesF1Path) {
-						elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
+					if internal.DoesPathExists(indexesF1Path) {
+						elemsMap, err := internal.ParseDataF1File(indexesF1Path)
 						if err != nil {
 							return nil, err
 						}
@@ -687,7 +687,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 							indexedValueStr := strconv.FormatInt(indexedValue, 10)
 							elem, ok := elemsMap[indexedValueStr]
 							if ok {
-								readBytes, err := flaarum_shared.ReadPortionF2File(projName, tableName,
+								readBytes, err := internal.ReadPortionF2File(projName, tableName,
 									whereStruct.FieldName+"_indexes", elem.DataBegin, elem.DataEnd)
 								if err != nil {
 									fmt.Printf("%+v\n", err)
@@ -717,10 +717,10 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 					continue
 				}
 
-				otherTableIndexesF1Path := filepath.Join(flaarum_shared.GetTablePath(projName, pTbl), parts[1]+"_indexes.flaa1")
+				otherTableIndexesF1Path := filepath.Join(internal.GetTablePath(projName, pTbl), parts[1]+"_indexes.flaa1")
 
-				if flaarum_shared.DoesPathExists(otherTableIndexesF1Path) {
-					elemsMap, err := flaarum_shared.ParseDataF1File(otherTableIndexesF1Path)
+				if internal.DoesPathExists(otherTableIndexesF1Path) {
+					elemsMap, err := internal.ParseDataF1File(otherTableIndexesF1Path)
 					if err != nil {
 						return nil, err
 					}
@@ -728,7 +728,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 					for _, inval := range whereStruct.FieldValues {
 						elemHandle, ok := elemsMap[inval]
 						if ok {
-							readBytes, err := flaarum_shared.ReadPortionF2File(projName, pTbl, parts[1]+"_indexes",
+							readBytes, err := internal.ReadPortionF2File(projName, pTbl, parts[1]+"_indexes",
 								elemHandle.DataBegin, elemHandle.DataEnd)
 							if err != nil {
 								fmt.Printf("%+v\n", err)
@@ -746,8 +746,8 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 			} else {
 				indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName+"_indexes.flaa1")
 
-				if flaarum_shared.DoesPathExists(indexesF1Path) {
-					elemsMap, err := flaarum_shared.ParseDataF1File(indexesF1Path)
+				if internal.DoesPathExists(indexesF1Path) {
+					elemsMap, err := internal.ParseDataF1File(indexesF1Path)
 					if err != nil {
 						return nil, err
 					}
@@ -755,7 +755,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 					for _, inval := range whereStruct.FieldValues {
 						elemHandle, ok := elemsMap[inval]
 						if ok {
-							readBytes, err := flaarum_shared.ReadPortionF2File(projName, tableName,
+							readBytes, err := internal.ReadPortionF2File(projName, tableName,
 								whereStruct.FieldName+"_indexes", elemHandle.DataBegin, elemHandle.DataEnd)
 							if err != nil {
 								fmt.Printf("%+v\n", err)
@@ -784,7 +784,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 				}
 
 				otherTablePath := filepath.Join(dataPath, projName, pTbl)
-				pointedTableElemsMap, _ := flaarum_shared.ParseDataF1File(filepath.Join(otherTablePath, "data.flaa1"))
+				pointedTableElemsMap, _ := internal.ParseDataF1File(filepath.Join(otherTablePath, "data.flaa1"))
 
 				for _, elem := range pointedTableElemsMap {
 					aTextToSearch := readTextField(projName, pTbl, whereStruct.FieldName, elem.DataKey)
@@ -800,7 +800,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 				beforeFilter = append(beforeFilter, stringIds)
 
 			} else {
-				elemsMap, _ := flaarum_shared.ParseDataF1File(filepath.Join(tablePath, "data.flaa1"))
+				elemsMap, _ := internal.ParseDataF1File(filepath.Join(tablePath, "data.flaa1"))
 
 				for _, elem := range elemsMap {
 					aTextToSearch := readTextField(projName, tableName, whereStruct.FieldName, elem.DataKey)
@@ -838,12 +838,12 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 }
 
 func innerSearch(projName, stmt string) (*[]map[string]string, error) {
-	stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
+	stmtStruct, err := internal.ParseSearchStmt(stmt)
 	if err != nil {
 		return nil, err
 	}
 
-	dataPath, _ := flaarum_shared.GetDataPath()
+	dataPath, _ := internal.GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, stmtStruct.TableName)
 	tableName := stmtStruct.TableName
 
@@ -862,7 +862,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 	if stmtStruct.Expand {
 		for _, fKeyStruct := range tableStruct.ForeignKeys {
-			if !flaarum_shared.DoesPathExists(filepath.Join(dataPath, projName, fKeyStruct.PointedTable)) {
+			if !internal.DoesPathExists(filepath.Join(dataPath, projName, fKeyStruct.PointedTable)) {
 				return nil, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", fKeyStruct.PointedTable, projName))
 			}
 			expDetails[fKeyStruct.FieldName] = fKeyStruct.PointedTable
@@ -875,8 +875,8 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 		if len(stmtStruct.MultiWhereOptions) == 0 {
 			dataF1Path := filepath.Join(tablePath, "data.flaa1")
 
-			if flaarum_shared.DoesPathExists(dataF1Path) {
-				elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
+			if internal.DoesPathExists(dataF1Path) {
+				elemsMap, err := internal.ParseDataF1File(dataF1Path)
 				if err != nil {
 					return nil, err
 				}
@@ -910,8 +910,8 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 		if len(stmtStruct.WhereOptions) == 0 {
 			dataF1Path := filepath.Join(tablePath, "data.flaa1")
 
-			if flaarum_shared.DoesPathExists(dataF1Path) {
-				elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
+			if internal.DoesPathExists(dataF1Path) {
+				elemsMap, err := internal.ParseDataF1File(dataF1Path)
 				if err != nil {
 					return nil, err
 				}
@@ -932,20 +932,20 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 	// read the whole foundRows using its Id
 	tmpRet := make([]map[string]string, 0)
-	elemsMap, _ := flaarum_shared.ParseDataF1File(filepath.Join(tablePath, "data.flaa1"))
+	elemsMap, _ := internal.ParseDataF1File(filepath.Join(tablePath, "data.flaa1"))
 
 	for _, retId := range retIds {
 		elem, ok := elemsMap[retId]
 		if !ok {
 			continue
 		}
-		rawRowData, err := flaarum_shared.ReadPortionF2File(projName, tableName, "data",
+		rawRowData, err := internal.ReadPortionF2File(projName, tableName, "data",
 			elem.DataBegin, elem.DataEnd)
 		if err != nil {
 			return nil, err
 		}
 
-		rowMap, err := flaarum_shared.ParseEncodedRowData(rawRowData)
+		rowMap, err := internal.ParseEncodedRowData(rawRowData)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -955,7 +955,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 
 			pTbl, ok := expDetails[field]
 			if ok {
-				pTblelemsMap, err := flaarum_shared.ParseDataF1File(filepath.Join(flaarum_shared.GetTablePath(projName, pTbl), "data.flaa1"))
+				pTblelemsMap, err := internal.ParseDataF1File(filepath.Join(internal.GetTablePath(projName, pTbl), "data.flaa1"))
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -964,13 +964,13 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 				if !ok {
 					continue
 				}
-				rawRowData2, err := flaarum_shared.ReadPortionF2File(projName, pTbl, "data",
+				rawRowData2, err := internal.ReadPortionF2File(projName, pTbl, "data",
 					pTblelem.DataBegin, pTblelem.DataEnd)
 				if err != nil {
 					return nil, err
 				}
 
-				rowMap2, err := flaarum_shared.ParseEncodedRowData(rawRowData2)
+				rowMap2, err := internal.ParseEncodedRowData(rawRowData2)
 				if err != nil {
 					fmt.Println(err)
 					continue

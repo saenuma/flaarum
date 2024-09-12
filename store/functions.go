@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/internal"
 )
 
 func countRows(w http.ResponseWriter, r *http.Request) {
@@ -16,22 +16,22 @@ func countRows(w http.ResponseWriter, r *http.Request) {
 	projName := vars["proj"]
 
 	stmt := r.FormValue("stmt")
-	qd, err := flaarum_shared.ParseSearchStmt(stmt)
+	qd, err := internal.ParseSearchStmt(stmt)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
 	tableName := qd.TableName
 
 	if !doesTableExists(projName, tableName) {
-		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
+		internal.PrintError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
 		return
 	}
 
 	rows, err := innerSearch(projName, stmt)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 	fmt.Fprintf(w, "%d", len(*rows))
@@ -42,7 +42,7 @@ func allRowsCount(w http.ResponseWriter, r *http.Request) {
 	projName := vars["proj"]
 	tableName := vars["tbl"]
 
-	dataPath, _ := flaarum_shared.GetDataPath()
+	dataPath, _ := internal.GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 
 	createTableMutexIfNecessary(projName, tableName)
@@ -51,9 +51,9 @@ func allRowsCount(w http.ResponseWriter, r *http.Request) {
 	defer tablesMutexes[fullTableName].RUnlock()
 
 	dataF1Path := filepath.Join(tablePath, "data.flaa1")
-	elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
+	elemsMap, err := internal.ParseDataF1File(dataF1Path)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
@@ -65,29 +65,29 @@ func sumRows(w http.ResponseWriter, r *http.Request) {
 	projName := vars["proj"]
 
 	stmt := r.FormValue("stmt")
-	qd, err := flaarum_shared.ParseSearchStmt(stmt)
+	qd, err := internal.ParseSearchStmt(stmt)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
 	tableName := qd.TableName
 
 	if !doesTableExists(projName, tableName) {
-		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
+		internal.PrintError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
 		return
 	}
 
 	rows, err := innerSearch(projName, stmt)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
 	toSumField := r.FormValue("tosum")
 	tableStruct, err := getCurrentTableStructureParsed(projName, tableName)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 	found := false
@@ -98,7 +98,7 @@ func sumRows(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !found {
-		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("The field '%s' does not exist in this table structure", toSumField)))
+		internal.PrintError(w, errors.New(fmt.Sprintf("The field '%s' does not exist in this table structure", toSumField)))
 		return
 	}
 
@@ -106,7 +106,7 @@ func sumRows(w http.ResponseWriter, r *http.Request) {
 	for _, row := range *rows {
 		oneData, err := strconv.ParseInt(row[toSumField], 10, 64)
 		if err != nil {
-			flaarum_shared.PrintError(w, errors.Wrap(err, "strconv failed."))
+			internal.PrintError(w, errors.Wrap(err, "strconv failed."))
 			return
 		}
 		sumInt += oneData

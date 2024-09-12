@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/internal"
 )
 
 func deleteRows(w http.ResponseWriter, r *http.Request) {
@@ -16,35 +16,35 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 	projName := vars["proj"]
 
 	stmt := r.FormValue("stmt")
-	stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
+	stmtStruct, err := internal.ParseSearchStmt(stmt)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
 	tableName := stmtStruct.TableName
 	if !doesTableExists(projName, tableName) {
-		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
+		internal.PrintError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
 		return
 	}
 
 	rows, err := innerSearch(projName, stmt)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
 	existingTables, err := getExistingTables(projName)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
-	relatedRelationshipDetails := make(map[string]flaarum_shared.FKeyStruct)
+	relatedRelationshipDetails := make(map[string]internal.FKeyStruct)
 	for _, tbl := range existingTables {
 		ts, err := getCurrentTableStructureParsed(projName, tbl)
 		if err != nil {
-			flaarum_shared.PrintError(w, err)
+			internal.PrintError(w, err)
 			return
 		}
 
@@ -65,13 +65,13 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 
 			toCheckRows, err := innerSearch(projName, innerStmt)
 			if err != nil {
-				flaarum_shared.PrintError(w, err)
+				internal.PrintError(w, err)
 				return
 			}
 
 			if fkd.OnDelete == "on_delete_restrict" {
 				if len(*toCheckRows) > 0 {
-					flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("This row with id '%s' is used in table '%s'",
+					internal.PrintError(w, errors.New(fmt.Sprintf("This row with id '%s' is used in table '%s'",
 						row["id"], otherTbl)))
 					return
 				}
@@ -82,7 +82,7 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 
 				err := innerDelete(projName, otherTbl, toCheckRows)
 				if err != nil {
-					flaarum_shared.PrintError(w, err)
+					internal.PrintError(w, err)
 					tablesMutexes[otherTblFullName].Unlock()
 					return
 				}
@@ -99,7 +99,7 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 
 	err = innerDelete(projName, tableName, rows)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
@@ -107,17 +107,17 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 }
 
 func innerDelete(projName, tableName string, rows *[]map[string]string) error {
-	dataPath, _ := flaarum_shared.GetDataPath()
+	dataPath, _ := internal.GetDataPath()
 	dataF1Path := filepath.Join(dataPath, projName, tableName, "data.flaa1")
 	// update flaa1 file by rewriting it.
-	elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
+	elemsMap, err := internal.ParseDataF1File(dataF1Path)
 	if err != nil {
 		return err
 	}
 
 	for _, row := range *rows {
 		// write null data to flaa2 file
-		tablePath := flaarum_shared.GetTablePath(projName, tableName)
+		tablePath := internal.GetTablePath(projName, tableName)
 
 		dataLumpPath := filepath.Join(tablePath, "data.flaa2")
 
@@ -126,7 +126,7 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
 
 		nullData := make([]byte, end-begin)
 
-		if flaarum_shared.DoesPathExists(dataLumpPath) {
+		if internal.DoesPathExists(dataLumpPath) {
 			dataLumpHandle, err := os.OpenFile(dataLumpPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
 			if err != nil {
 				return errors.Wrap(err, "os error")
@@ -142,15 +142,15 @@ func innerDelete(projName, tableName string, rows *[]map[string]string) error {
 				continue
 			}
 
-			if !flaarum_shared.IsNotIndexedField(projName, tableName, f) {
-				flaarum_shared.DeleteIndex(projName, tableName, f, d, row["id"], row["_version"])
+			if !internal.IsNotIndexedField(projName, tableName, f) {
+				internal.DeleteIndex(projName, tableName, f, d, row["id"], row["_version"])
 			}
 		}
 		delete(elemsMap, row["id"])
 	}
 
 	// rewrite index
-	err = flaarum_shared.RewriteF1File(projName, tableName, "data", elemsMap)
+	err = internal.RewriteF1File(projName, tableName, "data", elemsMap)
 	if err != nil {
 		return err
 	}

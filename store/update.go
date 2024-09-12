@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/internal"
 )
 
 func updateRows(w http.ResponseWriter, r *http.Request) {
@@ -17,9 +17,9 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 	projName := vars["proj"]
 
 	stmt := r.FormValue("stmt")
-	stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
+	stmtStruct, err := internal.ParseSearchStmt(stmt)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
@@ -31,12 +31,12 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := innerSearch(projName, stmt)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
 	if len(*rows) == 0 {
-		flaarum_shared.PrintError(w, errors.New("There is no data to update. The search statement returned nothing."))
+		internal.PrintError(w, errors.New("There is no data to update. The search statement returned nothing."))
 		return
 	}
 
@@ -51,18 +51,18 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 
 	currentVersion, err := getCurrentVersionNum(projName, tableName)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 	updatedValues["_version"] = strconv.Itoa(currentVersion)
 
 	tableStruct, err := getCurrentTableStructureParsed(projName, tableName)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
-	fieldsDescs := make(map[string]flaarum_shared.FieldStruct)
+	fieldsDescs := make(map[string]internal.FieldStruct)
 	for _, fd := range tableStruct.Fields {
 		fieldsDescs[fd.FieldName] = fd
 	}
@@ -79,8 +79,8 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 			if ok {
 				newRow[k] = v
 			} else {
-				if !flaarum_shared.IsNotIndexedFieldVersioned(projName, tableName, k, row["_version"]) {
-					flaarum_shared.DeleteIndex(projName, tableName, k, v, row["id"], row["_version"])
+				if !internal.IsNotIndexedFieldVersioned(projName, tableName, k, row["_version"]) {
+					internal.DeleteIndex(projName, tableName, k, v, row["id"], row["_version"])
 				}
 			}
 		}
@@ -105,18 +105,18 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 	tablesMutexes[fullTableName].Lock()
 	defer tablesMutexes[fullTableName].Unlock()
 
-	dataPath, _ := flaarum_shared.GetDataPath()
+	dataPath, _ := internal.GetDataPath()
 	dataF1Path := filepath.Join(dataPath, projName, tableName, "data.flaa1")
 
-	elemsMap, err := flaarum_shared.ParseDataF1File(dataF1Path)
+	elemsMap, err := internal.ParseDataF1File(dataF1Path)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
 	// write null data to flaa2 file
 	for _, row := range patchedRows {
-		tablePath := flaarum_shared.GetTablePath(projName, tableName)
+		tablePath := internal.GetTablePath(projName, tableName)
 
 		dataLumpPath := filepath.Join(tablePath, "data.flaa2")
 
@@ -125,7 +125,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 
 		nullData := make([]byte, end-begin)
 
-		if flaarum_shared.DoesPathExists(dataLumpPath) {
+		if internal.DoesPathExists(dataLumpPath) {
 			dataLumpHandle, err := os.OpenFile(dataLumpPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
 			if err != nil {
 				fmt.Println(err)
@@ -143,20 +143,20 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			if !flaarum_shared.IsNotIndexedField(projName, tableName, fieldName) {
+			if !internal.IsNotIndexedField(projName, tableName, fieldName) {
 				allOldRows := *rows
 				oldRow := allOldRows[i]
 
 				oldData, ok := oldRow[fieldName]
 				if ok && oldData != newData {
-					err = flaarum_shared.DeleteIndex(projName, tableName, fieldName, oldData, row["id"], (*rows)[i]["_version"])
+					err = internal.DeleteIndex(projName, tableName, fieldName, oldData, row["id"], (*rows)[i]["_version"])
 					if err != nil {
-						flaarum_shared.PrintError(w, err)
+						internal.PrintError(w, err)
 						return
 					}
-					err = flaarum_shared.MakeIndex(projName, tableName, fieldName, newData, row["id"])
+					err = internal.MakeIndex(projName, tableName, fieldName, newData, row["id"])
 					if err != nil {
-						flaarum_shared.PrintError(w, err)
+						internal.PrintError(w, err)
 						return
 					}
 				}
@@ -166,9 +166,9 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// write data
-		err = flaarum_shared.SaveRowData(projName, tableName, row["id"], row)
+		err = internal.SaveRowData(projName, tableName, row["id"], row)
 		if err != nil {
-			flaarum_shared.PrintError(w, err)
+			internal.PrintError(w, err)
 			return
 		}
 	}

@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/internal"
 )
 
 func (cl *Client) CreateTable(stmt string) error {
@@ -60,11 +60,11 @@ func (cl *Client) CreateOrUpdateTable(stmt string) error {
 		return err
 	}
 
-	tableStruct, err := flaarum_shared.ParseTableStructureStmt(stmt)
+	tableStruct, err := internal.ParseTableStructureStmt(stmt)
 	if err != nil {
 		return err
 	}
-	if flaarum_shared.FindIn(tables, tableStruct.TableName) == -1 {
+	if internal.FindIn(tables, tableStruct.TableName) == -1 {
 		// table doesn't exist
 		err = cl.CreateTable(stmt)
 		if err != nil {
@@ -82,7 +82,7 @@ func (cl *Client) CreateOrUpdateTable(stmt string) error {
 			return err
 		}
 
-		if oldStmt != flaarum_shared.FormatTableStruct(tableStruct) {
+		if oldStmt != internal.FormatTableStruct(tableStruct) {
 			err = cl.UpdateTableStructure(stmt)
 			if err != nil {
 				return err
@@ -140,24 +140,24 @@ func (cl *Client) GetTableStructure(tableName string, versionNum int64) (string,
 	}
 }
 
-func (cl *Client) GetTableStructureParsed(tableName string, versionNum int64) (flaarum_shared.TableStruct, error) {
+func (cl *Client) GetTableStructureParsed(tableName string, versionNum int64) (internal.TableStruct, error) {
 	stmt, err := cl.GetTableStructure(tableName, versionNum)
 	if err != nil {
-		return flaarum_shared.TableStruct{}, err
+		return internal.TableStruct{}, err
 	}
-	return flaarum_shared.ParseTableStructureStmt(stmt)
+	return internal.ParseTableStructureStmt(stmt)
 }
 
-func (cl *Client) GetCurrentTableStructureParsed(tableName string) (flaarum_shared.TableStruct, error) {
+func (cl *Client) GetCurrentTableStructureParsed(tableName string) (internal.TableStruct, error) {
 	currentVersionNum, err := cl.GetCurrentTableVersionNum(tableName)
 	if err != nil {
-		return flaarum_shared.TableStruct{}, err
+		return internal.TableStruct{}, err
 	}
 	stmt, err := cl.GetTableStructure(tableName, currentVersionNum)
 	if err != nil {
-		return flaarum_shared.TableStruct{}, err
+		return internal.TableStruct{}, err
 	}
-	return flaarum_shared.ParseTableStructureStmt(stmt)
+	return internal.ParseTableStructureStmt(stmt)
 }
 
 func (cl Client) ListTables() ([]string, error) {

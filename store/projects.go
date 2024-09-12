@@ -10,7 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/internal"
 )
 
 func createProject(w http.ResponseWriter, r *http.Request) {
@@ -18,24 +18,24 @@ func createProject(w http.ResponseWriter, r *http.Request) {
 	projName := vars["proj"]
 
 	if err := nameValidate(projName); err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
 	if isInternalProjectName(projName) {
-		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", projName)))
+		internal.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", projName)))
 		return
 	}
 
-	dataPath, _ := flaarum_shared.GetDataPath()
+	dataPath, _ := internal.GetDataPath()
 
 	projsMutex.Lock()
 	defer projsMutex.Unlock()
 
-	if !flaarum_shared.DoesPathExists(filepath.Join(dataPath, projName)) {
+	if !internal.DoesPathExists(filepath.Join(dataPath, projName)) {
 		err := os.MkdirAll(filepath.Join(dataPath, projName), 0777)
 		if err != nil {
-			flaarum_shared.PrintError(w, errors.Wrap(err, "os error"))
+			internal.PrintError(w, errors.Wrap(err, "os error"))
 			return
 		}
 	}
@@ -48,18 +48,18 @@ func deleteProject(w http.ResponseWriter, r *http.Request) {
 	projName := vars["proj"]
 
 	if isInternalProjectName(projName) {
-		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", projName)))
+		internal.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", projName)))
 		return
 	}
 
-	dataPath, _ := flaarum_shared.GetDataPath()
-	if flaarum_shared.DoesPathExists(filepath.Join(dataPath, projName)) {
+	dataPath, _ := internal.GetDataPath()
+	if internal.DoesPathExists(filepath.Join(dataPath, projName)) {
 		projsMutex.Lock()
 		defer projsMutex.Unlock()
 
 		existingTables, err := getExistingTables(projName)
 		if err != nil {
-			flaarum_shared.PrintError(w, err)
+			internal.PrintError(w, err)
 			return
 		}
 
@@ -76,7 +76,7 @@ func deleteProject(w http.ResponseWriter, r *http.Request) {
 				fullTableName := projName + ":" + tableName
 				tablesMutexes[fullTableName].Unlock()
 			}
-			flaarum_shared.PrintError(w, errors.Wrap(err, "delete directory failed."))
+			internal.PrintError(w, errors.Wrap(err, "delete directory failed."))
 			return
 		}
 
@@ -93,14 +93,14 @@ func deleteProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func listProjects(w http.ResponseWriter, r *http.Request) {
-	dataPath, _ := flaarum_shared.GetDataPath()
+	dataPath, _ := internal.GetDataPath()
 
 	projsMutex.RLock()
 	defer projsMutex.RUnlock()
 
 	fis, err := os.ReadDir(dataPath)
 	if err != nil {
-		flaarum_shared.PrintError(w, errors.Wrap(err, "ioutil error"))
+		internal.PrintError(w, errors.Wrap(err, "ioutil error"))
 		return
 	}
 
@@ -114,7 +114,7 @@ func listProjects(w http.ResponseWriter, r *http.Request) {
 
 	jsonBytes, err := json.Marshal(projs)
 	if err != nil {
-		flaarum_shared.PrintError(w, errors.Wrap(err, "json error"))
+		internal.PrintError(w, errors.Wrap(err, "json error"))
 		return
 	}
 
@@ -127,24 +127,24 @@ func renameProject(w http.ResponseWriter, r *http.Request) {
 	newProjName := vars["nproj"]
 
 	if isInternalProjectName(projName) {
-		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", projName)))
+		internal.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", projName)))
 		return
 	}
 
 	if isInternalProjectName(newProjName) {
-		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", newProjName)))
+		internal.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", newProjName)))
 		return
 	}
 
-	dataPath, _ := flaarum_shared.GetDataPath()
+	dataPath, _ := internal.GetDataPath()
 
-	if !flaarum_shared.DoesPathExists(filepath.Join(dataPath, projName)) {
-		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("the project '%s' does not exists.", projName)))
+	if !internal.DoesPathExists(filepath.Join(dataPath, projName)) {
+		internal.PrintError(w, errors.New(fmt.Sprintf("the project '%s' does not exists.", projName)))
 		return
 	}
 
-	if flaarum_shared.DoesPathExists(filepath.Join(dataPath, newProjName)) {
-		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("the project name '%s' already exists.", newProjName)))
+	if internal.DoesPathExists(filepath.Join(dataPath, newProjName)) {
+		internal.PrintError(w, errors.New(fmt.Sprintf("the project name '%s' already exists.", newProjName)))
 		return
 	}
 	projsMutex.Lock()
@@ -152,7 +152,7 @@ func renameProject(w http.ResponseWriter, r *http.Request) {
 
 	existingTables, err := getExistingTables(projName)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
@@ -171,7 +171,7 @@ func renameProject(w http.ResponseWriter, r *http.Request) {
 			fullTableName := projName + ":" + tableName
 			tablesMutexes[fullTableName].Unlock()
 		}
-		flaarum_shared.PrintError(w, errors.Wrap(err, "renamed failed."))
+		internal.PrintError(w, errors.Wrap(err, "renamed failed."))
 		return
 	}
 

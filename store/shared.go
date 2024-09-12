@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
-	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/internal"
 )
 
 func nameValidate(name string) error {
@@ -24,7 +24,7 @@ func nameValidate(name string) error {
 
 func printValError(w http.ResponseWriter, err error) {
 	fmt.Printf("%+v\n", err)
-	debug := flaarum_shared.GetSetting("debug")
+	debug := internal.GetSetting("debug")
 	if debug == "true" {
 		http.Error(w, fmt.Sprintf("%+v", err), http.StatusBadRequest)
 	} else {

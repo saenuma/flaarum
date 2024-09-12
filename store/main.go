@@ -10,7 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/internal"
 	"github.com/saenuma/zazabul"
 )
 
@@ -19,14 +19,14 @@ var tablesMutexes map[string]*sync.RWMutex
 
 func main() {
 	// initialize
-	dataPath, err := flaarum_shared.GetDataPath()
+	dataPath, err := internal.GetDataPath()
 	if err != nil {
 		panic(err)
 	}
 
 	// create default project
 	firstProjPath := filepath.Join(dataPath, "first_proj")
-	if !flaarum_shared.DoesPathExists(firstProjPath) {
+	if !internal.DoesPathExists(firstProjPath) {
 		err = os.MkdirAll(firstProjPath, 0777)
 		if err != nil {
 			panic(err)
@@ -37,13 +37,13 @@ func main() {
 	projsMutex = &sync.RWMutex{}
 	tablesMutexes = make(map[string]*sync.RWMutex)
 
-	confPath, err := flaarum_shared.GetConfigPath()
+	confPath, err := internal.GetConfigPath()
 	if err != nil {
 		panic(err)
 	}
 
-	if !flaarum_shared.DoesPathExists(confPath) {
-		conf, err := zazabul.ParseConfig(flaarum_shared.RootConfigTemplate)
+	if !internal.DoesPathExists(confPath) {
+		conf, err := zazabul.ParseConfig(internal.RootConfigTemplate)
 		if err != nil {
 			panic(err)
 		}
@@ -81,12 +81,12 @@ func main() {
 
 	r.Use(keyEnforcementMiddleware)
 
-	port := flaarum_shared.GetSetting("port")
+	port := internal.GetSetting("port")
 
 	fmt.Printf("Serving on port: %s\n", port)
 
-	err = http.ListenAndServeTLS(fmt.Sprintf(":%s", port), flaarum_shared.G("https-server.crt"),
-		flaarum_shared.G("https-server.key"), r)
+	err = http.ListenAndServeTLS(fmt.Sprintf(":%s", port), internal.G("https-server.crt"),
+		internal.G("https-server.key"), r)
 	if err != nil {
 		panic(err)
 	}
@@ -94,12 +94,12 @@ func main() {
 
 func keyEnforcementMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		inProd := flaarum_shared.GetSetting("in_production")
+		inProd := internal.GetSetting("in_production")
 		if inProd == "" {
 			panic(errors.New("Have you installed and launched flaarum.store"))
 		} else if inProd == "true" {
 			keyStr := r.FormValue("key-str")
-			keyPath := flaarum_shared.GetKeyStrPath()
+			keyPath := internal.GetKeyStrPath()
 			raw, err := os.ReadFile(keyPath)
 			if err != nil {
 				http.Error(w, "Improperly Configured Server", http.StatusInternalServerError)

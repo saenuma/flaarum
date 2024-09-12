@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/internal"
 )
 
 // InsertRowStr inserts a row into a table. It expects the input to be of type map[string]string.
@@ -99,7 +99,7 @@ func (cl *Client) InsertRowAny(tableName string, toInsert map[string]any) (int64
 }
 
 // ParseRow given a TableStruct would convert a map of strings to a map of interfaces.
-func (cl *Client) ParseRow(rowStr map[string]string, tableStruct flaarum_shared.TableStruct) (map[string]any, error) {
+func (cl *Client) ParseRow(rowStr map[string]string, tableStruct internal.TableStruct) (map[string]any, error) {
 	fTypeMap := make(map[string]string)
 	for _, fd := range tableStruct.Fields {
 		fTypeMap[fd.FieldName] = fd.FieldType
@@ -201,7 +201,7 @@ func (cl *Client) Search(stmt string) (*[]map[string]any, error) {
 		}
 
 		ret := make([]map[string]any, 0)
-		stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
+		stmtStruct, err := internal.ParseSearchStmt(stmt)
 		if err != nil {
 			return nil, err
 		}
@@ -252,7 +252,7 @@ func (cl Client) SearchForOne(stmt string) (*map[string]any, error) {
 			return nil, ConnError{"json error\n" + err.Error()}
 		}
 
-		stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
+		stmtStruct, err := internal.ParseSearchStmt(stmt)
 		if err != nil {
 			return nil, err
 		}
@@ -418,7 +418,7 @@ func (cl Client) UpdateRowsStr(stmt string, updateDataStr map[string]string) err
 }
 
 func (cl Client) UpdateRowsAny(stmt string, updateData map[string]any) error {
-	stmtStruct, err := flaarum_shared.ParseSearchStmt(stmt)
+	stmtStruct, err := internal.ParseSearchStmt(stmt)
 	if err != nil {
 		return ValidationError{err.Error()}
 	}

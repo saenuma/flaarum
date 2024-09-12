@@ -10,7 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/internal"
 )
 
 func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map[string]string) (map[string]string, error) {
@@ -19,7 +19,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 		return nil, err
 	}
 
-	fieldsDescs := make(map[string]flaarum_shared.FieldStruct)
+	fieldsDescs := make(map[string]internal.FieldStruct)
 	for _, fd := range tableStruct.Fields {
 		fieldsDescs[fd.FieldName] = fd
 	}
@@ -136,16 +136,16 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
 	currentVersionNum, err := getCurrentVersionNum(projName, tableName)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
 	toInsert["_version"] = fmt.Sprintf("%d", currentVersionNum)
 
-	dataPath, _ := flaarum_shared.GetDataPath()
+	dataPath, _ := internal.GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
-	if !flaarum_shared.DoesPathExists(tablePath) {
-		flaarum_shared.PrintError(w, errors.New(fmt.Sprintf("Table '%s' of Project '%s' does not exists.", tableName, projName)))
+	if !internal.DoesPathExists(tablePath) {
+		internal.PrintError(w, errors.New(fmt.Sprintf("Table '%s' of Project '%s' does not exists.", tableName, projName)))
 		return
 	}
 
@@ -164,12 +164,12 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 	var nextId int64
 	lastIdPath := filepath.Join(tablePath, "lastId.txt")
 
-	if !flaarum_shared.DoesPathExists(lastIdPath) {
+	if !internal.DoesPathExists(lastIdPath) {
 		nextId = 1
 	} else {
 		raw, err := os.ReadFile(lastIdPath)
 		if err != nil {
-			flaarum_shared.PrintError(w, err)
+			internal.PrintError(w, err)
 			return
 		}
 		lastId, _ := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
@@ -179,9 +179,9 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
 	nextIdStr := strconv.FormatInt(nextId, 10)
 
-	err = flaarum_shared.SaveRowData(projName, tableName, nextIdStr, toInsert)
+	err = internal.SaveRowData(projName, tableName, nextIdStr, toInsert)
 	if err != nil {
-		flaarum_shared.PrintError(w, err)
+		internal.PrintError(w, err)
 		return
 	}
 
@@ -189,10 +189,10 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
 	// create indexes
 	for k, v := range toInsert {
-		if !flaarum_shared.IsNotIndexedField(projName, tableName, k) {
-			err := flaarum_shared.MakeIndex(projName, tableName, k, v, nextIdStr)
+		if !internal.IsNotIndexedField(projName, tableName, k) {
+			err := internal.MakeIndex(projName, tableName, k, v, nextIdStr)
 			if err != nil {
-				flaarum_shared.PrintError(w, err)
+				internal.PrintError(w, err)
 				return
 			}
 		}

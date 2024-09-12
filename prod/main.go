@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gookit/color"
-	"github.com/saenuma/flaarum/flaarum_shared"
+	"github.com/saenuma/flaarum/internal"
 	"github.com/saenuma/zazabul"
 )
 
@@ -43,7 +43,7 @@ Supported Commands:
       `)
 
 	case "r":
-		keyPath := flaarum_shared.GetKeyStrPath()
+		keyPath := internal.GetKeyStrPath()
 		raw, err := os.ReadFile(keyPath)
 		if err != nil {
 			color.Red.Printf("Error reading key string path.\nError:%s\n", err)
@@ -52,8 +52,8 @@ Supported Commands:
 		fmt.Println(string(raw))
 
 	case "c":
-		keyPath := flaarum_shared.GetKeyStrPath()
-		randomString := flaarum_shared.GenerateSecureRandomString(50)
+		keyPath := internal.GetKeyStrPath()
+		randomString := internal.GenerateSecureRandomString(50)
 
 		err := os.WriteFile(keyPath, []byte(randomString), 0777)
 		if err != nil {
@@ -63,9 +63,9 @@ Supported Commands:
 		fmt.Print(randomString)
 
 	case "mpr":
-		keyPath := flaarum_shared.GetKeyStrPath()
-		if !flaarum_shared.DoesPathExists(keyPath) {
-			randomString := flaarum_shared.GenerateSecureRandomString(50)
+		keyPath := internal.GetKeyStrPath()
+		if !internal.DoesPathExists(keyPath) {
+			randomString := internal.GenerateSecureRandomString(50)
 
 			err := os.WriteFile(keyPath, []byte(randomString), 0777)
 			if err != nil {
@@ -75,7 +75,7 @@ Supported Commands:
 
 		}
 
-		confPath, err := flaarum_shared.GetConfigPath()
+		confPath, err := internal.GetConfigPath()
 		if err != nil {
 			panic(err)
 		}
@@ -103,7 +103,7 @@ Supported Commands:
 		}
 
 	case "genssl":
-		rootPath, _ := flaarum_shared.GetRootPath()
+		rootPath, _ := internal.GetRootPath()
 		keyPath := filepath.Join(rootPath, "https-server.key")
 		crtPath := filepath.Join(rootPath, "https-server.crt")
 
