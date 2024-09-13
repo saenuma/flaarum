@@ -82,8 +82,8 @@ func main() {
 
 	fmt.Printf("Serving on port: %s\n", port)
 
-	err = http.ListenAndServeTLS(fmt.Sprintf(":%s", port), internal.G("https-servehttp.crt"),
-		internal.G("https-servehttp.key"), nil)
+	err = http.ListenAndServeTLS(fmt.Sprintf(":%s", port), internal.G("https-server.crt"),
+		internal.G("https-server.key"), nil)
 	if err != nil {
 		panic(err)
 	}
