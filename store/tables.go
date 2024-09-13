@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
 )
@@ -47,8 +46,8 @@ func validateTableStruct(projName string, tableStruct internal.TableStruct) erro
 }
 
 func createTable(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
+
+	projName := r.PathValue("proj")
 
 	stmt := r.FormValue("stmt")
 
@@ -92,8 +91,8 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateTableStructure(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
+
+	projName := r.PathValue("proj")
 
 	stmt := r.FormValue("stmt")
 
@@ -163,9 +162,9 @@ func getCurrentTableStructureParsed(projName, tableName string) (internal.TableS
 }
 
 func getCurrentVersionNumHTTP(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
-	tableName := vars["tbl"]
+
+	projName := r.PathValue("proj")
+	tableName := r.PathValue("tbl")
 
 	projsMutex.Lock()
 	defer projsMutex.Unlock()
@@ -180,10 +179,10 @@ func getCurrentVersionNumHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func getTableStructureHTTP(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
-	tableName := vars["tbl"]
-	versionNum := vars["vnum"]
+
+	projName := r.PathValue("proj")
+	tableName := r.PathValue("tbl")
+	versionNum := r.PathValue("vnum")
 
 	dataPath, _ := internal.GetDataPath()
 
@@ -220,8 +219,8 @@ func getExistingTables(projName string) ([]string, error) {
 }
 
 func listTables(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
+
+	projName := r.PathValue("proj")
 
 	projsMutex.Lock()
 	defer projsMutex.Unlock()
@@ -242,9 +241,9 @@ func listTables(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteTable(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
-	tableName := vars["tbl"]
+
+	projName := r.PathValue("proj")
+	tableName := r.PathValue("tbl")
 
 	dataPath, _ := internal.GetDataPath()
 

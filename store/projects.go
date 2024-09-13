@@ -8,14 +8,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
 )
 
 func createProject(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
+
+	projName := r.PathValue("proj")
 
 	if err := nameValidate(projName); err != nil {
 		internal.PrintError(w, err)
@@ -44,8 +43,8 @@ func createProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteProject(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
+
+	projName := r.PathValue("proj")
 
 	if isInternalProjectName(projName) {
 		internal.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", projName)))
@@ -122,9 +121,9 @@ func listProjects(w http.ResponseWriter, r *http.Request) {
 }
 
 func renameProject(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
-	newProjName := vars["nproj"]
+
+	projName := r.PathValue("proj")
+	newProjName := r.PathValue("nproj")
 
 	if isInternalProjectName(projName) {
 		internal.PrintError(w, errors.New(fmt.Sprintf("project name '%s' is used internally", projName)))

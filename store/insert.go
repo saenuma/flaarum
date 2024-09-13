@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
 )
@@ -117,9 +116,9 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 }
 
 func insertRow(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
-	tableName := vars["tbl"]
+
+	projName := r.PathValue("proj")
+	tableName := r.PathValue("tbl")
 
 	r.FormValue("email")
 

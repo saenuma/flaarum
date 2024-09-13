@@ -10,14 +10,13 @@ import (
 	"strings"
 
 	arrayOperations "github.com/adam-hanna/arrayOperations"
-	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
 )
 
 func searchTable(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
+
+	projName := r.PathValue("proj")
 
 	stmtStruct, err := internal.ParseSearchStmt(r.FormValue("stmt"))
 	if err != nil {

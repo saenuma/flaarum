@@ -6,14 +6,13 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
 )
 
 func countRows(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
+
+	projName := r.PathValue("proj")
 
 	stmt := r.FormValue("stmt")
 	qd, err := internal.ParseSearchStmt(stmt)
@@ -38,9 +37,8 @@ func countRows(w http.ResponseWriter, r *http.Request) {
 }
 
 func allRowsCount(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
-	tableName := vars["tbl"]
+	projName := r.PathValue("proj")
+	tableName := r.PathValue("tbl")
 
 	dataPath, _ := internal.GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
@@ -61,8 +59,8 @@ func allRowsCount(w http.ResponseWriter, r *http.Request) {
 }
 
 func sumRows(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
+
+	projName := r.PathValue("proj")
 
 	stmt := r.FormValue("stmt")
 	qd, err := internal.ParseSearchStmt(stmt)

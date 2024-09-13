@@ -5,7 +5,6 @@ go 1.23
 require (
 	github.com/adam-hanna/arrayOperations v1.0.1
 	github.com/gookit/color v1.5.2
-	github.com/gorilla/mux v1.8.0
 	github.com/pkg/errors v0.9.1
 	github.com/saenuma/zazabul v1.1.4
 	github.com/tidwall/pretty v1.2.1

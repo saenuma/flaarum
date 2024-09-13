@@ -7,14 +7,13 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
 )
 
 func updateRows(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	projName := vars["proj"]
+
+	projName := r.PathValue("proj")
 
 	stmt := r.FormValue("stmt")
 	stmtStruct, err := internal.ParseSearchStmt(stmt)

@@ -1,4 +1,4 @@
-// This is the server that accepts and stores data from clients. It is basically an https server.
+// This is the server that accepts and stores data from clients. It is basically an https servehttp.
 package main
 
 import (
@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
 	"github.com/saenuma/zazabul"
@@ -50,46 +49,48 @@ func main() {
 		conf.Write(confPath)
 	}
 
-	r := mux.NewRouter()
-
-	r.HandleFunc("/is-flaarum", func(w http.ResponseWriter, r *http.Request) {
+	http.Handle("/is-flaarum", Q(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "yeah-flaarum")
-	})
+	}))
 
 	// projects
-	r.HandleFunc("/create-project/{proj}", createProject)
-	r.HandleFunc("/delete-project/{proj}", deleteProject)
-	r.HandleFunc("/list-projects", listProjects)
-	r.HandleFunc("/rename-project/{proj}/{nproj}", renameProject)
+	http.Handle("/create-project/{proj}", Q(createProject))
+	http.Handle("/delete-project/{proj}", Q(deleteProject))
+	http.Handle("/list-projects", Q(listProjects))
+	http.Handle("/rename-project/{proj}/{nproj}", Q(renameProject))
 
 	// tables
-	r.HandleFunc("/create-table/{proj}", createTable)
-	r.HandleFunc("/update-table-structure/{proj}", updateTableStructure)
-	r.HandleFunc("/get-current-version-num/{proj}/{tbl}", getCurrentVersionNumHTTP)
-	r.HandleFunc("/get-table-structure/{proj}/{tbl}/{vnum}", getTableStructureHTTP)
-	r.HandleFunc("/list-tables/{proj}", listTables)
-	r.HandleFunc("/delete-table/{proj}/{tbl}", deleteTable)
+	http.Handle("/create-table/{proj}", Q(createTable))
+	http.Handle("/update-table-structure/{proj}", Q(updateTableStructure))
+	http.Handle("/get-current-version-num/{proj}/{tbl}", Q(getCurrentVersionNumHTTP))
+	http.Handle("/get-table-structure/{proj}/{tbl}/{vnum}", Q(getTableStructureHTTP))
+	http.Handle("/list-tables/{proj}", Q(listTables))
+	http.Handle("/delete-table/{proj}/{tbl}", Q(deleteTable))
 
 	// rows
-	r.HandleFunc("/insert-row/{proj}/{tbl}", insertRow)
-	r.HandleFunc("/search-table/{proj}", searchTable)
-	r.HandleFunc("/delete-rows/{proj}", deleteRows)
-	r.HandleFunc("/update-rows/{proj}", updateRows)
-	r.HandleFunc("/count-rows/{proj}", countRows)
-	r.HandleFunc("/sum-rows/{proj}", sumRows)
-	r.HandleFunc("/all-rows-count/{proj}/{tbl}", allRowsCount)
+	http.Handle("/insert-row/{proj}/{tbl}", Q(insertRow))
+	http.Handle("/search-table/{proj}", Q(searchTable))
+	http.Handle("/delete-rows/{proj}", Q(deleteRows))
+	http.Handle("/update-rows/{proj}", Q(updateRows))
+	http.Handle("/count-rows/{proj}", Q(countRows))
+	http.Handle("/sum-rows/{proj}", Q(sumRows))
+	http.Handle("/all-rows-count/{proj}/{tbl}", Q(allRowsCount))
 
-	r.Use(keyEnforcementMiddleware)
+	// http.Use(keyEnforcementMiddleware)
 
 	port := internal.GetSetting("port")
 
 	fmt.Printf("Serving on port: %s\n", port)
 
-	err = http.ListenAndServeTLS(fmt.Sprintf(":%s", port), internal.G("https-server.crt"),
-		internal.G("https-server.key"), r)
+	err = http.ListenAndServeTLS(fmt.Sprintf(":%s", port), internal.G("https-servehttp.crt"),
+		internal.G("https-servehttp.key"), nil)
 	if err != nil {
 		panic(err)
 	}
+}
+
+func Q(f func(w http.ResponseWriter, r *http.Request)) http.Handler {
+	return keyEnforcementMiddleware(http.HandlerFunc(f))
 }
 
 func keyEnforcementMiddleware(next http.Handler) http.Handler {
@@ -105,14 +106,14 @@ func keyEnforcementMiddleware(next http.Handler) http.Handler {
 				http.Error(w, "Improperly Configured Server", http.StatusInternalServerError)
 			}
 			if keyStr == string(raw) {
-				// Call the next handler, which can be another middleware in the chain, or the final handler.
+				// Call the next handler, which can be another middleware in the chain, or the final handlehttp.
 				next.ServeHTTP(w, r)
 			} else {
 				http.Error(w, "Forbidden", http.StatusForbidden)
 			}
 
 		} else {
-			// Call the next handler, which can be another middleware in the chain, or the final handler.
+			// Call the next handler, which can be another middleware in the chain, or the final handlehttp.
 			next.ServeHTTP(w, r)
 		}
 
