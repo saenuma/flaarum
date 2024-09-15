@@ -336,94 +336,88 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []intern
 
 				resolvedFieldName := parts[1]
 
-				currentFieldType := internal.GetFieldType(projName, pTbl, resolvedFieldName)
-
 				otherTableindexesF1Path := filepath.Join(internal.GetTablePath(projName, pTbl), resolvedFieldName+"_indexes.flaa1")
 
-				if currentFieldType == "int" {
+				var whereStructFieldValueInt int64
+				whereStructFieldValueInt, err = strconv.ParseInt(whereStruct.FieldValue, 10, 64)
+				if err != nil {
+					return nil, errors.Wrap(err, "strconv error")
+				}
 
-					var whereStructFieldValueInt int64
-					whereStructFieldValueInt, err = strconv.ParseInt(whereStruct.FieldValue, 10, 64)
+				if internal.DoesPathExists(otherTableindexesF1Path) {
+					elemsMap, err := internal.ParseDataF1File(otherTableindexesF1Path)
 					if err != nil {
-						return nil, errors.Wrap(err, "strconv error")
+						return nil, err
 					}
 
-					if internal.DoesPathExists(otherTableindexesF1Path) {
-						elemsMap, err := internal.ParseDataF1File(otherTableindexesF1Path)
+					elemsKeys := make([]int64, 0, len(elemsMap))
+
+					for k := range elemsMap {
+						var elemValueInt int64
+						elemValueInt, err = strconv.ParseInt(k, 10, 64)
 						if err != nil {
-							return nil, err
+							return nil, errors.Wrap(err, "strconv error")
 						}
 
-						elemsKeys := make([]int64, 0, len(elemsMap))
+						elemsKeys = append(elemsKeys, elemValueInt)
+					}
 
-						for k := range elemsMap {
-							var elemValueInt int64
-							elemValueInt, err = strconv.ParseInt(k, 10, 64)
-							if err != nil {
-								return nil, errors.Wrap(err, "strconv error")
-							}
+					sort.Slice(elemsKeys, func(i, j int) bool {
+						return elemsKeys[i] < elemsKeys[j]
+					})
 
-							elemsKeys = append(elemsKeys, elemValueInt)
+					exactMatch := false
+					brokeLoop := false
+					index := 0
+					for i, indexedValue := range elemsKeys {
+						if indexedValue == whereStructFieldValueInt {
+							exactMatch = true
+							brokeLoop = true
+							index = i
+							break
 						}
-
-						sort.Slice(elemsKeys, func(i, j int) bool {
-							return elemsKeys[i] < elemsKeys[j]
-						})
-
-						exactMatch := false
-						brokeLoop := false
-						index := 0
-						for i, indexedValue := range elemsKeys {
-							if indexedValue == whereStructFieldValueInt {
-								exactMatch = true
-								brokeLoop = true
-								index = i
-								break
-							}
-							if indexedValue > whereStructFieldValueInt {
-								index = i
-								brokeLoop = true
-								break
-							}
+						if indexedValue > whereStructFieldValueInt {
+							index = i
+							brokeLoop = true
+							break
 						}
+					}
 
-						foundIndexedValues := make([]int64, 0)
-						if brokeLoop && exactMatch {
-							if whereStruct.Relation == ">" {
-								newIndex := index + 1
-								if len(elemsKeys) != newIndex {
-									foundIndexedValues = elemsKeys[newIndex:]
-								}
-							} else if whereStruct.Relation == ">=" {
-								foundIndexedValues = elemsKeys[index:]
+					foundIndexedValues := make([]int64, 0)
+					if brokeLoop && exactMatch {
+						if whereStruct.Relation == ">" {
+							newIndex := index + 1
+							if len(elemsKeys) != newIndex {
+								foundIndexedValues = elemsKeys[newIndex:]
 							}
-						} else if brokeLoop {
+						} else if whereStruct.Relation == ">=" {
 							foundIndexedValues = elemsKeys[index:]
 						}
-
-						// retrieve the id of the foundIndexedValues
-						for _, indexedValue := range foundIndexedValues {
-							indexedValueStr := strconv.FormatInt(indexedValue, 10)
-
-							elem, ok := elemsMap[indexedValueStr]
-							if ok {
-								readBytes, err := internal.ReadPortionF2File(projName, pTbl,
-									resolvedFieldName+"_indexes", elem.DataBegin, elem.DataEnd)
-								if err != nil {
-									fmt.Printf("%+v\n", err)
-								}
-								trueWhereValues = append(trueWhereValues, strings.Split(string(readBytes), ",")...)
-							}
-						}
-
-						stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
-						if err != nil {
-							return nil, err
-						}
-
-						beforeFilter = append(beforeFilter, stringIds)
+					} else if brokeLoop {
+						foundIndexedValues = elemsKeys[index:]
 					}
 
+					// retrieve the id of the foundIndexedValues
+					for _, indexedValue := range foundIndexedValues {
+						indexedValueStr := strconv.FormatInt(indexedValue, 10)
+
+						elem, ok := elemsMap[indexedValueStr]
+						if ok {
+							readBytes, err := internal.ReadPortionF2File(projName, pTbl,
+								resolvedFieldName+"_indexes", elem.DataBegin, elem.DataEnd)
+							if err != nil {
+								fmt.Printf("%+v\n", err)
+							}
+							trueWhereValues = append(trueWhereValues, strings.Split(string(readBytes), ",")...)
+						}
+					}
+
+					stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+					if err != nil {
+						return nil, err
+					}
+
+					beforeFilter = append(beforeFilter, stringIds)
 				}
 
 			} else {
@@ -431,87 +425,83 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []intern
 
 				indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName+"_indexes.flaa1")
 
-				currentFieldType := internal.GetFieldType(projName, tableName, whereStruct.FieldName)
+				var whereStructFieldValueInt int64
+				whereStructFieldValueInt, err = strconv.ParseInt(whereStruct.FieldValue, 10, 64)
+				if err != nil {
+					return nil, errors.Wrap(err, "strconv error")
+				}
 
-				if currentFieldType == "int" {
-					var whereStructFieldValueInt int64
-					whereStructFieldValueInt, err = strconv.ParseInt(whereStruct.FieldValue, 10, 64)
+				if internal.DoesPathExists(indexesF1Path) {
+					elemsMap, err := internal.ParseDataF1File(indexesF1Path)
 					if err != nil {
-						return nil, errors.Wrap(err, "strconv error")
+						return nil, err
 					}
 
-					if internal.DoesPathExists(indexesF1Path) {
-						elemsMap, err := internal.ParseDataF1File(indexesF1Path)
+					elemsKeys := make([]int64, 0, len(elemsMap))
+
+					for k := range elemsMap {
+						var elemValueInt int64
+						elemValueInt, err = strconv.ParseInt(k, 10, 64)
 						if err != nil {
-							return nil, err
+							return nil, errors.Wrap(err, "strconv error")
 						}
 
-						elemsKeys := make([]int64, 0, len(elemsMap))
+						elemsKeys = append(elemsKeys, elemValueInt)
+					}
 
-						for k := range elemsMap {
-							var elemValueInt int64
-							elemValueInt, err = strconv.ParseInt(k, 10, 64)
-							if err != nil {
-								return nil, errors.Wrap(err, "strconv error")
-							}
+					sort.Slice(elemsKeys, func(i, j int) bool {
+						return elemsKeys[i] < elemsKeys[j]
+					})
 
-							elemsKeys = append(elemsKeys, elemValueInt)
+					exactMatch := false
+					brokeLoop := false
+					index := 0
+					for i, indexedValue := range elemsKeys {
+						if indexedValue == whereStructFieldValueInt {
+							exactMatch = true
+							brokeLoop = true
+							index = i
+							break
 						}
-
-						sort.Slice(elemsKeys, func(i, j int) bool {
-							return elemsKeys[i] < elemsKeys[j]
-						})
-
-						exactMatch := false
-						brokeLoop := false
-						index := 0
-						for i, indexedValue := range elemsKeys {
-							if indexedValue == whereStructFieldValueInt {
-								exactMatch = true
-								brokeLoop = true
-								index = i
-								break
-							}
-							if indexedValue > whereStructFieldValueInt {
-								index = i
-								brokeLoop = true
-								break
-							}
+						if indexedValue > whereStructFieldValueInt {
+							index = i
+							brokeLoop = true
+							break
 						}
+					}
 
-						foundIndexedValues := make([]int64, 0)
-						if brokeLoop && exactMatch {
-							if whereStruct.Relation == ">" {
-								newIndex := index + 1
-								if len(elemsKeys) != newIndex {
-									foundIndexedValues = elemsKeys[newIndex:]
-								}
-							} else if whereStruct.Relation == ">=" {
-								foundIndexedValues = elemsKeys[index:]
+					foundIndexedValues := make([]int64, 0)
+					if brokeLoop && exactMatch {
+						if whereStruct.Relation == ">" {
+							newIndex := index + 1
+							if len(elemsKeys) != newIndex {
+								foundIndexedValues = elemsKeys[newIndex:]
 							}
-						} else if brokeLoop {
+						} else if whereStruct.Relation == ">=" {
 							foundIndexedValues = elemsKeys[index:]
 						}
-
-						// retrieve the id of the foundIndexedValues
-						for _, indexedValue := range foundIndexedValues {
-							indexedValueStr := strconv.FormatInt(indexedValue, 10)
-
-							elem, ok := elemsMap[indexedValueStr]
-							if ok {
-								readBytes, err := internal.ReadPortionF2File(projName, tableName,
-									whereStruct.FieldName+"_indexes", elem.DataBegin, elem.DataEnd)
-								if err != nil {
-									fmt.Printf("%+v\n", err)
-								}
-								stringIds = append(stringIds, strings.Split(string(readBytes), ",")...)
-							}
-						}
-
-						beforeFilter = append(beforeFilter, stringIds)
+					} else if brokeLoop {
+						foundIndexedValues = elemsKeys[index:]
 					}
 
+					// retrieve the id of the foundIndexedValues
+					for _, indexedValue := range foundIndexedValues {
+						indexedValueStr := strconv.FormatInt(indexedValue, 10)
+
+						elem, ok := elemsMap[indexedValueStr]
+						if ok {
+							readBytes, err := internal.ReadPortionF2File(projName, tableName,
+								whereStruct.FieldName+"_indexes", elem.DataBegin, elem.DataEnd)
+							if err != nil {
+								fmt.Printf("%+v\n", err)
+							}
+							stringIds = append(stringIds, strings.Split(string(readBytes), ",")...)
+						}
+					}
+
+					beforeFilter = append(beforeFilter, stringIds)
 				}
+
 			}
 
 		} else if whereStruct.Relation == "<" || whereStruct.Relation == "<=" {
@@ -527,176 +517,169 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []intern
 
 				resolvedFieldName := parts[1]
 
-				currentFieldType := internal.GetFieldType(projName, pTbl, resolvedFieldName)
 				otherTableindexesF1Path := filepath.Join(internal.GetTablePath(projName, pTbl), parts[1]+"_indexes.flaa1")
 
-				if currentFieldType == "int" {
-					var whereStructFieldValueInt int64
-					whereStructFieldValueInt, err = strconv.ParseInt(whereStruct.FieldValue, 10, 64)
+				var whereStructFieldValueInt int64
+				whereStructFieldValueInt, err = strconv.ParseInt(whereStruct.FieldValue, 10, 64)
+				if err != nil {
+					return nil, errors.Wrap(err, "strconv error")
+				}
+
+				if internal.DoesPathExists(otherTableindexesF1Path) {
+					elemsMap, err := internal.ParseDataF1File(otherTableindexesF1Path)
 					if err != nil {
-						return nil, errors.Wrap(err, "strconv error")
+						return nil, err
 					}
 
-					if internal.DoesPathExists(otherTableindexesF1Path) {
-						elemsMap, err := internal.ParseDataF1File(otherTableindexesF1Path)
+					elemsKeys := make([]int64, 0, len(elemsMap))
+
+					for k := range elemsMap {
+						var elemValueInt int64
+						elemValueInt, err = strconv.ParseInt(k, 10, 64)
 						if err != nil {
-							return nil, err
+							return nil, errors.Wrap(err, "strconv error")
 						}
 
-						elemsKeys := make([]int64, 0, len(elemsMap))
+						elemsKeys = append(elemsKeys, elemValueInt)
+					}
 
-						for k := range elemsMap {
-							var elemValueInt int64
-							elemValueInt, err = strconv.ParseInt(k, 10, 64)
-							if err != nil {
-								return nil, errors.Wrap(err, "strconv error")
-							}
+					sort.Slice(elemsKeys, func(i, j int) bool {
+						return elemsKeys[i] < elemsKeys[j]
+					})
 
-							elemsKeys = append(elemsKeys, elemValueInt)
+					exactMatch := false
+					brokeLoop := false
+					index := 0
+					for i, indexedValue := range elemsKeys {
+						if indexedValue == whereStructFieldValueInt {
+							exactMatch = true
+							brokeLoop = true
+							index = i
+							break
 						}
-
-						sort.Slice(elemsKeys, func(i, j int) bool {
-							return elemsKeys[i] < elemsKeys[j]
-						})
-
-						exactMatch := false
-						brokeLoop := false
-						index := 0
-						for i, indexedValue := range elemsKeys {
-							if indexedValue == whereStructFieldValueInt {
-								exactMatch = true
-								brokeLoop = true
-								index = i
-								break
-							}
-							if indexedValue > whereStructFieldValueInt {
-								index = i
-								brokeLoop = true
-								break
-							}
+						if indexedValue > whereStructFieldValueInt {
+							index = i
+							brokeLoop = true
+							break
 						}
+					}
 
-						foundIndexedValues := make([]int64, 0)
-						if brokeLoop && exactMatch {
-							if whereStruct.Relation == "<" {
-								newIndex := index + 1
-								if len(elemsKeys) != newIndex {
-									foundIndexedValues = elemsKeys[0:newIndex]
-								}
-							} else if whereStruct.Relation == "<=" {
-								foundIndexedValues = elemsKeys[0:index]
+					foundIndexedValues := make([]int64, 0)
+					if brokeLoop && exactMatch {
+						if whereStruct.Relation == "<" {
+							newIndex := index + 1
+							if len(elemsKeys) != newIndex {
+								foundIndexedValues = elemsKeys[0:newIndex]
 							}
-						} else if brokeLoop {
+						} else if whereStruct.Relation == "<=" {
 							foundIndexedValues = elemsKeys[0:index]
 						}
-
-						// retrieve the id of the foundIndexedValues
-						for _, indexedValue := range foundIndexedValues {
-							indexedValueStr := strconv.FormatInt(indexedValue, 10)
-
-							elem, ok := elemsMap[indexedValueStr]
-							if ok {
-								readBytes, err := internal.ReadPortionF2File(projName, pTbl,
-									resolvedFieldName+"_indexes", elem.DataBegin, elem.DataEnd)
-								if err != nil {
-									fmt.Printf("%+v\n", err)
-								}
-								trueWhereValues = append(trueWhereValues, strings.Split(string(readBytes), ",")...)
-							}
-						}
-
-						stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
-						if err != nil {
-							return nil, err
-						}
-
-						beforeFilter = append(beforeFilter, stringIds)
+					} else if brokeLoop {
+						foundIndexedValues = elemsKeys[0:index]
 					}
 
+					// retrieve the id of the foundIndexedValues
+					for _, indexedValue := range foundIndexedValues {
+						indexedValueStr := strconv.FormatInt(indexedValue, 10)
+
+						elem, ok := elemsMap[indexedValueStr]
+						if ok {
+							readBytes, err := internal.ReadPortionF2File(projName, pTbl,
+								resolvedFieldName+"_indexes", elem.DataBegin, elem.DataEnd)
+							if err != nil {
+								fmt.Printf("%+v\n", err)
+							}
+							trueWhereValues = append(trueWhereValues, strings.Split(string(readBytes), ",")...)
+						}
+					}
+
+					stringIds, err := findIdsContainingTrueWhereValues(projName, tableName, parts[0], trueWhereValues)
+					if err != nil {
+						return nil, err
+					}
+
+					beforeFilter = append(beforeFilter, stringIds)
 				}
+
 			} else {
 				stringIds := make([]string, 0)
 
-				currentFieldType := internal.GetFieldType(projName, tableName, whereStruct.FieldName)
 				indexesF1Path := filepath.Join(tablePath, whereStruct.FieldName+"_indexes.flaa1")
 
-				if currentFieldType == "int" {
+				var whereStructFieldValueInt int64
+				whereStructFieldValueInt, err = strconv.ParseInt(whereStruct.FieldValue, 10, 64)
+				if err != nil {
+					return nil, errors.Wrap(err, "strconv error")
+				}
 
-					var whereStructFieldValueInt int64
-					whereStructFieldValueInt, err = strconv.ParseInt(whereStruct.FieldValue, 10, 64)
+				if internal.DoesPathExists(indexesF1Path) {
+					elemsMap, err := internal.ParseDataF1File(indexesF1Path)
 					if err != nil {
-						return nil, errors.Wrap(err, "strconv error")
+						return nil, err
 					}
 
-					if internal.DoesPathExists(indexesF1Path) {
-						elemsMap, err := internal.ParseDataF1File(indexesF1Path)
+					elemsKeys := make([]int64, 0, len(elemsMap))
+
+					for k := range elemsMap {
+						var elemValueInt int64
+						elemValueInt, err = strconv.ParseInt(k, 10, 64)
 						if err != nil {
-							return nil, err
+							return nil, errors.Wrap(err, "strconv error")
 						}
 
-						elemsKeys := make([]int64, 0, len(elemsMap))
+						elemsKeys = append(elemsKeys, elemValueInt)
+					}
 
-						for k := range elemsMap {
-							var elemValueInt int64
-							elemValueInt, err = strconv.ParseInt(k, 10, 64)
-							if err != nil {
-								return nil, errors.Wrap(err, "strconv error")
-							}
+					sort.Slice(elemsKeys, func(i, j int) bool {
+						return elemsKeys[i] < elemsKeys[j]
+					})
 
-							elemsKeys = append(elemsKeys, elemValueInt)
+					exactMatch := false
+					brokeLoop := false
+					index := 0
+					for i, indexedValue := range elemsKeys {
+						if indexedValue == whereStructFieldValueInt {
+							exactMatch = true
+							brokeLoop = true
+							index = i
+							break
 						}
-
-						sort.Slice(elemsKeys, func(i, j int) bool {
-							return elemsKeys[i] < elemsKeys[j]
-						})
-
-						exactMatch := false
-						brokeLoop := false
-						index := 0
-						for i, indexedValue := range elemsKeys {
-							if indexedValue == whereStructFieldValueInt {
-								exactMatch = true
-								brokeLoop = true
-								index = i
-								break
-							}
-							if indexedValue > whereStructFieldValueInt {
-								index = i
-								brokeLoop = true
-								break
-							}
+						if indexedValue > whereStructFieldValueInt {
+							index = i
+							brokeLoop = true
+							break
 						}
+					}
 
-						foundIndexedValues := make([]int64, 0)
-						if brokeLoop && exactMatch {
-							if whereStruct.Relation == "<" {
-								newIndex := index + 1
-								if len(elemsKeys) != newIndex {
-									foundIndexedValues = elemsKeys[0:newIndex]
-								}
-							} else if whereStruct.Relation == "<=" {
-								foundIndexedValues = elemsKeys[0:index]
+					foundIndexedValues := make([]int64, 0)
+					if brokeLoop && exactMatch {
+						if whereStruct.Relation == "<" {
+							newIndex := index + 1
+							if len(elemsKeys) != newIndex {
+								foundIndexedValues = elemsKeys[0:newIndex]
 							}
-						} else if brokeLoop {
+						} else if whereStruct.Relation == "<=" {
 							foundIndexedValues = elemsKeys[0:index]
 						}
-
-						// retrieve the id of the foundIndexedValues
-						for _, indexedValue := range foundIndexedValues {
-							indexedValueStr := strconv.FormatInt(indexedValue, 10)
-							elem, ok := elemsMap[indexedValueStr]
-							if ok {
-								readBytes, err := internal.ReadPortionF2File(projName, tableName,
-									whereStruct.FieldName+"_indexes", elem.DataBegin, elem.DataEnd)
-								if err != nil {
-									fmt.Printf("%+v\n", err)
-								}
-								stringIds = append(stringIds, strings.Split(string(readBytes), ",")...)
-							}
-						}
-
-						beforeFilter = append(beforeFilter, stringIds)
+					} else if brokeLoop {
+						foundIndexedValues = elemsKeys[0:index]
 					}
+
+					// retrieve the id of the foundIndexedValues
+					for _, indexedValue := range foundIndexedValues {
+						indexedValueStr := strconv.FormatInt(indexedValue, 10)
+						elem, ok := elemsMap[indexedValueStr]
+						if ok {
+							readBytes, err := internal.ReadPortionF2File(projName, tableName,
+								whereStruct.FieldName+"_indexes", elem.DataBegin, elem.DataEnd)
+							if err != nil {
+								fmt.Printf("%+v\n", err)
+							}
+							stringIds = append(stringIds, strings.Split(string(readBytes), ",")...)
+						}
+					}
+
+					beforeFilter = append(beforeFilter, stringIds)
 				}
 			}
 
