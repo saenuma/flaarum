@@ -72,14 +72,6 @@ func (cl *Client) ConvertInterfaceMapToStringMap(tableName string, oldMap map[st
 		case int64:
 			vInStr := strconv.FormatInt(vInType, 10)
 			newMap[k] = vInStr
-		case bool:
-			var vInStr string
-			if vInType {
-				vInStr = "t"
-			} else if !vInType {
-				vInStr = "f"
-			}
-			newMap[k] = vInStr
 		case string:
 			newMap[k] = vInType
 		}
@@ -139,14 +131,7 @@ func (cl *Client) ParseRow(rowStr map[string]string, tableStruct internal.TableS
 					return nil, fmt.Errorf("the value '%s' to field '%s' is not of type 'int'", v, k)
 				}
 				tmpRow[k] = vInt
-			} else if fieldType == "bool" {
-				if v == "t" {
-					tmpRow[k] = true
-				} else {
-					tmpRow[k] = false
-				}
 			}
-
 		}
 	}
 
