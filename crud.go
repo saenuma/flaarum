@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -19,6 +20,59 @@ func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (in
 	urlValues.Add("key-str", cl.KeyStr)
 	for k, v := range toInsert {
 		urlValues.Add(k, v)
+	}
+
+	tableStruct, err := cl.GetCurrentTableStructureParsed(tableName)
+	if err != nil {
+		return -1, err
+	}
+
+	fields := make([]string, 0)
+	for _, fd := range tableStruct.Fields {
+		fields = append(fields, fd.FieldName)
+	}
+
+	for k := range toInsert {
+		if k == "id" || k == "_version" {
+			msg := fmt.Sprintf("The field '%s' would be generated. Please remove.", k)
+			return -1, retError(20, msg)
+		}
+
+		if !slices.Contains(fields, k) {
+			msg := fmt.Sprintf("The field '%s' is not part of this table structure", k)
+			return -1, retError(20, msg)
+		}
+
+	}
+
+	for _, fd := range tableStruct.Fields {
+		v, ok := toInsert[fd.FieldName]
+
+		if ok && v != "" {
+			if fd.FieldType == "string" {
+				if len(v) > 200 {
+					msg := fmt.Sprintf("The value '%s' to field '%s' is longer than 200 characters", v, fd.FieldName)
+					return -1, retError(24, msg)
+				}
+				if strings.Contains(v, "\n") || strings.Contains(v, "\r\n") {
+					msg := fmt.Sprintf("The value of field '%s' contains new line.", fd.FieldName)
+					return -1, retError(24, msg)
+				}
+			}
+
+			if fd.FieldType == "int" {
+
+				_, err := strconv.ParseInt(v, 10, 64)
+				if err != nil {
+					msg := fmt.Sprintf("The value '%s' to field '%s' is not of type 'int'", v, fd.FieldName)
+					return -1, retError(24, msg)
+				}
+			}
+
+		}
+		if !ok && fd.Required {
+			return -1, retError(22, fmt.Sprintf("The field '%s' is required.", fd.FieldName))
+		}
 	}
 
 	resp, err := httpCl.PostForm(fmt.Sprintf("%sinsert-row/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
@@ -38,7 +92,14 @@ func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (in
 		}
 		return retId, nil
 	} else if resp.StatusCode == 400 {
-		return 0, retError(20, string(body))
+		retStr := string(body)
+		if strings.HasPrefix(retStr, "UE:") {
+			return -1, retError(21, retStr[3:])
+		} else if strings.HasPrefix(retStr, "FKE:") {
+			return -1, retError(23, retStr[4:])
+		} else {
+			return 0, retError(20, string(body))
+		}
 	} else {
 		return 0, retError(11, string(body))
 	}

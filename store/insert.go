@@ -18,51 +18,6 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 		return nil, err
 	}
 
-	fieldsDescs := make(map[string]internal.FieldStruct)
-	for _, fd := range tableStruct.Fields {
-		fieldsDescs[fd.FieldName] = fd
-	}
-
-	for k := range dataMap {
-		if k == "id" || k == "_version" {
-			continue
-		}
-		_, ok := fieldsDescs[k]
-		if !ok {
-			return nil, errors.New(fmt.Sprintf("The field '%s' is not part of this table structure", k))
-		}
-	}
-
-	for _, fd := range tableStruct.Fields {
-		k := fd.FieldName
-		v, ok := dataMap[k]
-
-		if ok && v != "" {
-			if fd.FieldType == "string" {
-				if len(v) > 220 {
-					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is longer than 220 characters", v, k))
-				}
-				if strings.Contains(v, "\n") || strings.Contains(v, "\r\n") {
-					return nil, errors.New(fmt.Sprintf("The value of field '%s' contains new line.", k))
-				}
-			}
-
-			if fd.FieldType == "int" {
-
-				_, err := strconv.ParseInt(v, 10, 64)
-				if err != nil {
-					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not of type 'int'", v, k))
-				}
-			}
-
-		}
-
-		if !ok && fd.Required {
-			return nil, errors.New(fmt.Sprintf("The field '%s' is required.", k))
-		}
-
-	}
-
 	// validate unique property
 	for _, fd := range tableStruct.Fields {
 		newValue, ok1 := dataMap[fd.FieldName]
@@ -87,7 +42,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 			}
 
 			if len(*toCheckRows) > 0 {
-				return nil, errors.New(fmt.Sprintf("The data '%s' is not unique to field '%s'.", newValue, fd.FieldName))
+				return nil, errors.New(fmt.Sprintf("UE: The data '%s' is not unique to field '%s'.", newValue, fd.FieldName))
 			}
 		}
 	}
@@ -107,7 +62,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 				return nil, err
 			}
 			if len(*toCheckRows) == 0 {
-				return nil, errors.New(fmt.Sprintf("The data with id '%s' does not exist in table '%s'", v, fkd.PointedTable))
+				return nil, errors.New(fmt.Sprintf("FKE: The data with id '%s' does not exist in table '%s'", v, fkd.PointedTable))
 			}
 		}
 	}
@@ -148,7 +103,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check if data conforms with table structure
+	// do unique and foreign key validation
 	toInsert, err = validateAndMutateDataMap(projName, tableName, toInsert, nil)
 	if err != nil {
 		printValError(w, err)

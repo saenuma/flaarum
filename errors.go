@@ -12,6 +12,7 @@ Common error codes
 21: Errors relating to unique constraints
 22: Errors relating to required constraints
 23: Errors relating to foreign keys
+24: Type errors
 */
 type FlError struct {
 	Code int
