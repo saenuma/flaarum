@@ -3,7 +3,7 @@ package flaarum
 import "fmt"
 
 /*
-Common error codes
+All error codes
 
 10: Connection Error
 11: Error happended on server
