@@ -23,24 +23,24 @@ func (cl *Client) InsertRowStr(tableName string, toInsert map[string]string) (in
 
 	resp, err := httpCl.PostForm(fmt.Sprintf("%sinsert-row/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
 	if err != nil {
-		return 0, ConnError{err.Error()}
+		return 0, retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, ConnError{err.Error()}
+		return 0, retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		retId, err := strconv.ParseInt(strings.TrimSpace(string(body)), 10, 64)
 		if err != nil {
-			return 0, ServerError{err.Error()}
+			return 0, retError(11, err.Error())
 		}
 		return retId, nil
 	} else if resp.StatusCode == 400 {
-		return 0, ValidationError{string(body)}
+		return 0, retError(20, string(body))
 	} else {
-		return 0, ServerError{string(body)}
+		return 0, retError(11, string(body))
 	}
 }
 
@@ -92,7 +92,7 @@ func (cl *Client) ConvertInterfaceMapToStringMap(tableName string, oldMap map[st
 func (cl *Client) InsertRowAny(tableName string, toInsert map[string]any) (int64, error) {
 	toInsertStr, err := cl.ConvertInterfaceMapToStringMap(tableName, toInsert)
 	if err != nil {
-		return 0, ValidationError{err.Error()}
+		return 0, retError(20, err.Error())
 	}
 
 	return cl.InsertRowStr(tableName, toInsertStr)
@@ -182,24 +182,25 @@ func (cl *Client) Search(stmt string) (*[]map[string]any, error) {
 	urlValues.Set("key-str", cl.KeyStr)
 	urlValues.Set("stmt", stmt)
 
+	_, err := internal.ParseSearchStmt(stmt)
+	if err != nil {
+		return nil, retError(12, err.Error())
+	}
+
 	resp, err := httpCl.PostForm(cl.Addr+"search-table/"+cl.ProjName, urlValues)
 	if err != nil {
-		return nil, ConnError{err.Error()}
+		return nil, retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, ConnError{err.Error()}
+		return nil, retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		rowsStr := make([]map[string]string, 0)
-		err = json.Unmarshal(body, &rowsStr)
-		if err != nil {
-			return nil, ConnError{"json error\n" + err.Error()}
-		}
-
+		json.Unmarshal(body, &rowsStr)
 		ret := make([]map[string]any, 0)
 		stmtStruct, err := internal.ParseSearchStmt(stmt)
 		if err != nil {
@@ -207,24 +208,21 @@ func (cl *Client) Search(stmt string) (*[]map[string]any, error) {
 		}
 
 		for _, rowStr := range rowsStr {
-			versionInt, err := strconv.ParseInt(rowStr["_version"], 10, 64)
-			if err != nil {
-				return nil, ConnError{"strconv error\n" + err.Error()}
-			}
+			versionInt, _ := strconv.ParseInt(rowStr["_version"], 10, 64)
 			versionedTableStruct, err := cl.GetTableStructureParsed(stmtStruct.TableName, versionInt)
 			if err != nil {
-				return nil, ConnError{err.Error()}
+				return nil, retError(10, err.Error())
 			}
 			row, err := cl.ParseRow(rowStr, versionedTableStruct)
 			if err != nil {
-				return nil, ConnError{err.Error()}
+				return nil, retError(10, err.Error())
 			}
 			ret = append(ret, row)
 		}
 
 		return &ret, nil
 	} else {
-		return nil, ServerError{string(body)}
+		return nil, retError(11, string(body))
 	}
 }
 
@@ -234,45 +232,39 @@ func (cl Client) SearchForOne(stmt string) (*map[string]any, error) {
 	urlValues.Set("stmt", stmt)
 	urlValues.Set("query-one", "t")
 
+	stmtStruct, err := internal.ParseSearchStmt(stmt)
+	if err != nil {
+		return nil, retError(12, err.Error())
+	}
+
 	resp, err := httpCl.PostForm(cl.Addr+"search-table/"+cl.ProjName, urlValues)
 	if err != nil {
-		return nil, ConnError{err.Error()}
+		return nil, retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, ConnError{err.Error()}
+		return nil, retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		rowStr := make(map[string]string)
-		err = json.Unmarshal(body, &rowStr)
-		if err != nil {
-			return nil, ConnError{"json error\n" + err.Error()}
-		}
+		json.Unmarshal(body, &rowStr)
 
-		stmtStruct, err := internal.ParseSearchStmt(stmt)
-		if err != nil {
-			return nil, err
-		}
-
-		versionInt, err := strconv.ParseInt(rowStr["_version"], 10, 64)
-		if err != nil {
-			return nil, ConnError{"strconv error\n" + err.Error()}
-		}
+		versionInt, _ := strconv.ParseInt(rowStr["_version"], 10, 64)
 		versionedTableStruct, err := cl.GetTableStructureParsed(stmtStruct.TableName, versionInt)
 		if err != nil {
-			return nil, ConnError{err.Error()}
+			return nil, retError(10, err.Error())
 		}
 
 		row, err := cl.ParseRow(rowStr, versionedTableStruct)
 		if err != nil {
-			return nil, ConnError{err.Error()}
+			return nil, retError(10, err.Error())
 		}
 		return &row, nil
 	} else {
-		return nil, ServerError{string(body)}
+		return nil, retError(11, string(body))
 	}
 }
 
@@ -281,21 +273,26 @@ func (cl Client) DeleteRows(stmt string) error {
 	urlValues.Add("key-str", cl.KeyStr)
 	urlValues.Add("stmt", stmt)
 
+	_, err := internal.ParseSearchStmt(stmt)
+	if err != nil {
+		return retError(12, err.Error())
+	}
+
 	resp, err := httpCl.PostForm(fmt.Sprintf("%sdelete-rows/%s", cl.Addr, cl.ProjName), urlValues)
 	if err != nil {
-		return ConnError{err.Error()}
+		return retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return ConnError{err.Error()}
+		return retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		return nil
 	} else {
-		return ServerError{string(body)}
+		return retError(11, string(body))
 	}
 }
 
@@ -304,26 +301,28 @@ func (cl Client) CountRows(stmt string) (int64, error) {
 	urlValues.Set("key-str", cl.KeyStr)
 	urlValues.Set("stmt", stmt)
 
+	_, err := internal.ParseSearchStmt(stmt)
+	if err != nil {
+		return -1, retError(12, err.Error())
+	}
+
 	resp, err := httpCl.PostForm(fmt.Sprintf("%scount-rows/%s", cl.Addr, cl.ProjName), urlValues)
 	if err != nil {
-		return 0, ConnError{err.Error()}
+		return 0, retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, ConnError{err.Error()}
+		return 0, retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		r := string(body)
-		trueR, err := strconv.ParseInt(r, 10, 64)
-		if err != nil {
-			return 0, ConnError{"strconv error\n" + err.Error()}
-		}
+		trueR, _ := strconv.ParseInt(r, 10, 64)
 		return trueR, nil
 	} else {
-		return 0, ServerError{string(body)}
+		return 0, retError(11, string(body))
 	}
 }
 
@@ -333,28 +332,25 @@ func (cl Client) AllRowsCount(tableName string) (int64, error) {
 
 	resp, err := httpCl.PostForm(fmt.Sprintf("%sall-rows-count/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
 	if err != nil {
-		return 0, ConnError{err.Error()}
+		return 0, retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, ConnError{err.Error()}
+		return 0, retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		r := string(body)
-		trueR, err := strconv.ParseInt(r, 10, 64)
-		if err != nil {
-			return 0, ConnError{"strconv error\n" + err.Error()}
-		}
+		trueR, _ := strconv.ParseInt(r, 10, 64)
 		return trueR, nil
 	} else {
-		return 0, ServerError{string(body)}
+		return 0, retError(11, string(body))
 	}
 }
 
-// Sums the fields of a row and returns int64 if it is an int field
+// Sums the fields of a row and returns int64
 func (cl Client) SumRows(stmt string) (any, error) {
 	urlValues := url.Values{}
 	urlValues.Add("stmt", stmt)
@@ -362,25 +358,22 @@ func (cl Client) SumRows(stmt string) (any, error) {
 
 	resp, err := httpCl.PostForm(fmt.Sprintf("%ssum-rows/%s", cl.Addr, cl.ProjName), urlValues)
 	if err != nil {
-		return 0, ConnError{err.Error()}
+		return 0, retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, ConnError{err.Error()}
+		return 0, retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		r := string(body)
-		trueR, err := strconv.ParseInt(r, 10, 64)
-		if err != nil {
-			return 0, ConnError{"strconv error\n" + err.Error()}
-		}
+		trueR, _ := strconv.ParseInt(r, 10, 64)
 		return trueR, nil
 
 	} else {
-		return 0, ServerError{string(body)}
+		return 0, retError(11, string(body))
 	}
 }
 
@@ -388,6 +381,11 @@ func (cl Client) UpdateRowsStr(stmt string, updateDataStr map[string]string) err
 	urlValues := url.Values{}
 	urlValues.Add("key-str", cl.KeyStr)
 	urlValues.Add("stmt", stmt)
+
+	_, err := internal.ParseSearchStmt(stmt)
+	if err != nil {
+		return retError(12, err.Error())
+	}
 
 	keys := make([]string, 0)
 	for k := range updateDataStr {
@@ -401,30 +399,30 @@ func (cl Client) UpdateRowsStr(stmt string, updateDataStr map[string]string) err
 
 	resp, err := httpCl.PostForm(fmt.Sprintf("%supdate-rows/%s", cl.Addr, cl.ProjName), urlValues)
 	if err != nil {
-		return ConnError{err.Error()}
+		return retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return ConnError{err.Error()}
+		return retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		return nil
 	} else {
-		return ServerError{string(body)}
+		return retError(11, string(body))
 	}
 }
 
 func (cl Client) UpdateRowsAny(stmt string, updateData map[string]any) error {
 	stmtStruct, err := internal.ParseSearchStmt(stmt)
 	if err != nil {
-		return ValidationError{err.Error()}
+		return retError(12, err.Error())
 	}
 	updateDataStr, err := cl.ConvertInterfaceMapToStringMap(stmtStruct.TableName, updateData)
 	if err != nil {
-		return ValidationError{err.Error()}
+		return retError(20, err.Error())
 	}
 
 	return cl.UpdateRowsStr(stmt, updateDataStr)

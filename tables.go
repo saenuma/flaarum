@@ -17,18 +17,18 @@ func (cl *Client) CreateTable(stmt string) error {
 
 	resp, err := httpCl.PostForm(cl.Addr+"create-table/"+cl.ProjName, urlValues)
 	if err != nil {
-		return ConnError{err.Error()}
+		return retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return ConnError{"ioutil error\n" + err.Error()}
+		return retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		return nil
 	} else {
-		return ServerError{string(body)}
+		return retError(11, string(body))
 	}
 }
 
@@ -39,18 +39,18 @@ func (cl *Client) UpdateTableStructure(stmt string) error {
 
 	resp, err := httpCl.PostForm(cl.Addr+"update-table-structure/"+cl.ProjName, urlValues)
 	if err != nil {
-		return ConnError{err.Error()}
+		return retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return ConnError{"ioutil error\n" + err.Error()}
+		return retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		return nil
 	} else {
-		return ServerError{string(body)}
+		return retError(11, string(body))
 	}
 }
 
@@ -99,22 +99,19 @@ func (cl *Client) GetCurrentTableVersionNum(tableName string) (int64, error) {
 
 	resp, err := httpCl.PostForm(fmt.Sprintf("%sget-current-version-num/%s/%s", cl.Addr, cl.ProjName, tableName), urlValues)
 	if err != nil {
-		return -1, ConnError{err.Error()}
+		return -1, retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return -1, ConnError{err.Error()}
+		return -1, retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
-		retId, err := strconv.ParseInt(string(body), 10, 64)
-		if err != nil {
-			return -1, ConnError{"strconv error\n" + err.Error()}
-		}
+		retId, _ := strconv.ParseInt(string(body), 10, 64)
 		return retId, nil
 	} else {
-		return -1, ServerError{string(body)}
+		return -1, retError(11, string(body))
 	}
 }
 
@@ -125,18 +122,18 @@ func (cl *Client) GetTableStructure(tableName string, versionNum int64) (string,
 	resp, err := httpCl.PostForm(fmt.Sprintf("%sget-table-structure/%s/%s/%d", cl.Addr, cl.ProjName, tableName, versionNum),
 		urlValues)
 	if err != nil {
-		return "", ConnError{err.Error()}
+		return "", retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", ConnError{err.Error()}
+		return "", retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		return string(body), nil
 	} else {
-		return "", ServerError{string(body)}
+		return "", retError(11, string(body))
 	}
 }
 
@@ -166,23 +163,20 @@ func (cl Client) ListTables() ([]string, error) {
 
 	resp, err := httpCl.PostForm(fmt.Sprintf("%slist-tables/%s", cl.Addr, cl.ProjName), urlValues)
 	if err != nil {
-		return nil, ConnError{err.Error()}
+		return nil, retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, ConnError{err.Error()}
+		return nil, retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		tables := make([]string, 0)
-		err = json.Unmarshal(body, &tables)
-		if err != nil {
-			return nil, ConnError{"json error\n" + err.Error()}
-		}
+		json.Unmarshal(body, &tables)
 		return tables, nil
 	} else {
-		return nil, ServerError{string(body)}
+		return nil, retError(11, string(body))
 	}
 
 }
@@ -193,17 +187,17 @@ func (cl *Client) DeleteTable(tableName string) error {
 
 	resp, err := httpCl.PostForm(cl.Addr+"delete-table/"+cl.ProjName+"/"+tableName, urlValues)
 	if err != nil {
-		return ConnError{err.Error()}
+		return retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return ConnError{err.Error()}
+		return retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		return nil
 	} else {
-		return ServerError{string(body)}
+		return retError(11, string(body))
 	}
 }

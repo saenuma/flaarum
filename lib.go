@@ -9,30 +9,6 @@ import (
 	"net/url"
 )
 
-type ConnError struct {
-	msg string // description of error
-}
-
-func (e ConnError) Error() string {
-	return "connection Error: " + e.msg
-}
-
-type ValidationError struct {
-	msg string // description of error
-}
-
-func (e ValidationError) Error() string {
-	return "validation Error: " + e.msg
-}
-
-type ServerError struct {
-	msg string // description of error
-}
-
-func (e ServerError) Error() string {
-	return "server Error: " + e.msg
-}
-
 var httpCl *http.Client
 
 func init() {
@@ -63,21 +39,21 @@ func (cl *Client) Ping() error {
 
 	resp, err := httpCl.PostForm(cl.Addr+"is-flaarum", urlValues)
 	if err != nil {
-		return ConnError{err.Error()}
+		return retError(10, err.Error())
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return ConnError{err.Error()}
+		return retError(10, err.Error())
 	}
 
 	if resp.StatusCode == 200 {
 		if string(body) == "yeah-flaarum" {
 			return nil
 		} else {
-			return ConnError{"Unexpected Error in confirming that the server is a flaarum store."}
+			return retError(10, "Unexpected Error in confirming that the server is a flaarum store.")
 		}
 	} else {
-		return ConnError{string(body)}
+		return retError(10, string(body))
 	}
 }
