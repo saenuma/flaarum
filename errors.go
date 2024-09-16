@@ -14,15 +14,15 @@ Common error codes
 23: Errors relating to foreign keys
 24: Type errors
 */
-type FlError struct {
+type FlaarumError struct {
 	Code int
 	msg  string
 }
 
-func (e FlError) Error() string {
+func (e FlaarumError) Error() string {
 	return fmt.Sprintf("Error Code: %d\n%s", e.Code, e.msg)
 }
 
-func retError(code int, msg string) FlError {
-	return FlError{Code: code, msg: msg}
+func retError(code int, msg string) FlaarumError {
+	return FlaarumError{Code: code, msg: msg}
 }
