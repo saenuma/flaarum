@@ -73,7 +73,6 @@ func main() {
 	http.Handle("/delete-rows/{proj}", Q(deleteRows))
 	http.Handle("/update-rows/{proj}", Q(updateRows))
 	http.Handle("/count-rows/{proj}", Q(countRows))
-	http.Handle("/sum-rows/{proj}", Q(sumRows))
 	http.Handle("/all-rows-count/{proj}/{tbl}", Q(allRowsCount))
 
 	// http.Use(keyEnforcementMiddleware)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
@@ -56,60 +55,4 @@ func allRowsCount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "%d", len(elemsMap))
-}
-
-func sumRows(w http.ResponseWriter, r *http.Request) {
-
-	projName := r.PathValue("proj")
-
-	stmt := r.FormValue("stmt")
-	qd, err := internal.ParseSearchStmt(stmt)
-	if err != nil {
-		internal.PrintError(w, err)
-		return
-	}
-
-	tableName := qd.TableName
-
-	if !doesTableExists(projName, tableName) {
-		internal.PrintError(w, errors.New(fmt.Sprintf("table '%s' of project '%s' does not exists.", tableName, projName)))
-		return
-	}
-
-	rows, err := innerSearch(projName, stmt)
-	if err != nil {
-		internal.PrintError(w, err)
-		return
-	}
-
-	toSumField := r.FormValue("tosum")
-	tableStruct, err := getCurrentTableStructureParsed(projName, tableName)
-	if err != nil {
-		internal.PrintError(w, err)
-		return
-	}
-	found := false
-	for _, fd := range tableStruct.Fields {
-		if fd.FieldName == toSumField {
-			found = true
-		}
-	}
-
-	if !found {
-		internal.PrintError(w, errors.New(fmt.Sprintf("The field '%s' does not exist in this table structure", toSumField)))
-		return
-	}
-
-	var sumInt int64
-	for _, row := range *rows {
-		oneData, err := strconv.ParseInt(row[toSumField], 10, 64)
-		if err != nil {
-			internal.PrintError(w, errors.Wrap(err, "strconv failed."))
-			return
-		}
-		sumInt += oneData
-
-	}
-
-	fmt.Fprintf(w, "%d", sumInt)
 }

@@ -396,33 +396,6 @@ func (cl Client) AllRowsCount(tableName string) (int64, error) {
 	}
 }
 
-// Sums the fields of a row and returns int64
-func (cl Client) SumRows(stmt string) (any, error) {
-	urlValues := url.Values{}
-	urlValues.Add("stmt", stmt)
-	urlValues.Add("key-str", cl.KeyStr)
-
-	resp, err := httpCl.PostForm(fmt.Sprintf("%ssum-rows/%s", cl.Addr, cl.ProjName), urlValues)
-	if err != nil {
-		return 0, retError(10, err.Error())
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return 0, retError(10, err.Error())
-	}
-
-	if resp.StatusCode == 200 {
-		r := string(body)
-		trueR, _ := strconv.ParseInt(r, 10, 64)
-		return trueR, nil
-
-	} else {
-		return 0, retError(11, string(body))
-	}
-}
-
 func (cl Client) UpdateRowsStr(stmt string, updateDataStr map[string]string) error {
 	urlValues := url.Values{}
 	urlValues.Add("key-str", cl.KeyStr)
