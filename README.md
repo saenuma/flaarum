@@ -1,7 +1,6 @@
 # flaarum
 
-[![GoDoc](https://godoc.org/github.com/saenuma/flaarum?status.svg)](https://godoc.org/github.com/saenuma/flaarum)
-
+[![Go Reference](https://pkg.go.dev/badge/github.com/saenuma/flaarum.svg)](https://pkg.go.dev/github.com/saenuma/flaarum)
 A database that enforces structures and features its own query language.
 
 
