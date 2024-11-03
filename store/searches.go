@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
+	"slices"
+	"cmp"
 
 	arrayOperations "github.com/adam-hanna/arrayOperations"
 	"github.com/pkg/errors"
@@ -362,8 +363,8 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []intern
 						elemsKeys = append(elemsKeys, elemValueInt)
 					}
 
-					sort.Slice(elemsKeys, func(i, j int) bool {
-						return elemsKeys[i] < elemsKeys[j]
+					slices.SortFunc(elemsKeys, func(a, b int64) int{
+						return cmp.Compare(a, b)
 					})
 
 					exactMatch := false
@@ -449,8 +450,8 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []intern
 						elemsKeys = append(elemsKeys, elemValueInt)
 					}
 
-					sort.Slice(elemsKeys, func(i, j int) bool {
-						return elemsKeys[i] < elemsKeys[j]
+					slices.SortFunc(elemsKeys, func(a, b int64) int{
+						return cmp.Compare(a, b)
 					})
 
 					exactMatch := false
@@ -543,8 +544,8 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []intern
 						elemsKeys = append(elemsKeys, elemValueInt)
 					}
 
-					sort.Slice(elemsKeys, func(i, j int) bool {
-						return elemsKeys[i] < elemsKeys[j]
+					slices.SortFunc(elemsKeys, func(a, b int64) int{
+						return cmp.Compare(a, b)
 					})
 
 					exactMatch := false
@@ -630,9 +631,10 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []intern
 						elemsKeys = append(elemsKeys, elemValueInt)
 					}
 
-					sort.Slice(elemsKeys, func(i, j int) bool {
-						return elemsKeys[i] < elemsKeys[j]
+					slices.SortFunc(elemsKeys, func(a, b int64) int{
+						return cmp.Compare(a, b)
 					})
+
 
 					exactMatch := false
 					brokeLoop := false
@@ -971,35 +973,35 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 	elems := tmpRet
 	if stmtStruct.OrderBy != "" {
 		if stmtStruct.OrderDirection == "asc" {
-			sort.Slice(elems, func(i, j int) bool {
-				if confirmFieldType(projName, tableName, stmtStruct.OrderBy, "int", elems[i]["_version"]) &&
-					confirmFieldType(projName, tableName, stmtStruct.OrderBy, "int", elems[j]["_version"]) {
-					x, err1 := strconv.ParseInt(elems[i][stmtStruct.OrderBy], 10, 64)
-					y, err2 := strconv.ParseInt(elems[j][stmtStruct.OrderBy], 10, 64)
+			slices.SortFunc(elems, func(a, b map[string]string) int {
+				if confirmFieldType(projName, tableName, stmtStruct.OrderBy, "int", a["_version"]) &&
+					confirmFieldType(projName, tableName, stmtStruct.OrderBy, "int", b["_version"]) {
+					x, err1 := strconv.ParseInt(a[stmtStruct.OrderBy], 10, 64)
+					y, err2 := strconv.ParseInt(b[stmtStruct.OrderBy], 10, 64)
 					if err1 == nil && err2 == nil {
-						return x < y
+						return cmp.Compare(x, y)
 					} else {
-						return elems[i][stmtStruct.OrderBy] < elems[j][stmtStruct.OrderBy]
+						return strings.Compare(a[stmtStruct.OrderBy], b[stmtStruct.OrderBy])
 					}
 
 				} else {
-					return elems[i][stmtStruct.OrderBy] < elems[j][stmtStruct.OrderBy]
+					return strings.Compare(a[stmtStruct.OrderBy], b[stmtStruct.OrderBy])					
 				}
 			})
 		} else {
-			sort.SliceStable(elems, func(i, j int) bool {
-				if confirmFieldType(projName, tableName, stmtStruct.OrderBy, "int", elems[i]["_version"]) &&
-					confirmFieldType(projName, tableName, stmtStruct.OrderBy, "int", elems[j]["_version"]) {
-					x, err1 := strconv.ParseInt(elems[i][stmtStruct.OrderBy], 10, 64)
-					y, err2 := strconv.ParseInt(elems[j][stmtStruct.OrderBy], 10, 64)
+			slices.SortFunc(elems, func(a, b map[string]string) int {
+				if confirmFieldType(projName, tableName, stmtStruct.OrderBy, "int", a["_version"]) &&
+					confirmFieldType(projName, tableName, stmtStruct.OrderBy, "int", b["_version"]) {
+					x, err1 := strconv.ParseInt(a[stmtStruct.OrderBy], 10, 64)
+					y, err2 := strconv.ParseInt(b[stmtStruct.OrderBy], 10, 64)
 					if err1 == nil && err2 == nil {
-						return x > y
+						return cmp.Compare(x, y) * -1
 					} else {
-						return elems[i][stmtStruct.OrderBy] > elems[j][stmtStruct.OrderBy]
+						return strings.Compare(a[stmtStruct.OrderBy], b[stmtStruct.OrderBy]) * -1
 					}
 
 				} else {
-					return elems[i][stmtStruct.OrderBy] > elems[j][stmtStruct.OrderBy]
+					return strings.Compare(a[stmtStruct.OrderBy], b[stmtStruct.OrderBy]) * -1		
 				}
 			})
 		}
