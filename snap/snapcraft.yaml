@@ -15,6 +15,11 @@ description: |
 grade: stable # must be 'stable' to release into candidate/stable channels
 confinement: strict # use 'strict' once you have the right plugs and slots
 
+platforms:
+  amd64:
+  arm64:
+  armhf:
+
 parts:
   all-needed-files:
     # See 'snapcraft plugins'
