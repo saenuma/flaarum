@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/gookit/color"
-	"github.com/saenuma/flaarum"
 	"github.com/saenuma/flaarum/internal"
+	flaarum "github.com/saenuma/flaarumlib"
 	"github.com/tidwall/pretty"
 )
 
