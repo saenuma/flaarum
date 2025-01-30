@@ -64,6 +64,25 @@ func IsNotIndexedFieldVersioned(projName, tableName, fieldName, version string) 
 	return false
 }
 
+func ReadIndexesToMap(projName, tableName, fieldName string) (map[string][]string, error) {
+	dataPath, _ := GetDataPath()
+	indexesPath := filepath.Join(dataPath, projName, tableName, fieldName+"_indexes.json")
+
+	indexesObj := make(map[string][]string)
+	if DoesPathExists(indexesPath) {
+		rawJson, err := os.ReadFile(indexesPath)
+		if err != nil {
+			return indexesObj, errors.Wrap(err, "file read error")
+		}
+		err = json.Unmarshal(rawJson, &indexesObj)
+		if err != nil {
+			return indexesObj, errors.Wrap(err, "json error")
+		}
+	}
+
+	return indexesObj, nil
+}
+
 func DeleteIndex(projName, tableName, fieldName, data, rowId, version string) error {
 
 	dataPath, _ := GetDataPath()
