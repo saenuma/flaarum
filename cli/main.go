@@ -2,18 +2,17 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/gookit/color"
 	"github.com/saenuma/flaarum/internal"
 	flaarum "github.com/saenuma/flaarumlib"
-	"github.com/tidwall/pretty"
 )
 
 const VersionFormat = "20060102T150405MST"
@@ -547,19 +546,36 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
-		jsonBytes, err := json.Marshal(*rows)
-		if err != nil {
-			color.Red.Printf("Error ocurred.\nError: %s\n", err)
-			os.Exit(1)
+		outStr := ""
+		fields := make([]string, 0)
+		for _, row := range *rows {
+			if len(fields) == 0 {
+				for key := range row {
+					if key == "id" {
+						continue
+					}
+
+					fields = append(fields, key)
+				}
+				slices.Sort(fields)
+			}
+
+			tmp := fmt.Sprintf("id: %v  ", row["id"])
+			for _, key := range fields {
+				v := fmt.Sprintf("%v", row[key])
+				if len(v) > 30 {
+					v = v[:30] + "..."
+				}
+				tmp += fmt.Sprintf("%s: %s  ", key, v)
+			}
+			outStr += tmp + "\n"
 		}
 
-		prettyJson := pretty.Pretty(jsonBytes)
-
 		if runtime.GOOS == "windows" {
-			fmt.Println(string(prettyJson))
+			fmt.Println(outStr)
 		} else {
 			cmd := exec.Command("less")
-			cmd.Stdin = strings.NewReader(string(prettyJson))
+			cmd.Stdin = strings.NewReader(outStr)
 			cmd.Stdout = os.Stdout
 
 			err = cmd.Run()
