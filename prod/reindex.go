@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
-	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -39,26 +37,12 @@ func reIndex(projName, tableName string) error {
 	workingF2Path := filepath.Join(workingTablePath, "data.flaa2")
 	os.WriteFile(workingF2Path, rawDataFlaa2, 0777)
 
-	// copy the structures to the new table folder
-	dirFIs, err := os.ReadDir(tablePath)
-	if err != nil {
-		return errors.Wrap(err, "directory read error")
-	}
-	for _, dirFI := range dirFIs {
-		if strings.HasPrefix(dirFI.Name(), "structure") && strings.HasSuffix(dirFI.Name(), ".txt") {
-			oldStructPath := filepath.Join(tablePath, dirFI.Name())
-			raw, _ := os.ReadFile(oldStructPath)
-			newStructPath := filepath.Join(workingTablePath, dirFI.Name())
-			os.WriteFile(newStructPath, raw, 0777)
-		}
-	}
-
+	// start the reindexing
 	elemsMap, _ := internal.ParseDataF1File(workingF1Path)
 
-	// get all the fields in the data
-	fields := make([]string, 0)
-	for _, elem := range elemsMap {
+	var wg sync.WaitGroup
 
+	for _, elem := range elemsMap {
 		rawRowData, err := internal.ReadPortionF2File(projName, tmpTableName, "data",
 			elem.DataBegin, elem.DataEnd)
 		if err != nil {
@@ -71,49 +55,27 @@ func reIndex(projName, tableName string) error {
 			continue
 		}
 
-		for k := range rowMap {
-			if !slices.Contains(fields, k) {
-				fields = append(fields, k)
+		for k, v := range rowMap {
+			if k == "id" {
+				continue
 			}
-		}
+			idStr := rowMap["id"]
+			wg.Add(1)
+			go func(k, v, idStr string) {
+				defer wg.Done()
 
-	}
-
-	var wg sync.WaitGroup
-	for _, field := range fields {
-		if field == "id" {
-			continue
-		}
-
-		wg.Add(1)
-		go func(field string) {
-			defer wg.Done()
-
-			for _, elem := range elemsMap {
-				rawRowData, err := internal.ReadPortionF2File(projName, tmpTableName, "data",
-					elem.DataBegin, elem.DataEnd)
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
-
-				rowMap, err := internal.ParseEncodedRowData(rawRowData)
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
-
-				if !internal.IsNotIndexedField(projName, tmpTableName, field) {
-					err := internal.MakeIndex(projName, tmpTableName, field, rowMap[field], elem.DataKey)
+				if !internal.IsNotIndexedField(projName, tmpTableName, k) {
+					err := internal.MakeIndex(projName, tmpTableName, k, v, idStr)
 					if err != nil {
 						fmt.Println(err)
 					}
 				}
-			}
+			}(k, v, idStr)
 
-		}(field)
+		}
+
+		wg.Wait()
 	}
-	wg.Wait()
 
 	// delete old table and make temporary default.
 	os.RemoveAll(tablePath)

@@ -1,48 +1,74 @@
 package internal
 
 import (
-	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
-	"slices"
 	"strconv"
+	"strings"
 
+	arrayOperations "github.com/adam-hanna/arrayOperations"
 	"github.com/pkg/errors"
 )
 
 func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
+	// make exact search indexes
 	dataPath, _ := GetDataPath()
-	indexesPath := filepath.Join(dataPath, projName, tableName, fieldName+"_indexes.json")
+	indexesF1Path := filepath.Join(dataPath, projName, tableName, fieldName+"_indexes.flaa1")
+	indexesF2Path := filepath.Join(dataPath, projName, tableName, fieldName+"_indexes.flaa2")
 
-	indexesObj := make(map[string][]string)
-	if !DoesPathExists(indexesPath) {
-		indexesObj[newData] = []string{rowId}
+	var begin int64
+	var end int64
+	if !DoesPathExists(indexesF1Path) {
+		begin = 0
+		err := os.WriteFile(indexesF2Path, []byte(rowId+","), 0777)
+		if err != nil {
+			return errors.Wrap(err, "os error")
+		}
+		end = int64(len([]byte(rowId + ",")))
 	} else {
-		rawJson, err := os.ReadFile(indexesPath)
+		elemsMap, err := ParseDataF1File(indexesF1Path)
 		if err != nil {
-			return errors.Wrap(err, "file read error")
+			return err
 		}
-		err = json.Unmarshal(rawJson, &indexesObj)
-		if err != nil {
-			return errors.Wrap(err, "json error")
-		}
-		indexesSlice, ok := indexesObj[newData]
-		if ok {
-			if !slices.Contains(indexesSlice, rowId) {
-				indexesSlice = append(indexesSlice, rowId)
-				indexesObj[newData] = indexesSlice
-			}
+
+		elem, ok := elemsMap[newData]
+		var newDataToWrite string
+		if !ok {
+			newDataToWrite = rowId + ","
 		} else {
-			indexesObj[newData] = []string{rowId}
+			readBytes, err := ReadPortionF2File(projName, tableName, fieldName+"_indexes", elem.DataBegin, elem.DataEnd)
+			if err != nil {
+				return err
+			}
+			previousEntries := strings.Split(string(readBytes), ",")
+			newEntries := arrayOperations.Union(previousEntries, []string{rowId})
+			newDataToWrite = strings.Join(newEntries, ",") + ","
 		}
+
+		f2IndexesHandle, err := os.OpenFile(indexesF2Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+		if err != nil {
+			return errors.Wrap(err, "os error")
+		}
+		defer f2IndexesHandle.Close()
+
+		stat, err := f2IndexesHandle.Stat()
+		if err != nil {
+			return errors.Wrap(err, "os error")
+		}
+
+		size := stat.Size()
+		f2IndexesHandle.Write([]byte(newDataToWrite))
+		begin = size
+		end = int64(len([]byte(newDataToWrite))) + size
 	}
 
-	indexesJson, err := json.Marshal(indexesObj)
+	elem := DataF1Elem{newData, begin, end}
+	err := AppendDataF1File(projName, tableName, fieldName+"_indexes", elem)
 	if err != nil {
-		return errors.Wrap(err, "json error")
+		return errors.Wrap(err, "os error")
 	}
 
-	os.WriteFile(indexesPath, indexesJson, 0777)
 	return nil
 }
 
@@ -65,37 +91,81 @@ func IsNotIndexedFieldVersioned(projName, tableName, fieldName, version string) 
 }
 
 func DeleteIndex(projName, tableName, fieldName, data, rowId, version string) error {
-
 	dataPath, _ := GetDataPath()
-	indexesPath := filepath.Join(dataPath, projName, tableName, fieldName+"_indexes.json")
 
-	indexesObj := make(map[string][]string)
-	if DoesPathExists(indexesPath) {
-		rawJson, err := os.ReadFile(indexesPath)
-		if err != nil {
-			return errors.Wrap(err, "file read error")
-		}
-		err = json.Unmarshal(rawJson, &indexesObj)
-		if err != nil {
-			return errors.Wrap(err, "json error")
-		}
-
-		indexesSlice, ok := indexesObj[data]
-		if ok {
-			if slices.Contains(indexesSlice, rowId) {
-				idx := slices.Index(indexesSlice, rowId)
-				indexesSlice = slices.Delete(indexesSlice, idx, idx+1)
-				indexesObj[data] = indexesSlice
-			}
-		}
-	}
-
-	indexesJson, err := json.Marshal(indexesObj)
+	indexesF1Path := filepath.Join(dataPath, projName, tableName, fieldName+"_indexes.flaa1")
+	// update flaa1 file by rewriting it.
+	elemsMap, err := ParseDataF1File(indexesF1Path)
 	if err != nil {
-		return errors.Wrap(err, "json error")
+		return err
 	}
 
-	os.WriteFile(indexesPath, indexesJson, 0777)
+	elem, ok := elemsMap[data]
+	if !ok {
+		return nil
+	}
+
+	readBytes, err := ReadPortionF2File(projName, tableName, fieldName+"_indexes",
+		elem.DataBegin, elem.DataEnd)
+	if err != nil {
+		fmt.Println("Bad indexes file")
+		fmt.Printf("%+v\n", err)
+	}
+	similarIds := strings.Split(string(readBytes), ",")
+	toWriteIds := make([]string, 0)
+	for _, oldId := range similarIds {
+		if oldId != rowId {
+			toWriteIds = append(toWriteIds, oldId)
+		}
+	}
+
+	if len(toWriteIds) == 0 {
+		delete(elemsMap, data)
+		err = RewriteF1File(projName, tableName, fieldName+"_indexes", elemsMap)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		tablePath := GetTablePath(projName, tableName)
+		indexesF2Path := filepath.Join(tablePath, fieldName+"_indexes.flaa2")
+		toWriteData := strings.Join(toWriteIds, ",")
+
+		var begin int64
+		var end int64
+		if DoesPathExists(indexesF2Path) {
+			indexesF2Handle, err := os.OpenFile(indexesF2Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+			if err != nil {
+				return errors.Wrap(err, "os error")
+			}
+			defer indexesF2Handle.Close()
+
+			stat, err := indexesF2Handle.Stat()
+			if err != nil {
+				return errors.Wrap(err, "os error")
+			}
+
+			size := stat.Size()
+			indexesF2Handle.Write([]byte(toWriteData))
+			begin = size
+			end = int64(len([]byte(toWriteData))) + size
+		} else {
+			err := os.WriteFile(indexesF2Path, []byte(toWriteData), 0777)
+			if err != nil {
+				return errors.Wrap(err, "os error")
+			}
+
+			begin = 0
+			end = int64(len([]byte(toWriteData)))
+		}
+
+		elem := DataF1Elem{data, begin, end}
+		err = AppendDataF1File(projName, tableName, fieldName+"_indexes", elem)
+		if err != nil {
+			return errors.Wrap(err, "os error")
+		}
+	}
+
 	return nil
 }
 
