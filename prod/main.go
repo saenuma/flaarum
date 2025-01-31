@@ -34,12 +34,16 @@ Supported Commands:
 
   mpr       Make production ready. It also creates a key string.
 
-  ejson     Exports a table to json. It expects a project table combo eg. firstproj/users
+  ejson     Exports a table to json. It expects a project table combo eg. first_proj/users
 
-  ecsv      Exports a table to csv. It expects a project table combo eg. firstproj/users
+  ecsv      Exports a table to csv. It expects a project table combo eg. first_proj/users
 
   ridx      Reindex a table. This is attimes needed if there has been changes to the table structure.
-            It expects a project table combo eg. firstproj/users
+            It expects a project table combo eg. first_proj/users
+
+  trim      Trim large flaarum files. This is needed after months of using the database.
+            It expects a project table combo eg. first_proj/users
+
       `)
 
 	case "r":
@@ -140,6 +144,21 @@ Supported Commands:
 		err := reIndex(parts[0], parts[1])
 		if err != nil {
 			color.Red.Println("Error reindexing:\n" + err.Error())
+			os.Exit(1)
+		}
+
+		fmt.Println("ok")
+
+	case "trim":
+		if len(os.Args) != 3 {
+			color.Red.Println(`'trim' command expects a project and table combo eg. 'first_proj/users' `)
+			os.Exit(1)
+		}
+
+		parts := strings.Split(os.Args[2], "/")
+		err := trimLargeFlaarumFiles(parts[0], parts[1])
+		if err != nil {
+			color.Red.Println("Error triming:\n" + err.Error())
 			os.Exit(1)
 		}
 
