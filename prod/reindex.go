@@ -79,11 +79,14 @@ func reIndex(projName, tableName string) error {
 
 	}
 
+	toIndex := make(map[string]map[string][]string)
 	var wg sync.WaitGroup
 	for _, field := range fields {
 		if field == "id" {
 			continue
 		}
+
+		toIndex[field] = make(map[string][]string)
 
 		wg.Add(1)
 		go func(field string) {
@@ -103,17 +106,63 @@ func reIndex(projName, tableName string) error {
 					continue
 				}
 
+				// if !internal.IsNotIndexedField(projName, tmpTableName, field) {
+				// 	err := internal.MakeIndex(projName, tmpTableName, field, rowMap[field], elem.DataKey)
+				// 	if err != nil {
+				// 		fmt.Println(err)
+				// 	}
+				// }
+
 				if !internal.IsNotIndexedField(projName, tmpTableName, field) {
-					err := internal.MakeIndex(projName, tmpTableName, field, rowMap[field], elem.DataKey)
-					if err != nil {
-						fmt.Println(err)
+					idsSlice, ok := toIndex[field][rowMap[field]]
+					if !ok {
+						toIndex[field][rowMap[field]] = []string{elem.DataKey}
+					} else {
+						idsSlice = append(idsSlice, elem.DataKey)
+						toIndex[field][rowMap[field]] = idsSlice
 					}
 				}
 			}
 
 		}(field)
 	}
+
 	wg.Wait()
+
+	for field, indexesMap := range toIndex {
+		// indexesF1Path := filepath.Join(dataPath, projName, tableName, field+"_indexes.flaa1")
+		tmpIndexesF2Path := filepath.Join(dataPath, projName, tmpTableName, field+"_indexes.flaa2")
+
+		for fieldValue, rowsSlice := range indexesMap {
+
+			tmpIndexesHandle, err := os.OpenFile(tmpIndexesF2Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			defer tmpIndexesHandle.Close()
+
+			stat, err := tmpIndexesHandle.Stat()
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+
+			size := stat.Size()
+			newDataToWrite := strings.Join(rowsSlice, ",") + ","
+			tmpIndexesHandle.Write([]byte(newDataToWrite))
+			begin := size
+			end := int64(len([]byte(newDataToWrite))) + size
+
+			elem := internal.DataF1Elem{DataKey: fieldValue, DataBegin: begin, DataEnd: end}
+			err = internal.AppendDataF1File(projName, tmpTableName, field+"_indexes", elem)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+		}
+
+	}
 
 	// delete old table and make temporary default.
 	os.RemoveAll(tablePath)
