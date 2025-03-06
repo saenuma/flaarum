@@ -162,7 +162,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaaru
 
 		}
 
-		if ft == "int" && whereStruct.Relation == "has" {
+		if (ft == "int" || ft == "float") && whereStruct.Relation == "has" {
 			return nil, errors.New(fmt.Sprintf("The field type '%s' does not support the query relation 'has'", ft))
 		}
 
@@ -984,6 +984,16 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 						return strings.Compare(a[stmtStruct.OrderBy], b[stmtStruct.OrderBy])
 					}
 
+				} else if confirmFieldType(projName, tableName, stmtStruct.OrderBy, "float", a["_version"]) &&
+					confirmFieldType(projName, tableName, stmtStruct.OrderBy, "float", b["_version"]) {
+					x, err1 := strconv.ParseFloat(a[stmtStruct.OrderBy], 64)
+					y, err2 := strconv.ParseFloat(b[stmtStruct.OrderBy], 64)
+					if err1 == nil && err2 == nil {
+						return cmp.Compare(x, y)
+					} else {
+						return strings.Compare(a[stmtStruct.OrderBy], b[stmtStruct.OrderBy])
+					}
+
 				} else {
 					return strings.Compare(a[stmtStruct.OrderBy], b[stmtStruct.OrderBy])
 				}
@@ -994,6 +1004,16 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 					confirmFieldType(projName, tableName, stmtStruct.OrderBy, "int", b["_version"]) {
 					x, err1 := strconv.ParseInt(a[stmtStruct.OrderBy], 10, 64)
 					y, err2 := strconv.ParseInt(b[stmtStruct.OrderBy], 10, 64)
+					if err1 == nil && err2 == nil {
+						return cmp.Compare(x, y) * -1
+					} else {
+						return strings.Compare(a[stmtStruct.OrderBy], b[stmtStruct.OrderBy]) * -1
+					}
+
+				} else if confirmFieldType(projName, tableName, stmtStruct.OrderBy, "float", a["_version"]) &&
+					confirmFieldType(projName, tableName, stmtStruct.OrderBy, "float", b["_version"]) {
+					x, err1 := strconv.ParseFloat(a[stmtStruct.OrderBy], 64)
+					y, err2 := strconv.ParseFloat(b[stmtStruct.OrderBy], 64)
 					if err1 == nil && err2 == nil {
 						return cmp.Compare(x, y) * -1
 					} else {
