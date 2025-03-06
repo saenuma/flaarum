@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
+	"github.com/saenuma/flaarumlib"
 )
 
 func updateRows(w http.ResponseWriter, r *http.Request) {
@@ -16,7 +17,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 	projName := r.PathValue("proj")
 
 	stmt := r.FormValue("stmt")
-	stmtStruct, err := internal.ParseSearchStmt(stmt)
+	stmtStruct, err := flaarumlib.ParseSearchStmt(stmt)
 	if err != nil {
 		internal.PrintError(w, err)
 		return
@@ -61,7 +62,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fieldsDescs := make(map[string]internal.FieldStruct)
+	fieldsDescs := make(map[string]flaarumlib.FieldStruct)
 	for _, fd := range tableStruct.Fields {
 		fieldsDescs[fd.FieldName] = fd
 	}

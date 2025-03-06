@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
+	"github.com/saenuma/flaarumlib"
 )
 
 func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map[string]string) (map[string]string, error) {
@@ -18,7 +19,7 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 		return nil, err
 	}
 
-	fieldsDescs := make(map[string]internal.FieldStruct)
+	fieldsDescs := make(map[string]flaarumlib.FieldStruct)
 	for _, fd := range tableStruct.Fields {
 		fieldsDescs[fd.FieldName] = fd
 	}

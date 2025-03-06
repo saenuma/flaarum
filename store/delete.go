@@ -8,13 +8,14 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
+	"github.com/saenuma/flaarumlib"
 )
 
 func deleteRows(w http.ResponseWriter, r *http.Request) {
 	projName := r.PathValue("proj")
 
 	stmt := r.FormValue("stmt")
-	stmtStruct, err := internal.ParseSearchStmt(stmt)
+	stmtStruct, err := flaarumlib.ParseSearchStmt(stmt)
 	if err != nil {
 		internal.PrintError(w, err)
 		return
@@ -38,7 +39,7 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	relatedRelationshipDetails := make(map[string]internal.FKeyStruct)
+	relatedRelationshipDetails := make(map[string]flaarumlib.FKeyStruct)
 	for _, tbl := range existingTables {
 		ts, err := getCurrentTableStructureParsed(projName, tbl)
 		if err != nil {

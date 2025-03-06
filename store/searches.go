@@ -1,25 +1,26 @@
 package main
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
-	"slices"
-	"cmp"
 
 	arrayOperations "github.com/adam-hanna/arrayOperations"
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
+	"github.com/saenuma/flaarumlib"
 )
 
 func searchTable(w http.ResponseWriter, r *http.Request) {
 
 	projName := r.PathValue("proj")
 
-	stmtStruct, err := internal.ParseSearchStmt(r.FormValue("stmt"))
+	stmtStruct, err := flaarumlib.ParseSearchStmt(r.FormValue("stmt"))
 	if err != nil {
 		internal.PrintError(w, err)
 		return
@@ -113,7 +114,7 @@ func readTextField(projName, tableName, fieldName, lookedForId string) string {
 	return rowMap[fieldName]
 }
 
-func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []internal.WhereStruct) ([]string, error) {
+func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaarumlib.WhereStruct) ([]string, error) {
 	dataPath, _ := internal.GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 
@@ -363,7 +364,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []intern
 						elemsKeys = append(elemsKeys, elemValueInt)
 					}
 
-					slices.SortFunc(elemsKeys, func(a, b int64) int{
+					slices.SortFunc(elemsKeys, func(a, b int64) int {
 						return cmp.Compare(a, b)
 					})
 
@@ -450,7 +451,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []intern
 						elemsKeys = append(elemsKeys, elemValueInt)
 					}
 
-					slices.SortFunc(elemsKeys, func(a, b int64) int{
+					slices.SortFunc(elemsKeys, func(a, b int64) int {
 						return cmp.Compare(a, b)
 					})
 
@@ -544,7 +545,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []intern
 						elemsKeys = append(elemsKeys, elemValueInt)
 					}
 
-					slices.SortFunc(elemsKeys, func(a, b int64) int{
+					slices.SortFunc(elemsKeys, func(a, b int64) int {
 						return cmp.Compare(a, b)
 					})
 
@@ -631,10 +632,9 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []intern
 						elemsKeys = append(elemsKeys, elemValueInt)
 					}
 
-					slices.SortFunc(elemsKeys, func(a, b int64) int{
+					slices.SortFunc(elemsKeys, func(a, b int64) int {
 						return cmp.Compare(a, b)
 					})
-
 
 					exactMatch := false
 					brokeLoop := false
@@ -822,7 +822,7 @@ func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []intern
 }
 
 func innerSearch(projName, stmt string) (*[]map[string]string, error) {
-	stmtStruct, err := internal.ParseSearchStmt(stmt)
+	stmtStruct, err := flaarumlib.ParseSearchStmt(stmt)
 	if err != nil {
 		return nil, err
 	}
@@ -985,7 +985,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 					}
 
 				} else {
-					return strings.Compare(a[stmtStruct.OrderBy], b[stmtStruct.OrderBy])					
+					return strings.Compare(a[stmtStruct.OrderBy], b[stmtStruct.OrderBy])
 				}
 			})
 		} else {
@@ -1001,7 +1001,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 					}
 
 				} else {
-					return strings.Compare(a[stmtStruct.OrderBy], b[stmtStruct.OrderBy]) * -1		
+					return strings.Compare(a[stmtStruct.OrderBy], b[stmtStruct.OrderBy]) * -1
 				}
 			})
 		}

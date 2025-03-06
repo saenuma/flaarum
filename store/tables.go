@@ -9,13 +9,14 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
+	"github.com/saenuma/flaarumlib"
 )
 
 func doesTableExists(projName, tableName string) bool {
 	return internal.DoesTableExists(projName, tableName)
 }
 
-func validateTableStruct(projName string, tableStruct internal.TableStruct) error {
+func validateTableStruct(projName string, tableStruct flaarumlib.TableStruct) error {
 	fields := make([]string, 0)
 	fTypeMap := make(map[string]string)
 	td := tableStruct
@@ -51,7 +52,7 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 
 	stmt := r.FormValue("stmt")
 
-	tableStruct, err := internal.ParseTableStructureStmt(stmt)
+	tableStruct, err := flaarumlib.ParseTableStructureStmt(stmt)
 	if err != nil {
 		internal.PrintError(w, err)
 		return
@@ -79,7 +80,7 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	formattedStmt := internal.FormatTableStruct(tableStruct)
+	formattedStmt := flaarumlib.FormatTableStruct(tableStruct)
 	err = os.WriteFile(filepath.Join(dataPath, projName, tableStruct.TableName, "structure1.txt"),
 		[]byte(formattedStmt), 0777)
 	if err != nil {
@@ -96,7 +97,7 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 
 	stmt := r.FormValue("stmt")
 
-	tableStruct, err := internal.ParseTableStructureStmt(stmt)
+	tableStruct, err := flaarumlib.ParseTableStructureStmt(stmt)
 	if err != nil {
 		internal.PrintError(w, err)
 		return
@@ -131,7 +132,7 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	formattedStmt := internal.FormatTableStruct(tableStruct)
+	formattedStmt := flaarumlib.FormatTableStruct(tableStruct)
 	if formattedStmt != string(oldFormattedStmt) {
 		nextVersionNumber := currentVersionNum + 1
 		newStructurePath := filepath.Join(tablePath, fmt.Sprintf("structure%d.txt", nextVersionNumber))
@@ -149,14 +150,14 @@ func getCurrentVersionNum(projName, tableName string) (int, error) {
 	return internal.GetCurrentVersionNum(projName, tableName)
 }
 
-func getTableStructureParsed(projName, tableName string, versionNum int) (internal.TableStruct, error) {
+func getTableStructureParsed(projName, tableName string, versionNum int) (flaarumlib.TableStruct, error) {
 	return internal.GetTableStructureParsed(projName, tableName, versionNum)
 }
 
-func getCurrentTableStructureParsed(projName, tableName string) (internal.TableStruct, error) {
+func getCurrentTableStructureParsed(projName, tableName string) (flaarumlib.TableStruct, error) {
 	currentVersionNum, err := getCurrentVersionNum(projName, tableName)
 	if err != nil {
-		return internal.TableStruct{}, err
+		return flaarumlib.TableStruct{}, err
 	}
 	return getTableStructureParsed(projName, tableName, currentVersionNum)
 }

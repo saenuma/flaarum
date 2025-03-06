@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
+	"github.com/saenuma/flaarumlib"
 )
 
 func countRows(w http.ResponseWriter, r *http.Request) {
@@ -14,7 +15,7 @@ func countRows(w http.ResponseWriter, r *http.Request) {
 	projName := r.PathValue("proj")
 
 	stmt := r.FormValue("stmt")
-	qd, err := internal.ParseSearchStmt(stmt)
+	qd, err := flaarumlib.ParseSearchStmt(stmt)
 	if err != nil {
 		internal.PrintError(w, err)
 		return

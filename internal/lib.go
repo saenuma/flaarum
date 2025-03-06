@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/saenuma/flaarumlib"
 	"github.com/saenuma/zazabul"
 )
 
@@ -178,14 +179,14 @@ func GetCurrentVersionNum(projName, tableName string) (int, error) {
 	return currentVersionNum, nil
 }
 
-func GetTableStructureParsed(projName, tableName string, versionNum int) (TableStruct, error) {
+func GetTableStructureParsed(projName, tableName string, versionNum int) (flaarumlib.TableStruct, error) {
 	dataPath, _ := GetDataPath()
 	raw, err := os.ReadFile(filepath.Join(dataPath, projName, tableName, fmt.Sprintf("structure%d.txt", versionNum)))
 	if err != nil {
-		return TableStruct{}, errors.Wrap(err, "ioutil error")
+		return flaarumlib.TableStruct{}, errors.Wrap(err, "ioutil error")
 	}
 
-	return ParseTableStructureStmt(string(raw))
+	return flaarumlib.ParseTableStructureStmt(string(raw))
 }
 
 func GetFieldType(projName, tableName, fieldName string) string {
@@ -220,10 +221,10 @@ func GetTablePath(projName, tableName string) string {
 	return filepath.Join(dataPath, projName, tableName)
 }
 
-func GetCurrentTableStructureParsed(projName, tableName string) (TableStruct, error) {
+func GetCurrentTableStructureParsed(projName, tableName string) (flaarumlib.TableStruct, error) {
 	currentVersionNum, err := GetCurrentVersionNum(projName, tableName)
 	if err != nil {
-		return TableStruct{}, err
+		return flaarumlib.TableStruct{}, err
 	}
 	return GetTableStructureParsed(projName, tableName, currentVersionNum)
 }
