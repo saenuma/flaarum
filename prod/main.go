@@ -34,9 +34,9 @@ Supported Commands:
 
   mpr       Make production ready. It also creates a key string.
 
-  ejson     Exports a table to json. It expects a project table combo eg. first_proj/users
+  ejson     Exports a table to json. It expects a project
 
-  ecsv      Exports a table to csv. It expects a project table combo eg. first_proj/users
+  ecsv      Exports a table to csv. It expects a project
 
   ridx      Reindex a table. This is attimes needed if there has been changes to the table structure.
             It expects a project table combo eg. first_proj/users
