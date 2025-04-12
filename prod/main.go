@@ -42,7 +42,7 @@ Supported Commands:
             It expects a project table combo eg. first_proj/users
 
   trim      Trim large flaarum files. This is needed after months of using the database.
-            It expects a project table combo eg. first_proj/users
+            It expects a project.
 
       `)
 
@@ -111,9 +111,14 @@ Supported Commands:
 		keyPath := filepath.Join(rootPath, "https-server.key")
 		crtPath := filepath.Join(rootPath, "https-server.crt")
 
-		exec.Command("openssl", "req", "-x509", "-newkey", "rsa:4096", "-keyout", keyPath,
+		out, err := exec.Command("openssl", "req", "-x509", "-newkey", "rsa:4096", "-keyout", keyPath,
 			"-out", crtPath, "-sha256", "-days", "3650", "-nodes", "-subj",
-			"/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname").Run()
+			"/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname").CombinedOutput()
+		if err != nil {
+			color.Red.Println(out)
+			color.Red.Println(err.Error())
+			os.Exit(1)
+		}
 		fmt.Println("ok")
 
 	case "ejson":
@@ -151,12 +156,11 @@ Supported Commands:
 
 	case "trim":
 		if len(os.Args) != 3 {
-			color.Red.Println(`'trim' command expects a project and table combo eg. 'first_proj/users' `)
+			color.Red.Println(`'trim' command expects a project`)
 			os.Exit(1)
 		}
 
-		parts := strings.Split(os.Args[2], "/")
-		err := trimLargeFlaarumFiles(parts[0], parts[1])
+		err := trimFlaarumFilesProject(os.Args[2])
 		if err != nil {
 			color.Red.Println("Error triming:\n" + err.Error())
 			os.Exit(1)

@@ -200,25 +200,6 @@ func getTableStructureHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, string(stmt))
 }
 
-func getExistingTables(projName string) ([]string, error) {
-	dataPath, _ := internal.GetDataPath()
-	tablesPath := filepath.Join(dataPath, projName)
-
-	tablesFIs, err := os.ReadDir(tablesPath)
-	if err != nil {
-		return nil, errors.Wrap(err, "read directory failed.")
-	}
-
-	tables := make([]string, 0)
-	for _, tfi := range tablesFIs {
-		if tfi.IsDir() {
-			tables = append(tables, tfi.Name())
-		}
-	}
-
-	return tables, nil
-}
-
 func listTables(w http.ResponseWriter, r *http.Request) {
 
 	projName := r.PathValue("proj")
@@ -226,7 +207,7 @@ func listTables(w http.ResponseWriter, r *http.Request) {
 	projsMutex.Lock()
 	defer projsMutex.Unlock()
 
-	tables, err := getExistingTables(projName)
+	tables, err := internal.ListTables(projName)
 	if err != nil {
 		internal.PrintError(w, err)
 		return

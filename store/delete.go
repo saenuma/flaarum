@@ -33,7 +33,7 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existingTables, err := getExistingTables(projName)
+	existingTables, err := internal.ListTables(projName)
 	if err != nil {
 		internal.PrintError(w, err)
 		return

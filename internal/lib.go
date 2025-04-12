@@ -228,3 +228,34 @@ func GetCurrentTableStructureParsed(projName, tableName string) (flaarumlib.Tabl
 	}
 	return GetTableStructureParsed(projName, tableName, currentVersionNum)
 }
+
+func IsInternalProjectName(projName string) bool {
+	if projName == "keyfile" || projName == "first_proj" {
+		return true
+	}
+
+	if strings.HasPrefix(projName, "flaarum_export_") {
+		return true
+	}
+
+	return false
+}
+
+func ListTables(projName string) ([]string, error) {
+	dataPath, _ := GetDataPath()
+	tablesPath := filepath.Join(dataPath, projName)
+
+	tablesFIs, err := os.ReadDir(tablesPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "read directory failed.")
+	}
+
+	tables := make([]string, 0)
+	for _, tfi := range tablesFIs {
+		if tfi.IsDir() {
+			tables = append(tables, tfi.Name())
+		}
+	}
+
+	return tables, nil
+}

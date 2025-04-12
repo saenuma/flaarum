@@ -12,7 +12,23 @@ import (
 	"github.com/saenuma/flaarum/internal"
 )
 
-func trimLargeFlaarumFiles(projName, tableName string) error {
+func trimFlaarumFilesProject(projName string) error {
+
+	tables, err := internal.ListTables(projName)
+	if err != nil {
+		return err
+	}
+
+	for _, tableName := range tables {
+		err := trimFlaarumFilesTable(projName, tableName)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func trimFlaarumFilesTable(projName, tableName string) error {
 
 	dataPath, _ := internal.GetDataPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)

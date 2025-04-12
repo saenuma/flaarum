@@ -56,7 +56,7 @@ func deleteProject(w http.ResponseWriter, r *http.Request) {
 		projsMutex.Lock()
 		defer projsMutex.Unlock()
 
-		existingTables, err := getExistingTables(projName)
+		existingTables, err := internal.ListTables(projName)
 		if err != nil {
 			internal.PrintError(w, err)
 			return
@@ -149,7 +149,7 @@ func renameProject(w http.ResponseWriter, r *http.Request) {
 	projsMutex.Lock()
 	defer projsMutex.Unlock()
 
-	existingTables, err := getExistingTables(projName)
+	existingTables, err := internal.ListTables(projName)
 	if err != nil {
 		internal.PrintError(w, err)
 		return
