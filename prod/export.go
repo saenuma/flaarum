@@ -17,7 +17,19 @@ import (
 
 const VersionFormat = "20060102T150405MST"
 
-func export(project, table, format string) {
+func export(projName, format string) {
+	tables, err := internal.ListTables(projName)
+	if err != nil {
+		color.Red.Println(err)
+		os.Exit(1)
+	}
+
+	for _, tableName := range tables {
+		exportTable(projName, tableName, format)
+	}
+}
+
+func exportTable(project, table, format string) {
 	var keyStr string
 	inProd := internal.GetSetting("in_production")
 	if inProd == "" {

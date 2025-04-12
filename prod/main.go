@@ -123,21 +123,19 @@ Supported Commands:
 
 	case "ejson":
 		if len(os.Args) != 3 {
-			color.Red.Println(`'ejson' command expects a project and table combo eg. 'first_proj/users' `)
+			color.Red.Println(`'ejson' command expects a project`)
 			os.Exit(1)
 		}
 
-		parts := strings.Split(os.Args[2], "/")
-		export(parts[0], parts[1], "json")
+		export(os.Args[2], "json")
 
 	case "ecsv":
 		if len(os.Args) != 3 {
-			color.Red.Println(`'ecsv' command expects a project and table combo eg. 'first_proj/users' `)
+			color.Red.Println(`'ecsv' command expects a project`)
 			os.Exit(1)
 		}
 
-		parts := strings.Split(os.Args[2], "/")
-		export(parts[0], parts[1], "csv")
+		export(os.Args[2], "csv")
 
 	case "ridx":
 		if len(os.Args) != 3 {
