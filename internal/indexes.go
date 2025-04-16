@@ -6,9 +6,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	arrayOperations "github.com/adam-hanna/arrayOperations"
 	"github.com/pkg/errors"
+	"github.com/saenuma/flaarumlib"
 )
 
 func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
@@ -92,6 +94,49 @@ func IsNotIndexedFieldVersioned(projName, tableName, fieldName, version string) 
 
 func DeleteIndex(projName, tableName, fieldName, data, rowId, version string) error {
 	dataPath, _ := GetDataPath()
+
+	if ConfirmFieldType(projName, tableName, fieldName, "date", version) {
+		valueInTimeType, err := time.Parse(flaarumlib.DATE_FORMAT, data)
+		if err != nil {
+			return errors.New(fmt.Sprintf("The value '%s' to field '%s' is not a date.", data, fieldName))
+		}
+
+		dMap := make(map[string]string)
+		f := fieldName
+		dMap[f+"_year"] = strconv.Itoa(valueInTimeType.Year())
+		dMap[f+"_month"] = strconv.Itoa(int(valueInTimeType.Month()))
+		dMap[f+"_day"] = strconv.Itoa(valueInTimeType.Day())
+
+		for toDeleteField, fieldData := range dMap {
+			err := DeleteIndex(projName, tableName, toDeleteField, fieldData, rowId, version)
+			if err != nil {
+				return err
+			}
+		}
+
+	} else if ConfirmFieldType(projName, tableName, fieldName, "datetime", version) {
+		valueInTimeType, err := time.Parse(flaarumlib.DATETIME_FORMAT, data)
+		if err != nil {
+			return errors.New(fmt.Sprintf("The value '%s' to field '%s' is not a datetime.", data, fieldName))
+		}
+
+		dMap := make(map[string]string)
+		f := fieldName
+		dMap[f+"_year"] = strconv.Itoa(valueInTimeType.Year())
+		dMap[f+"_month"] = strconv.Itoa(int(valueInTimeType.Month()))
+		dMap[f+"_day"] = strconv.Itoa(valueInTimeType.Day())
+		dMap[f+"_hour"] = strconv.Itoa(valueInTimeType.Hour())
+		dMap[f+"_date"] = valueInTimeType.Format(flaarumlib.DATE_FORMAT)
+		dMap[f+"_tzname"], _ = valueInTimeType.Zone()
+
+		for toDeleteField, fieldData := range dMap {
+			err := DeleteIndex(projName, tableName, toDeleteField, fieldData, rowId, version)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
 
 	indexesF1Path := filepath.Join(dataPath, projName, tableName, fieldName+"_indexes.flaa1")
 	// update flaa1 file by rewriting it.

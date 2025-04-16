@@ -4,7 +4,6 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -38,25 +37,6 @@ func createTableMutexIfNecessary(projName, tableName string) {
 	if !ok {
 		tablesMutexes[fullTableName] = &sync.RWMutex{}
 	}
-}
-
-func confirmFieldType(projName, tableName, fieldName, fieldType, version string) bool {
-	versionInt, _ := strconv.Atoi(version)
-	tableStruct, err := getTableStructureParsed(projName, tableName, versionInt)
-	if err != nil {
-		return false
-	}
-
-	if fieldName == "id" && fieldType == "int" {
-		return true
-	}
-
-	for _, fd := range tableStruct.Fields {
-		if fd.FieldName == fieldName && fd.FieldType == fieldType {
-			return true
-		}
-	}
-	return false
 }
 
 func MakeHash(data string) string {

@@ -203,6 +203,54 @@ func GetFieldType(projName, tableName, fieldName string) string {
 		fieldNamesToFieldTypes[fieldStruct.FieldName] = fieldStruct.FieldType
 	}
 
+	if strings.HasSuffix(fieldName, "_year") {
+		genFieldName := fieldName[0 : len(fieldName)-len("_year")]
+		ans, ok := fieldNamesToFieldTypes[genFieldName]
+
+		if ok && (ans == "datetime" || ans == "date") {
+			return "int"
+		}
+	} else if strings.HasSuffix(fieldName, "_month") {
+		genFieldName := fieldName[0 : len(fieldName)-len("_month")]
+		ans, ok := fieldNamesToFieldTypes[genFieldName]
+
+		if ok && (ans == "datetime" || ans == "date") {
+			return "int"
+		}
+	} else if strings.HasSuffix(fieldName, "_day") {
+		genFieldName := fieldName[0 : len(fieldName)-len("_day")]
+		ans, ok := fieldNamesToFieldTypes[genFieldName]
+
+		if ok && (ans == "datetime" || ans == "date") {
+			return "int"
+		}
+	} else if strings.HasSuffix(fieldName, "_hour") {
+		genFieldName := fieldName[0 : len(fieldName)-len("_hour")]
+		ans, ok := fieldNamesToFieldTypes[genFieldName]
+
+		if ok && ans == "datetime" {
+			return "int"
+		}
+	} else if strings.HasSuffix(fieldName, "_date") {
+		genFieldName := fieldName[0 : len(fieldName)-len("_date")]
+		ans, ok := fieldNamesToFieldTypes[genFieldName]
+
+		if ok && ans == "datetime" {
+			return "date"
+		}
+	} else if strings.HasSuffix(fieldName, "_tzname") {
+		genFieldName := fieldName[0 : len(fieldName)-len("_tzname")]
+		ans, ok := fieldNamesToFieldTypes[genFieldName]
+
+		if ok && ans == "datetime" {
+			return "string"
+		}
+	}
+
+	for _, fieldStruct := range tableStruct.Fields {
+		fieldNamesToFieldTypes[fieldStruct.FieldName] = fieldStruct.FieldType
+	}
+
 	return fieldNamesToFieldTypes[fieldName]
 }
 
@@ -258,4 +306,23 @@ func ListTables(projName string) ([]string, error) {
 	}
 
 	return tables, nil
+}
+
+func ConfirmFieldType(projName, tableName, fieldName, fieldType, version string) bool {
+	versionInt, _ := strconv.Atoi(version)
+	tableStruct, err := GetTableStructureParsed(projName, tableName, versionInt)
+	if err != nil {
+		return false
+	}
+
+	if fieldName == "id" && fieldType == "int" {
+		return true
+	}
+
+	for _, fd := range tableStruct.Fields {
+		if fd.FieldName == fieldName && fd.FieldType == fieldType {
+			return true
+		}
+	}
+	return false
 }

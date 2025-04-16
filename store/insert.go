@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
@@ -56,6 +57,30 @@ func validateAndMutateDataMap(projName, tableName string, dataMap, oldValues map
 				}
 			}
 
+			if fd.FieldType == "date" {
+				valueInTimeType, err := time.Parse(flaarumlib.DATE_FORMAT, v)
+				if err != nil {
+					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in date format.", v, k))
+				}
+
+				dataMap[k+"_year"] = strconv.Itoa(valueInTimeType.Year())
+				dataMap[k+"_month"] = strconv.Itoa(int(valueInTimeType.Month()))
+				dataMap[k+"_day"] = strconv.Itoa(valueInTimeType.Day())
+
+			} else if fd.FieldType == "datetime" {
+				valueInTimeType, err := time.Parse(flaarumlib.DATETIME_FORMAT, v)
+				if err != nil {
+					return nil, errors.New(fmt.Sprintf("The value '%s' to field '%s' is not in datetime format.", v, k))
+				}
+
+				dataMap[k+"_year"] = strconv.Itoa(valueInTimeType.Year())
+				dataMap[k+"_month"] = strconv.Itoa(int(valueInTimeType.Month()))
+				dataMap[k+"_day"] = strconv.Itoa(valueInTimeType.Day())
+				dataMap[k+"_hour"] = strconv.Itoa(valueInTimeType.Hour())
+				dataMap[k+"_date"] = valueInTimeType.Format(flaarumlib.DATE_FORMAT)
+				dataMap[k+"_tzname"], _ = valueInTimeType.Zone()
+
+			}
 		}
 
 		if !ok && fd.Required {
