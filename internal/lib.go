@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gookit/color"
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarumlib"
 	"github.com/saenuma/zazabul"
@@ -325,4 +326,50 @@ func ConfirmFieldType(projName, tableName, fieldName, fieldType, version string)
 		}
 	}
 	return false
+}
+
+func GetLocalFlaarumClient(project string) flaarumlib.Client {
+	var keyStr string
+	inProd := GetSetting("in_production")
+	if inProd == "" {
+		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
+		os.Exit(1)
+	}
+	if inProd == "true" {
+		keyStrPath := GetKeyStrPath()
+		raw, err := os.ReadFile(keyStrPath)
+		if err != nil {
+			color.Red.Println(err)
+			os.Exit(1)
+		}
+		keyStr = string(raw)
+	} else {
+		keyStr = "not-yet-set"
+	}
+	port := GetSetting("port")
+	if port == "" {
+		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
+		os.Exit(1)
+	}
+	var cl flaarumlib.Client
+
+	portInt, err := strconv.Atoi(port)
+	if err != nil {
+		color.Red.Println("Invalid port setting.")
+		os.Exit(1)
+	}
+
+	if portInt != PORT {
+		cl = flaarumlib.NewClientCustomPort("127.0.0.1", keyStr, project, portInt)
+	} else {
+		cl = flaarumlib.NewClient("127.0.0.1", keyStr, project)
+	}
+
+	err = cl.Ping()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	return cl
 }

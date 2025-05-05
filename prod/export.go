@@ -11,7 +11,6 @@ import (
 
 	"github.com/gookit/color"
 	"github.com/saenuma/flaarum/internal"
-	flaarum "github.com/saenuma/flaarumlib"
 	"github.com/tidwall/pretty"
 )
 
@@ -30,47 +29,7 @@ func export(projName, format string) {
 }
 
 func exportTable(project, table, format string) {
-	var keyStr string
-	inProd := internal.GetSetting("in_production")
-	if inProd == "" {
-		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
-		os.Exit(1)
-	}
-	if inProd == "true" {
-		keyStrPath := internal.GetKeyStrPath()
-		raw, err := os.ReadFile(keyStrPath)
-		if err != nil {
-			color.Red.Println(err)
-			os.Exit(1)
-		}
-		keyStr = string(raw)
-	} else {
-		keyStr = "not-yet-set"
-	}
-	port := internal.GetSetting("port")
-	if port == "" {
-		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
-		os.Exit(1)
-	}
-	var cl flaarum.Client
-
-	portInt, err := strconv.Atoi(port)
-	if err != nil {
-		color.Red.Println("Invalid port setting.")
-		os.Exit(1)
-	}
-
-	if portInt != internal.PORT {
-		cl = flaarum.NewClientCustomPort("127.0.0.1", keyStr, project, portInt)
-	} else {
-		cl = flaarum.NewClient("127.0.0.1", keyStr, project)
-	}
-
-	err = cl.Ping()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	cl := internal.GetLocalFlaarumClient(project)
 
 	stmt := fmt.Sprintf(`
 		table: %s

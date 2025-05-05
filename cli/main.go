@@ -12,7 +12,6 @@ import (
 
 	"github.com/gookit/color"
 	"github.com/saenuma/flaarum/internal"
-	flaarum "github.com/saenuma/flaarumlib"
 )
 
 const VersionFormat = "20060102T150405MST"
@@ -24,47 +23,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var keyStr string
-	inProd := internal.GetSetting("in_production")
-	if inProd == "" {
-		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
-		os.Exit(1)
-	}
-	if inProd == "true" {
-		keyStrPath := internal.GetKeyStrPath()
-		raw, err := os.ReadFile(keyStrPath)
-		if err != nil {
-			color.Red.Println(err)
-			os.Exit(1)
-		}
-		keyStr = string(raw)
-	} else {
-		keyStr = "not-yet-set"
-	}
-	port := internal.GetSetting("port")
-	if port == "" {
-		color.Red.Println("unexpected error. Have you installed  and launched flaarum?")
-		os.Exit(1)
-	}
-	var cl flaarum.Client
-
-	portInt, err := strconv.Atoi(port)
-	if err != nil {
-		color.Red.Println("Invalid port setting.")
-		os.Exit(1)
-	}
-
-	if portInt != internal.PORT {
-		cl = flaarum.NewClientCustomPort("127.0.0.1", keyStr, "first_proj", portInt)
-	} else {
-		cl = flaarum.NewClient("127.0.0.1", keyStr, "first_proj")
-	}
-
-	err = cl.Ping()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	cl := internal.GetLocalFlaarumClient("first_proj")
 
 	switch os.Args[1] {
 	case "--help", "help", "h":
@@ -146,7 +105,7 @@ Table Search Commands:
 			os.Exit(1)
 		}
 		for _, arg := range os.Args[2:] {
-			err = cl.CreateProject(arg)
+			err := cl.CreateProject(arg)
 			if err != nil {
 				color.Red.Printf("Error creating project '%s':\nError: %s\n", arg, err)
 				os.Exit(1)
@@ -158,7 +117,7 @@ Table Search Commands:
 			os.Exit(1)
 		}
 
-		err = cl.RenameProject(os.Args[2], os.Args[3])
+		err := cl.RenameProject(os.Args[2], os.Args[3])
 		if err != nil {
 			color.Red.Printf("Error renaming project from '%s' to '%s'.\nError: %s\n", os.Args[2], os.Args[3], err)
 			os.Exit(1)
@@ -170,7 +129,7 @@ Table Search Commands:
 			os.Exit(1)
 		}
 		for _, arg := range os.Args[2:] {
-			err = cl.DeleteProject(arg)
+			err := cl.DeleteProject(arg)
 			if err != nil {
 				color.Red.Printf("Error deleting project '%s':\nError: %s\n", arg, err)
 				os.Exit(1)
@@ -255,7 +214,7 @@ Table Search Commands:
 			parts := strings.Split(arg, "/")
 			cl.ProjName = parts[0]
 
-			err = cl.DeleteTable(parts[1])
+			err := cl.DeleteTable(parts[1])
 			if err != nil {
 				color.Red.Printf("Error deleting table '%s'. \nError: %s\n", arg, err)
 				os.Exit(1)
@@ -464,7 +423,7 @@ Table Search Commands:
 			parts := strings.Split(os.Args[2], "/")
 			cl.ProjName = parts[0]
 
-			err = cl.DeleteRows(fmt.Sprintf(`
+			err := cl.DeleteRows(fmt.Sprintf(`
 				table: %s
 				where:
 				  id = %s
