@@ -34,11 +34,15 @@ Supported Commands:
 
   mpr       Make production ready. It also creates a key string.
 
-  ejson     Exports a table to json. It expects a project
+  etj       Exports a table to json. It expects a project/table combo
 
-  ecsv      Exports a table to csv. It expects a project
+  epj       Exports a project to json. It expects a project
 
-  ridx      Reindex a table. This is attimes needed if there has been changes to the table structure.
+  etc       Exports a table to csv. It expects a project/table combo
+
+  epc       Exports a project to csv. It expects a project
+  
+	ridx      Reindex a table. This is attimes needed if there has been changes to the table structure.
             It expects a project table combo eg. first_proj/users
 
   trim      Trim large flaarum files. This is needed after months of using the database.
@@ -121,21 +125,39 @@ Supported Commands:
 		}
 		fmt.Println("ok")
 
-	case "ejson":
+	case "etj":
 		if len(os.Args) != 3 {
-			color.Red.Println(`'ejson' command expects a project`)
+			color.Red.Println(`'etj' command expects a project/table combo`)
+			os.Exit(1)
+		}
+
+		parts := strings.Split(os.Args[2], "/")
+		exportTable(parts[0], parts[1], "json")
+
+	case "epj":
+		if len(os.Args) != 3 {
+			color.Red.Println(`'epj' command expects a project`)
 			os.Exit(1)
 		}
 
 		export(os.Args[2], "json")
 
-	case "ecsv":
+	case "epc":
 		if len(os.Args) != 3 {
-			color.Red.Println(`'ecsv' command expects a project`)
+			color.Red.Println(`'epc' command expects a project`)
 			os.Exit(1)
 		}
 
 		export(os.Args[2], "csv")
+
+	case "etc":
+		if len(os.Args) != 3 {
+			color.Red.Println(`'etc' command expects a project/table combo`)
+			os.Exit(1)
+		}
+
+		parts := strings.Split(os.Args[2], "/")
+		exportTable(parts[0], parts[1], "csv")
 
 	case "ridx":
 		if len(os.Args) != 3 {
