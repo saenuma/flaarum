@@ -14,7 +14,10 @@ import (
 	"github.com/tidwall/pretty"
 )
 
-const VersionFormat = "20060102T150405MST"
+const (
+	VersionFormat   = "20060102T150405MST"
+	ShortTimeFormat = "20060102"
+)
 
 func export(projName, format string) {
 	tables, err := internal.ListTables(projName)
@@ -53,9 +56,12 @@ func exportTable(project, table, format string) {
 			color.Red.Printf("Error ocurred.\nError: %s\n", err)
 			os.Exit(1)
 		}
-
 		prettyJson := pretty.Pretty(jsonBytes)
-		outFilePath := filepath.Join(rootPath, project, table+time.Now().Format(VersionFormat)+".json")
+
+		exportRootPath := filepath.Join(rootPath, "flaarum_exports", project, time.Now().Format(ShortTimeFormat))
+		os.MkdirAll(exportRootPath, 0777)
+		outFilePath := filepath.Join(exportRootPath, table+".json")
+
 		err = os.WriteFile(outFilePath, prettyJson, 0777)
 		if err != nil {
 			color.Red.Println("Error writing to file")
@@ -78,7 +84,9 @@ func exportTable(project, table, format string) {
 			headers = append(headers, fieldStruct.FieldName)
 		}
 
-		outFilePath := filepath.Join(rootPath, project, table+time.Now().Format(VersionFormat)+".csv")
+		exportRootPath := filepath.Join(rootPath, "flaarum_exports", project, time.Now().Format(ShortTimeFormat))
+		os.MkdirAll(exportRootPath, 0777)
+		outFilePath := filepath.Join(exportRootPath, table+".csv")
 		fileHandle, err := os.Create(outFilePath)
 		if err != nil {
 			color.Red.Println("Error creating file " + outFilePath)

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/saenuma/flaarum/internal"
@@ -186,12 +185,12 @@ func renameProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func isInternalProjectName(projName string) bool {
-	if projName == "keyfile" || projName == "first_proj" {
-		return true
-	}
+	internalNames := []string{"keyfile", "first_proj", "flaarum_exports"}
 
-	if strings.HasPrefix(projName, "flaarum_export_") {
-		return true
+	for _, iName := range internalNames {
+		if projName == iName {
+			return true
+		}
 	}
 
 	return false
