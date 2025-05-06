@@ -146,11 +146,11 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 	projName := r.PathValue("proj")
 	tableName := r.PathValue("tbl")
 
-	r.FormValue("email")
+	r.FormValue("id")
 
 	toInsert := make(map[string]string)
 	for k := range r.PostForm {
-		if k == "key-str" || k == "id" || k == "_version" {
+		if k == "key-str" || k == "_version" {
 			continue
 		}
 		if r.FormValue(k) == "" {
@@ -186,36 +186,51 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 	tablesMutexes[fullTableName].Lock()
 	defer tablesMutexes[fullTableName].Unlock()
 
-	var nextId int64
+	var lastId int64
 	lastIdPath := filepath.Join(tablePath, "lastId.txt")
 
 	if !internal.DoesPathExists(lastIdPath) {
-		nextId = 1
+		lastId = 0
 	} else {
 		raw, err := os.ReadFile(lastIdPath)
 		if err != nil {
 			internal.PrintError(w, err)
 			return
 		}
-		lastId, _ := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
-
-		nextId = lastId + 1
+		lastIdTmp, _ := strconv.ParseInt(strings.TrimSpace(string(raw)), 10, 64)
+		lastId = lastIdTmp
 	}
 
-	nextIdStr := strconv.FormatInt(nextId, 10)
+	var writtenId string
+	if _, ok := toInsert["id"]; ok {
+		toWriteId := toInsert["id"]
+		err = internal.SaveRowData(projName, tableName, toWriteId, toInsert)
+		if err != nil {
+			internal.PrintError(w, err)
+			return
+		}
+		toWriteIdInt64, _ := strconv.ParseInt(toWriteId, 10, 64)
+		if toWriteIdInt64 > lastId {
+			os.WriteFile(lastIdPath, []byte(toWriteId), 0777)
+		}
 
-	err = internal.SaveRowData(projName, tableName, nextIdStr, toInsert)
-	if err != nil {
-		internal.PrintError(w, err)
-		return
+		writtenId = toWriteId
+	} else {
+		nextIdStr := strconv.FormatInt(lastId+1, 10)
+		err = internal.SaveRowData(projName, tableName, nextIdStr, toInsert)
+		if err != nil {
+			internal.PrintError(w, err)
+			return
+		}
+
+		os.WriteFile(lastIdPath, []byte(nextIdStr), 0777)
+		writtenId = nextIdStr
 	}
-
-	os.WriteFile(lastIdPath, []byte(nextIdStr), 0777)
 
 	// create indexes
 	for k, v := range toInsert {
 		if !internal.IsNotIndexedField(projName, tableName, k) {
-			err := internal.MakeIndex(projName, tableName, k, v, nextIdStr)
+			err := internal.MakeIndex(projName, tableName, k, v, writtenId)
 			if err != nil {
 				internal.PrintError(w, err)
 				return
@@ -224,6 +239,6 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	fmt.Fprint(w, nextIdStr)
+	fmt.Fprint(w, writtenId)
 
 }

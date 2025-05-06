@@ -41,7 +41,23 @@ Supported Commands:
   etc       Exports a table to csv. It expects a project/table combo
 
   epc       Exports a project to csv. It expects a project
-  
+
+  itj       Imports table date from a json file. It expects a project/table combo and a filename 
+            All files and folders must be placed in the path gotten from 'flaarum.cli pwd' during import
+            Create the tables before importing.
+
+  itc       Imports table date from a csv file. It expects a project/table combo and a filename 
+            All files and folders must be placed in the path gotten from 'flaarum.cli pwd' during import
+            Create the tables before importing.
+
+  ipj       Imports table date from a json file. It expects a project and a folder containing the backups 
+            All files and folders must be placed in the path gotten from 'flaarum.cli pwd' during import
+            Create the tables before importing.
+
+  ipc       Imports table date from a csv file. It expects a project and a folder containing the backups
+            All files and folders must be placed in the path gotten from 'flaarum.cli pwd' during import
+            Create the tables before importing.
+
 	ridx      Reindex a table. This is attimes needed if there has been changes to the table structure.
             It expects a project table combo eg. first_proj/users
 
@@ -158,6 +174,64 @@ Supported Commands:
 
 		parts := strings.Split(os.Args[2], "/")
 		exportTable(parts[0], parts[1], "csv")
+
+	case "itj":
+		if len(os.Args) != 4 {
+			color.Red.Println(`'itj' command expects a project/table combo and a json file`)
+			os.Exit(1)
+		}
+
+		parts := strings.Split(os.Args[2], "/")
+		inputPath, err := internal.GetFlaarumPath(os.Args[3])
+		if err != nil {
+			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
+			os.Exit(1)
+		}
+
+		importTable(parts[0], parts[1], "json", inputPath)
+
+	case "itc":
+		if len(os.Args) != 4 {
+			color.Red.Println(`'itc' command expects a project/table combo and a csv file`)
+			os.Exit(1)
+		}
+
+		parts := strings.Split(os.Args[2], "/")
+		inputPath, err := internal.GetFlaarumPath(os.Args[3])
+		if err != nil {
+			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
+			os.Exit(1)
+		}
+
+		importTable(parts[0], parts[1], "csv", inputPath)
+
+	case "ipj":
+		if len(os.Args) != 4 {
+			color.Red.Println(`'itj' command expects a project and a folder containing the backups`)
+			os.Exit(1)
+		}
+
+		inputPath, err := internal.GetFlaarumPath(os.Args[3])
+		if err != nil {
+			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
+			os.Exit(1)
+		}
+
+		importProject(os.Args[2], "json", inputPath)
+
+	case "ipc":
+		if len(os.Args) != 4 {
+			color.Red.Println(`'itj' command expects a project and a folder containing the backups`)
+			os.Exit(1)
+		}
+
+		inputPath, err := internal.GetFlaarumPath(os.Args[3])
+		if err != nil {
+			color.Red.Printf("The supplied path '%s' does not exists.\n", inputPath)
+			os.Exit(1)
+		}
+
+		importProject(os.Args[2], "csv", inputPath)
 
 	case "ridx":
 		if len(os.Args) != 3 {
