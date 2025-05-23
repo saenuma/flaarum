@@ -66,7 +66,7 @@ func ParseDataF1File(path string) (map[string]DataF1Elem, error) {
 }
 
 func AppendDataF1File(projName, tableName, name string, elem DataF1Elem) error {
-	dataPath, _ := GetDataPath()
+	dataPath, _ := GetRootPath()
 	path := filepath.Join(dataPath, projName, tableName, name+".flaa1")
 	dataF1Handle, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0777)
 	if err != nil {
@@ -86,7 +86,7 @@ func AppendDataF1File(projName, tableName, name string, elem DataF1Elem) error {
 }
 
 func ReadPortionF2File(projName, tableName, name string, begin, end int64) ([]byte, error) {
-	dataPath, _ := GetDataPath()
+	dataPath, _ := GetRootPath()
 	path := filepath.Join(dataPath, projName, tableName, name+".flaa2")
 	f2FileHandle, err := os.OpenFile(path, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
@@ -104,7 +104,7 @@ func ReadPortionF2File(projName, tableName, name string, begin, end int64) ([]by
 }
 
 func RewriteF1File(projName, tableName, name string, elems map[string]DataF1Elem) error {
-	dataPath, _ := GetDataPath()
+	dataPath, _ := GetRootPath()
 	path := filepath.Join(dataPath, projName, tableName, name+".flaa1")
 
 	out := "\n"

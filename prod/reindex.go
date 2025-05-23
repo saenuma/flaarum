@@ -13,7 +13,7 @@ import (
 )
 
 func reIndex(projName, tableName string) error {
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 	tmpTableName := tableName + "_ridx_tmp"
 	workingTablePath := filepath.Join(dataPath, projName, tmpTableName)

@@ -106,7 +106,7 @@ func deleteRows(w http.ResponseWriter, r *http.Request) {
 }
 
 func innerDelete(projName, tableName string, rows *[]map[string]string) error {
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 	dataF1Path := filepath.Join(dataPath, projName, tableName, "data.flaa1")
 	// update flaa1 file by rewriting it.
 	elemsMap, err := internal.ParseDataF1File(dataF1Path)

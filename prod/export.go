@@ -44,7 +44,7 @@ func exportTable(project, table, format string) {
 		os.Exit(1)
 	}
 
-	rootPath, err := internal.GetDataPath()
+	rootPath, err := internal.GetRootPath()
 	if err != nil {
 		color.Red.Printf("Error ocurred.\nError: %s\n", err)
 		os.Exit(1)

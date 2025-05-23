@@ -30,7 +30,7 @@ func trimFlaarumFilesProject(projName string) error {
 
 func trimFlaarumFilesTable(projName, tableName string) error {
 
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 	tmpTableName := tableName + "_trim_tmp"
 	workingTablePath := filepath.Join(dataPath, projName, tmpTableName)

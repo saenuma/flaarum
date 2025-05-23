@@ -25,7 +25,7 @@ func createProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 
 	projsMutex.Lock()
 	defer projsMutex.Unlock()
@@ -50,7 +50,7 @@ func deleteProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 	if internal.DoesPathExists(filepath.Join(dataPath, projName)) {
 		projsMutex.Lock()
 		defer projsMutex.Unlock()
@@ -91,7 +91,7 @@ func deleteProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func listProjects(w http.ResponseWriter, r *http.Request) {
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 
 	projsMutex.RLock()
 	defer projsMutex.RUnlock()
@@ -134,7 +134,7 @@ func renameProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 
 	if !internal.DoesPathExists(filepath.Join(dataPath, projName)) {
 		internal.PrintError(w, errors.New(fmt.Sprintf("the project '%s' does not exists.", projName)))

@@ -27,7 +27,7 @@ func searchTable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 	tablePath := filepath.Join(dataPath, projName, stmtStruct.TableName)
 	if !internal.DoesPathExists(tablePath) {
 		internal.PrintError(w, errors.New(fmt.Sprintf("Table '%s' of Project '%s' does not exists.", stmtStruct.TableName, projName)))
@@ -63,7 +63,7 @@ func searchTable(w http.ResponseWriter, r *http.Request) {
 
 // this is needed in expanded searches
 func findIdsContainingTrueWhereValues(projName, tableName, fieldName string, trueWhereValues []string) ([]string, error) {
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 	retIds := make([]string, 0)
 
 	indexesF1Path := filepath.Join(dataPath, projName, tableName, fieldName+"_indexes.flaa1")
@@ -91,7 +91,7 @@ func findIdsContainingTrueWhereValues(projName, tableName, fieldName string, tru
 
 // read a text field
 func readTextField(projName, tableName, fieldName, lookedForId string) string {
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 
 	elemsMap, _ := internal.ParseDataF1File(filepath.Join(tablePath, "data.flaa1"))
@@ -116,7 +116,7 @@ func readTextField(projName, tableName, fieldName, lookedForId string) string {
 }
 
 func doOnlyOneSearch(projName, tableName string, expand bool, whereOpts []flaarumlib.WhereStruct) ([]string, error) {
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 
 	expDetails := make(map[string]string)
@@ -1634,7 +1634,7 @@ func innerSearch(projName, stmt string) (*[]map[string]string, error) {
 		return nil, err
 	}
 
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 	tablePath := filepath.Join(dataPath, projName, stmtStruct.TableName)
 	tableName := stmtStruct.TableName
 

@@ -58,7 +58,7 @@ func createTable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 
 	projsMutex.Lock()
 	defer projsMutex.Unlock()
@@ -103,7 +103,7 @@ func updateTableStructure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 
 	projsMutex.Lock()
 	defer projsMutex.Unlock()
@@ -185,7 +185,7 @@ func getTableStructureHTTP(w http.ResponseWriter, r *http.Request) {
 	tableName := r.PathValue("tbl")
 	versionNum := r.PathValue("vnum")
 
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 
 	projsMutex.Lock()
 	defer projsMutex.Unlock()
@@ -227,7 +227,7 @@ func deleteTable(w http.ResponseWriter, r *http.Request) {
 	projName := r.PathValue("proj")
 	tableName := r.PathValue("tbl")
 
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 
 	projsMutex.Lock()
 	defer projsMutex.Unlock()

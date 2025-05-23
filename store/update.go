@@ -105,7 +105,7 @@ func updateRows(w http.ResponseWriter, r *http.Request) {
 	tablesMutexes[fullTableName].Lock()
 	defer tablesMutexes[fullTableName].Unlock()
 
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 	dataF1Path := filepath.Join(dataPath, projName, tableName, "data.flaa1")
 
 	elemsMap, err := internal.ParseDataF1File(dataF1Path)

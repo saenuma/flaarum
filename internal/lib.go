@@ -99,10 +99,6 @@ func GetRootPath() (string, error) {
 	return dd, nil
 }
 
-func GetDataPath() (string, error) {
-	return GetRootPath()
-}
-
 func GetSetting(settingName string) string {
 	confPath, err := GetConfigPath()
 	if err != nil {
@@ -162,7 +158,7 @@ func FindIn(container []string, elem string) int {
 }
 
 func DoesTableExists(projName, tableName string) bool {
-	dataPath, _ := GetDataPath()
+	dataPath, _ := GetRootPath()
 	if _, err := os.Stat(filepath.Join(dataPath, projName, tableName)); os.IsNotExist(err) {
 		return false
 	} else {
@@ -171,7 +167,7 @@ func DoesTableExists(projName, tableName string) bool {
 }
 
 func GetCurrentVersionNum(projName, tableName string) (int, error) {
-	dataPath, _ := GetDataPath()
+	dataPath, _ := GetRootPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 
 	tableObjsFIs, err := os.ReadDir(tablePath)
@@ -199,7 +195,7 @@ func GetCurrentVersionNum(projName, tableName string) (int, error) {
 }
 
 func GetTableStructureParsed(projName, tableName string, versionNum int) (flaarumlib.TableStruct, error) {
-	dataPath, _ := GetDataPath()
+	dataPath, _ := GetRootPath()
 	raw, err := os.ReadFile(filepath.Join(dataPath, projName, tableName, fmt.Sprintf("structure%d.txt", versionNum)))
 	if err != nil {
 		return flaarumlib.TableStruct{}, errors.Wrap(err, "ioutil error")
@@ -284,7 +280,7 @@ func PrintError(w http.ResponseWriter, err error) {
 }
 
 func GetTablePath(projName, tableName string) string {
-	dataPath, _ := GetDataPath()
+	dataPath, _ := GetRootPath()
 	return filepath.Join(dataPath, projName, tableName)
 }
 
@@ -309,7 +305,7 @@ func IsInternalProjectName(projName string) bool {
 }
 
 func ListTables(projName string) ([]string, error) {
-	dataPath, _ := GetDataPath()
+	dataPath, _ := GetRootPath()
 	tablesPath := filepath.Join(dataPath, projName)
 
 	tablesFIs, err := os.ReadDir(tablesPath)

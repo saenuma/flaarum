@@ -40,7 +40,7 @@ func allRowsCount(w http.ResponseWriter, r *http.Request) {
 	projName := r.PathValue("proj")
 	tableName := r.PathValue("tbl")
 
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 
 	createTableMutexIfNecessary(projName, tableName)

@@ -15,7 +15,7 @@ import (
 
 func MakeIndex(projName, tableName, fieldName, newData, rowId string) error {
 	// make exact search indexes
-	dataPath, _ := GetDataPath()
+	dataPath, _ := GetRootPath()
 	indexesF1Path := filepath.Join(dataPath, projName, tableName, fieldName+"_indexes.flaa1")
 	indexesF2Path := filepath.Join(dataPath, projName, tableName, fieldName+"_indexes.flaa2")
 
@@ -93,7 +93,7 @@ func IsNotIndexedFieldVersioned(projName, tableName, fieldName, version string) 
 }
 
 func DeleteIndex(projName, tableName, fieldName, data, rowId, version string) error {
-	dataPath, _ := GetDataPath()
+	dataPath, _ := GetRootPath()
 
 	if ConfirmFieldType(projName, tableName, fieldName, "date", version) {
 		valueInTimeType, err := time.Parse(flaarumlib.DATE_FORMAT, data)

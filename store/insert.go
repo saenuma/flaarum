@@ -167,7 +167,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
 	toInsert["_version"] = fmt.Sprintf("%d", currentVersionNum)
 
-	dataPath, _ := internal.GetDataPath()
+	dataPath, _ := internal.GetRootPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
 	if !internal.DoesPathExists(tablePath) {
 		internal.PrintError(w, errors.New(fmt.Sprintf("Table '%s' of Project '%s' does not exists.", tableName, projName)))

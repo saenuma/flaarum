@@ -18,7 +18,7 @@ var tablesMutexes map[string]*sync.RWMutex
 
 func main() {
 	// initialize
-	dataPath, err := internal.GetDataPath()
+	dataPath, err := internal.GetRootPath()
 	if err != nil {
 		panic(err)
 	}
