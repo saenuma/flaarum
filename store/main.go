@@ -75,8 +75,6 @@ func main() {
 	http.Handle("/count-rows/{proj}", Q(countRows))
 	http.Handle("/all-rows-count/{proj}/{tbl}", Q(allRowsCount))
 
-	// http.Use(keyEnforcementMiddleware)
-
 	port := internal.GetSetting("port")
 
 	fmt.Printf("Serving on port: %s\n", port)
