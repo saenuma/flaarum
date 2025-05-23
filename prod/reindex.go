@@ -41,7 +41,7 @@ func reIndex(projName, tableName string) error {
 
 	raw, _ := os.ReadFile(filepath.Join(tablePath, "lastId.txt"))
 	os.WriteFile(filepath.Join(workingTablePath, "lastId.txt"), raw, 0777)
-	
+
 	// copy the structures to the new table folder
 	dirFIs, err := os.ReadDir(tablePath)
 	if err != nil {

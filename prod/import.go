@@ -42,6 +42,13 @@ func importTable(project, table, format, srcPath string) {
 		color.Red.Printf("table %s does not exists\n", table)
 		os.Exit(1)
 	}
+	tablePath := internal.GetTablePath(project, table)
+
+	// use RAM to speed up import operation
+	var buffer bytes.Buffer
+	writer := io.Writer(&buffer)
+	elemsSlice := make([]internal.DataF1Elem, 0)
+	var begin int64
 
 	if format == "json" {
 		rawJSON, err := os.ReadFile(srcPath)
@@ -50,19 +57,26 @@ func importTable(project, table, format, srcPath string) {
 			os.Exit(1)
 		}
 
-		objs := make([]map[string]string, 0)
+		objs := make([]map[string]any, 0)
 		err = json.Unmarshal(rawJSON, &objs)
 		if err != nil {
 			color.Red.Println(err.Error())
 			os.Exit(1)
 		}
 
-		for _, toWrite := range objs {
-			_, err := cl.InsertRowStr(table, toWrite)
+		for _, obj := range objs {
+			toWrite, err := cl.ConvertInterfaceMapToStringMap(table, obj)
 			if err != nil {
-				color.Red.Println(err)
+				fmt.Println(err)
+				continue
 			}
+			dataForCurrentRow := internal.EncodeRowData(project, table, toWrite)
+			writer.Write([]byte(dataForCurrentRow))
 
+			dataEnd := int64(len([]byte(dataForCurrentRow)))
+			elem := internal.DataF1Elem{DataKey: toWrite["id"], DataBegin: begin, DataEnd: begin + dataEnd}
+			elemsSlice = append(elemsSlice, elem)
+			begin += dataEnd
 		}
 
 	} else if format == "csv" {
@@ -81,14 +95,7 @@ func importTable(project, table, format, srcPath string) {
 			os.Exit(1)
 		}
 
-		tablePath := internal.GetTablePath(project, table)
-
-		// use RAM to speed up import operation
-		var buffer bytes.Buffer
-		writer := io.Writer(&buffer)
-		elemsSlice := make([]internal.DataF1Elem, 0)
-		var begin int64
-		for j, record := range records[1:] {
+		for _, record := range records[1:] {
 			toWrite := make(map[string]string)
 			for i, f := range record {
 				toWrite[records[0][i]] = f
@@ -101,28 +108,27 @@ func importTable(project, table, format, srcPath string) {
 			elem := internal.DataF1Elem{DataKey: toWrite["id"], DataBegin: begin, DataEnd: begin + dataEnd}
 			elemsSlice = append(elemsSlice, elem)
 			begin += dataEnd
-
-			if j == len(records[1:])-1 {
-			}
 		}
 
-		lastIdPath := filepath.Join(tablePath, "lastId.txt")
-
-		lastId := elemsSlice[len(elemsSlice)-1].DataKey
-		os.WriteFile(lastIdPath, []byte(lastId), 0777)
-
-		dataLumpPath := filepath.Join(tablePath, "data.flaa2")
-		os.WriteFile(dataLumpPath, buffer.Bytes(), 0777)
-
-		var out string
-		for _, elem := range elemsSlice {
-			out += fmt.Sprintf("data_key: %s\ndata_begin: %d\ndata_end:%d\n\n", elem.DataKey,
-				elem.DataBegin, elem.DataEnd)
-		}
-		dataIndexPath := filepath.Join(tablePath, "data.flaa1")
-		os.WriteFile(dataIndexPath, []byte(out), 0777)
-
-		// do reindexing
-		reIndex(project, table)
 	}
+
+	lastIdPath := filepath.Join(tablePath, "lastId.txt")
+
+	lastId := elemsSlice[len(elemsSlice)-1].DataKey
+	os.WriteFile(lastIdPath, []byte(lastId), 0777)
+
+	dataLumpPath := filepath.Join(tablePath, "data.flaa2")
+	os.WriteFile(dataLumpPath, buffer.Bytes(), 0777)
+
+	var out string
+	for _, elem := range elemsSlice {
+		out += fmt.Sprintf("data_key: %s\ndata_begin: %d\ndata_end:%d\n\n", elem.DataKey,
+			elem.DataBegin, elem.DataEnd)
+	}
+	dataIndexPath := filepath.Join(tablePath, "data.flaa1")
+	os.WriteFile(dataIndexPath, []byte(out), 0777)
+
+	// do reindexing
+	reIndex(project, table)
+
 }
