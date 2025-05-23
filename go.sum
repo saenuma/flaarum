@@ -10,6 +10,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/saenuma/flaarumlib v0.0.0-20250416071005-6f9727df3783 h1:4cTEiYpzMd4SrSmqrCbQi9bviX+U92aJKl7f+9ql5J4=
 github.com/saenuma/flaarumlib v0.0.0-20250416071005-6f9727df3783/go.mod h1:M7iUcW3HujhMko4bdiCIvO0im5m4G2bu/byQgURHhB0=
+github.com/saenuma/flaarumlib v0.0.0-20250523230325-a95a7280ccf4 h1:MOMn2kSJTgQ+8/xl8GUNBJxtXA64wkA1dhokRRqraro=
+github.com/saenuma/flaarumlib v0.0.0-20250523230325-a95a7280ccf4/go.mod h1:M7iUcW3HujhMko4bdiCIvO0im5m4G2bu/byQgURHhB0=
 github.com/saenuma/zazabul v1.1.4 h1:tVzr+yeGCBU/8Xc5S9iBLdwoJIDw4dyGUiPokHRAO24=
 github.com/saenuma/zazabul v1.1.4/go.mod h1:So2GPJYEbfm5PXuHmhyjSfG1JH8oEamRWOi3aLdN0q4=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=

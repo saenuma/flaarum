@@ -55,6 +55,9 @@ func trimFlaarumFilesTable(projName, tableName string) error {
 		}
 	}
 
+	raw, _ := os.ReadFile(filepath.Join(tablePath, "lastId.txt"))
+	os.WriteFile(filepath.Join(workingTablePath, "lastId.txt"), raw, 0777)
+
 	refF1Path := filepath.Join(tablePath, "data.flaa1")
 	tmpF2Path := filepath.Join(dataPath, projName, tmpTableName, "data.flaa2")
 	elemsMap, _ := internal.ParseDataF1File(refF1Path)

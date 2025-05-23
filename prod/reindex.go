@@ -39,6 +39,9 @@ func reIndex(projName, tableName string) error {
 	workingF2Path := filepath.Join(workingTablePath, "data.flaa2")
 	os.WriteFile(workingF2Path, rawDataFlaa2, 0777)
 
+	raw, _ := os.ReadFile(filepath.Join(tablePath, "lastId.txt"))
+	os.WriteFile(filepath.Join(workingTablePath, "lastId.txt"), raw, 0777)
+	
 	// copy the structures to the new table folder
 	dirFIs, err := os.ReadDir(tablePath)
 	if err != nil {
