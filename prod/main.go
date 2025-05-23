@@ -58,7 +58,7 @@ Supported Commands:
             All files and folders must be placed in the path gotten from 'flaarum.cli pwd' during import
             Create the tables before importing.
 
-	ridx      Reindex a table. This is attimes needed if there has been changes to the table structure.
+  ridx      Reindex a table. This is attimes needed if there has been changes to the table structure.
             It expects a project table combo eg. first_proj/users
 
   trim      Trim large flaarum files. This is needed after months of using the database.

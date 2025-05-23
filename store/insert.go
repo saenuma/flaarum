@@ -150,7 +150,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 
 	toInsert := make(map[string]string)
 	for k := range r.PostForm {
-		if k == "key-str" || k == "_version" {
+		if k == "key-str" {
 			continue
 		}
 		if r.FormValue(k) == "" {
@@ -159,13 +159,14 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 		toInsert[k] = r.FormValue(k)
 	}
 
-	currentVersionNum, err := getCurrentVersionNum(projName, tableName)
-	if err != nil {
-		internal.PrintError(w, err)
-		return
+	if _, ok := toInsert["version"]; !ok {
+		currentVersionNum, err := getCurrentVersionNum(projName, tableName)
+		if err != nil {
+			internal.PrintError(w, err)
+			return
+		}
+		toInsert["_version"] = fmt.Sprintf("%d", currentVersionNum)
 	}
-
-	toInsert["_version"] = fmt.Sprintf("%d", currentVersionNum)
 
 	dataPath, _ := internal.GetRootPath()
 	tablePath := filepath.Join(dataPath, projName, tableName)
@@ -175,7 +176,7 @@ func insertRow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// do unique and foreign key validation
-	toInsert, err = validateAndMutateDataMap(projName, tableName, toInsert, nil)
+	toInsert, err := validateAndMutateDataMap(projName, tableName, toInsert, nil)
 	if err != nil {
 		printValError(w, err)
 		return
