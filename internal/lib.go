@@ -76,13 +76,11 @@ func GetRootPath() (string, error) {
 		return "", errors.Wrap(err, "os error")
 	}
 
-	var dd string
+	dd := os.Getenv("SNAP_COMMON")
 	if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
 		dd = filepath.Join(hd, "Flaarum")
 		os.MkdirAll(dd, 0777)
 	} else {
-		dd = os.Getenv("SNAP_COMMON")
-
 		confPath := filepath.Join(dd, "flaarum.zconf")
 		conf, err := zazabul.LoadConfigFile(confPath)
 		if err != nil {
