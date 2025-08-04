@@ -34,11 +34,6 @@ in_production: false
 // changing the port can be used to hide your database during production
 port: 22318
 
-// data_folder is the folder in /var/snap/flaarum/common containing flaarum's generated
-// data. This is to support using flaarum with mounted disks.
-// default is / . meaning /var/snap/flaarum/common
-// use paths relative to /var/snap/flaarum/common
-data_folder: /
 `
 
 func DoesPathExists(p string) bool {
@@ -76,22 +71,11 @@ func GetRootPath() (string, error) {
 		return "", errors.Wrap(err, "os error")
 	}
 
-	dd := os.Getenv("SNAP_COMMON")
+	var dd string
+	dd = os.Getenv("SNAP_COMMON")
 	if strings.HasPrefix(dd, "/var/snap/go") || dd == "" {
 		dd = filepath.Join(hd, "Flaarum")
 		os.MkdirAll(dd, 0777)
-	} else {
-		confPath := filepath.Join(dd, "flaarum.zconf")
-		conf, err := zazabul.LoadConfigFile(confPath)
-		if err != nil {
-			fmt.Printf("%+v\n", err)
-			return dd, err
-		}
-
-		dataFolderSetting := conf.Get("data_folder")
-		if dataFolderSetting != "/" {
-			dd = filepath.Join(dd, dataFolderSetting)
-		}
 	}
 
 	return dd, nil
